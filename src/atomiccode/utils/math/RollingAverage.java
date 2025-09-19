@@ -5,7 +5,8 @@ import java.util.LinkedList;
 public class RollingAverage {
 
     private final int max;
-    private final LinkedList<Float> values = new LinkedList<Float>();
+    private final LinkedList<Float> values = new LinkedList<>();
+    private float sum = 0;
 
     public RollingAverage(int max) {
         this.max = max;
@@ -13,16 +14,13 @@ public class RollingAverage {
 
     public void addValue(float value) {
         if (values.size() >= max) {
-            values.removeFirst();
+            sum -= values.removeFirst();
         }
         values.addLast(value);
+        sum += value;
     }
 
     public float getAverage() {
-        float total = 0;
-        for (Float f : values) {
-            total += f;
-        }
-        return total / values.size();
+        return values.isEmpty() ? 0f : sum / values.size();
     }
 }

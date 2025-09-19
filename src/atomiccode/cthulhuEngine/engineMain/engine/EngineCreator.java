@@ -9,25 +9,30 @@ import atomiccode.cthulhuEngine.inputsOutputs.windowing.Window;
 public class EngineCreator {
 
     protected static Engine init(EngineConfigs configs) {
-//        checkResFolderExists();
-        Engine engine = initEngineInstance(configs);
-        return engine;
+        checkResFolderExists();
+        return initEngineInstance(configs);
     }
 
     private static void checkResFolderExists() {
-        if (EngineFiles.RES_FOLDER.exists())
-            return;
-        System.err.println("Can't init engine - res folder not found.");
-        System.exit(-1);
+        if (!EngineFiles.RES_FOLDER.exists()) {
+            throw new IllegalStateException("Resource folder not found: " + EngineFiles.RES_FOLDER.getAbsolutePath());
+        }
     }
 
     private static Engine initEngineInstance(EngineConfigs configs) {
+        if (configs == null) {
+            throw new IllegalArgumentException("EngineConfigs cannot be null");
+        }
+
         Window window = new Window(configs.windowTitle, configs.windowWidth, configs.windowHeight);
         Mouse mouseManager = new Mouse();
         Keyboard keyboardManager = new Keyboard();
+
         addInputListeners(window, mouseManager, keyboardManager);
+
         FrameTimer timer = new FrameTimer(configs.fps);
         StateManager stateManager = new StateManager(configs.defaultState, configs.initialState);
+
 //        return new Engine(window, mouseManager, keyboardManager, timer, stateManager, configs.resources);
         return new Engine(window, mouseManager, keyboardManager, timer, stateManager);
     }

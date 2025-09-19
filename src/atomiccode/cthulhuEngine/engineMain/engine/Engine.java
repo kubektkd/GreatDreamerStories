@@ -6,7 +6,7 @@ import atomiccode.cthulhuEngine.inputsOutputs.userInputs.Keyboard;
 import atomiccode.cthulhuEngine.inputsOutputs.userInputs.Mouse;
 import atomiccode.cthulhuEngine.inputsOutputs.windowing.Window;
 
-import java.awt.*;
+import java.awt.Graphics;
 import java.awt.image.BufferStrategy;
 
 public class Engine {
@@ -93,10 +93,9 @@ public class Engine {
 
     public static Engine init(EngineConfigs configs) {
         if (currentInstance != null) {
-            System.err.println("Engine has already been initialized!");
-        } else {
-            currentInstance = EngineCreator.init(configs);
+            throw new IllegalStateException("Engine has already been initialized!");
         }
+        currentInstance = EngineCreator.init(configs);
         return currentInstance;
     }
 }

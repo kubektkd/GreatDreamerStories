@@ -1,12 +1,20 @@
 package atomiccode.cthulhuEngine.inputsOutputs.stateControl;
 
-import java.awt.*;
+import java.awt.Graphics;
 
 public interface State {
 
-    public int getPriority();
+    int getPriority();
 
-    public abstract void tick();
+    void onEnter();
 
-    public void render(Graphics g);
+    void onExit();
+
+    // Deterministic game logic (e.g., combat, dialogue progression)
+    void tick();
+
+    // Frame-based updates (e.g., animations, transitions)
+    void update();
+
+    void render(Graphics g);
 }

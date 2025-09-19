@@ -9,7 +9,7 @@ public class Keyboard implements KeyListener {
     public boolean up, down, left, right;
 
     public Keyboard() {
-        keys = new boolean[256];
+        keys = new boolean[KeyEvent.KEY_LAST+1];
         justPressed = new boolean[keys.length];
         cantPress = new boolean[keys.length];
     }

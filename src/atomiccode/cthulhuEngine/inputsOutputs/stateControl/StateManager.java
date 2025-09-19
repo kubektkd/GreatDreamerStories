@@ -1,6 +1,6 @@
 package atomiccode.cthulhuEngine.inputsOutputs.stateControl;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -9,7 +9,7 @@ public class StateManager {
     private final State defaultState;
 
     private State currentState;
-    private List<QueuedState> stateQueue = new ArrayList<QueuedState>();
+    private List<QueuedState> stateQueue = new LinkedList<>();
 
     public StateManager(State defaultState, State initialState) {
         this.defaultState = defaultState;
@@ -47,21 +47,27 @@ public class StateManager {
     }
 
     private void switchState(State newState) {
-        this.currentState = newState;
+        if (currentState != null) {
+            currentState.onExit();
+        }
+        currentState = newState;
+        if (currentState != null) {
+            currentState.onEnter();
+        }
     }
 
     private State getNextState() {
         if (stateQueue.isEmpty()) {
             return defaultState;
         }
-        return stateQueue.get(0).state;
+        return stateQueue.getFirst().state;
     }
 
     private void cleanQueue() {
         Iterator<QueuedState> iterator = stateQueue.iterator();
         while (iterator.hasNext()) {
             QueuedState state = iterator.next();
-            if (!state.waitForEndRequest) {
+            if (!state.waitForEndRequest && state.state != currentState) {
                 iterator.remove();
             }
         }

@@ -2,7 +2,7 @@ package atomiccode.greatDreamerStories.states;
 
 import atomiccode.cthulhuEngine.inputsOutputs.stateControl.State;
 
-import java.awt.*;
+import java.awt.Graphics;
 
 public enum GameState implements State {
 
@@ -18,7 +18,22 @@ public enum GameState implements State {
     }
 
     @Override
+    public void onEnter() {
+
+    }
+
+    @Override
+    public void onExit() {
+
+    }
+
+    @Override
     public void tick() {
+
+    }
+
+    @Override
+    public void update() {
 
     }
 

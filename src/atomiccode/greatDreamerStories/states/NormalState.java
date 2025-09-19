@@ -12,7 +12,22 @@ public class NormalState implements State {
     }
 
     @Override
+    public void onEnter() {
+
+    }
+
+    @Override
+    public void onExit() {
+
+    }
+
+    @Override
     public void tick() {
+
+    }
+
+    @Override
+    public void update() {
 
     }
 

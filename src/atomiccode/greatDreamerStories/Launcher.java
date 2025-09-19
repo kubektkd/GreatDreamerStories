@@ -5,7 +5,7 @@ import atomiccode.greatDreamerStories.gameManagement.GameManager;
 
 public class Launcher {
 
-    private static final String VERSION = "Version 0.0.1";
+    private static final String VERSION = "0.0.1";
 
     public static void main(String[] args) {
 //        Game game = new Game("Tiled Game", 640, 480);

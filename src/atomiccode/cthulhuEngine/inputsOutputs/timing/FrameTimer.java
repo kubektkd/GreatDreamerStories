@@ -15,7 +15,6 @@ public class FrameTimer {
     private final RollingAverage deltaAverage = new RollingAverage(ROLL_AVG_COUNT);
 
     private long lastFrameTime;
-    private float applicationTime = 0;
     private float delta;
 
     private float timeSinceStart = 0;
@@ -28,15 +27,17 @@ public class FrameTimer {
 
     public void update(){
         long currentFrameTime = getCurrentTime();
-        float frameLength = Math.min(MAX_DELTA, (float)(currentFrameTime - lastFrameTime) / NANOS_IN_SECOND);
+        float frameLength = Math.min(MAX_DELTA, (currentFrameTime - lastFrameTime) / (float) NANOS_IN_SECOND);
         this.lastFrameTime = currentFrameTime;
-        applicationTime += frameLength;
-        if (applicationTime < STABLE_TIME) {
+
+        // warm-up stabilization
+        if (timeSinceStart < STABLE_TIME) {
             frameLength = idealDelta;
         }
+
         deltaAverage.addValue(frameLength);
         this.delta = deltaAverage.getAverage();
-        timeSinceStart += delta;
+        timeSinceStart += frameLength;
     }
 
     public float getDelta(){
@@ -51,6 +52,6 @@ public class FrameTimer {
     }
 
     private long getCurrentTime() {
-        return System.currentTimeMillis();
+        return System.nanoTime();
     }
 }

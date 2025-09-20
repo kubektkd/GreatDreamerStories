@@ -1,7 +1,8 @@
 package atomiccode.greatDreamerStories.configs;
 
 import atomiccode.cthulhuEngine.engineMain.engine.EngineConfigs;
-import atomiccode.greatDreamerStories.states.GameState;
+import atomiccode.greatDreamerStories.states.SplashState;
+import atomiccode.greatDreamerStories.states.MainMenuState;
 
 public class EngineConfigs_Build extends EngineConfigs {
 
@@ -18,8 +19,8 @@ public class EngineConfigs_Build extends EngineConfigs {
         windowHeight = 720;
         language = "PL";
 //        resources.colours.addPalette(loadColourPalette());
-        defaultState = GameState.NORMAL;
-        initialState = GameState.SPLASH_SCREEN;
+        defaultState = new MainMenuState();
+        initialState = new SplashState();
 //        debugger = new DebuggerConfigs();
     }
 }

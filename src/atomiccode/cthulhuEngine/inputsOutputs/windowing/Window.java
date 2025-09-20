@@ -26,6 +26,7 @@ public class Window {
         // optional configs
         frame.setResizable(false); // don't allow to resize the window
         frame.setLocationRelativeTo(null); // position frame in the screen center
+        frame.getContentPane().setBackground(Color.BLACK);
         frame.setVisible(true); // show JFrame
 
         canvas = new Canvas();

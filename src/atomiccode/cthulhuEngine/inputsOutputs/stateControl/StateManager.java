@@ -14,7 +14,10 @@ public class StateManager {
     public StateManager(State defaultState, State initialState) {
         this.defaultState = defaultState;
         this.currentState = initialState;
-        suggestState(initialState, true);
+        // Call onEnter for the initial state
+        if (currentState != null) {
+            currentState.onEnter();
+        }
     }
 
     public void suggestState(State state, boolean waitForEndRequest) {
@@ -35,6 +38,10 @@ public class StateManager {
 
     public State getState() {
         return currentState;
+    }
+    
+    public void setState(State newState) {
+        suggestState(newState, false);
     }
 
     public void updateState() {
@@ -58,7 +65,7 @@ public class StateManager {
 
     private State getNextState() {
         if (stateQueue.isEmpty()) {
-            return defaultState;
+            return currentState; // Don't switch if no state is queued
         }
         return stateQueue.getFirst().state;
     }

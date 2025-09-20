@@ -6,6 +6,7 @@ import atomiccode.cthulhuEngine.inputsOutputs.userInputs.Keyboard;
 import atomiccode.cthulhuEngine.inputsOutputs.userInputs.Mouse;
 import atomiccode.cthulhuEngine.inputsOutputs.windowing.Window;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.image.BufferStrategy;
 
@@ -48,9 +49,15 @@ public class Engine {
 //        window.update();
         timer.update();
         stateManager.updateState();
+        
+        // Update current state
+        if (stateManager.getState() != null) {
+            stateManager.getState().tick();
+            stateManager.getState().update();
+        }
     }
 
-    private void render() {
+    public void render() {
         bs = window.getCanvas().getBufferStrategy();
         if (bs == null) {
             window.getCanvas().createBufferStrategy(3);
@@ -58,8 +65,9 @@ public class Engine {
         }
         g = bs.getDrawGraphics();
 
-        // Clear screen
-        g.clearRect(0, 0, window.getCanvas().getWidth(), window.getCanvas().getHeight());
+        // Clear screen to black
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, window.getCanvas().getWidth(), window.getCanvas().getHeight());
 
         // Begin drawing
         if (stateManager.getState() != null)
@@ -84,6 +92,10 @@ public class Engine {
 
     public void requestClose() {
         this.closeFlag = true;
+    }
+    
+    public Window getWindow() {
+        return window;
     }
 
 

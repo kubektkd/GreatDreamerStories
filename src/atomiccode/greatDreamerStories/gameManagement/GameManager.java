@@ -21,7 +21,7 @@ public class GameManager implements Runnable {
     public void run() {
         while(running) {
             engine.update();
-//            engine.render();
+            engine.render();
         }
     }
 

@@ -1,4 +1,4 @@
 package atomiccode.greatDreamerStories.states;
 
-public class MenuState {
+public class BattleState {
 }

@@ -11,13 +11,13 @@ import java.io.IOException;
 
 public class SplashState implements State {
     
-    private static final int FADE_IN_DURATION_MS = 500; // 1 second fade in
-    private static final int VISIBLE_DURATION_MS = 3000; // 3 seconds fully visible
-    private static final int FADE_OUT_DURATION_MS = 500; // 1 second fade out
-    private static final int SINGLE_SPLASH_DURATION_MS = FADE_IN_DURATION_MS + VISIBLE_DURATION_MS + FADE_OUT_DURATION_MS; // 5 seconds per splash
+    private static final int FADE_IN_DURATION_MS = 500; // 0.5 second fade in
+    private static final int VISIBLE_DURATION_MS = 2000; // 2 seconds fully visible
+    private static final int FADE_OUT_DURATION_MS = 500; // 0.5 second fade out
+    private static final int SINGLE_SPLASH_DURATION_MS = FADE_IN_DURATION_MS + VISIBLE_DURATION_MS + FADE_OUT_DURATION_MS; // 3 seconds per splash
     
     // Multiple splash images
-    private String[] splashImagePaths = {"res/ac-logo.png", "res/splashscreen.jpg"};
+    private String[] splashImagePaths = {"res/splashscreen-logo.jpg", "res/splashscreen.jpg"};
     private int currentImageIndex = 0;
     private long imageLoadTime;
     private boolean hasStarted = false;

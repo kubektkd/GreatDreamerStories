@@ -9,7 +9,7 @@ public class GameManager implements Runnable {
     private Thread thread;
     private boolean running = false;
 
-    public void init(EngineConfigs configs) { // TODO take in game configs
+    public void init(EngineConfigs configs) {   // TODO: take in-game configs
         initSystems(configs);
     }
 
@@ -30,7 +30,7 @@ public class GameManager implements Runnable {
             return;
         running = true;
         thread = new Thread(this);
-        thread.start(); // this calls run method
+        thread.start(); // this calls run() method
     }
 
     public synchronized void stop() {

@@ -5,6 +5,7 @@ import atomiccode.cthulhuEngine.inputsOutputs.timing.FrameTimer;
 import atomiccode.cthulhuEngine.inputsOutputs.userInputs.Keyboard;
 import atomiccode.cthulhuEngine.inputsOutputs.userInputs.Mouse;
 import atomiccode.cthulhuEngine.inputsOutputs.windowing.Window;
+import atomiccode.cthulhuEngine.inputsOutputs.windowing.Window.Mode;
 
 public class EngineCreator {
 
@@ -24,7 +25,7 @@ public class EngineCreator {
             throw new IllegalArgumentException("EngineConfigs cannot be null");
         }
 
-        Window window = new Window(configs.windowTitle, configs.windowWidth, configs.windowHeight);
+        Window window = new Window(configs.windowTitle, configs.resolution.getWidth(), configs.resolution.getHeight(), Mode.MAXIMIZED);
         Mouse mouseManager = new Mouse();
         Keyboard keyboardManager = new Keyboard();
 
@@ -33,7 +34,7 @@ public class EngineCreator {
         FrameTimer timer = new FrameTimer(configs.fps);
         StateManager stateManager = new StateManager(configs.defaultState, configs.initialState);
 
-//        return new Engine(window, mouseManager, keyboardManager, timer, stateManager, configs.resources);
+        // return new Engine(window, mouseManager, keyboardManager, timer, stateManager, configs.resources);
         return new Engine(window, mouseManager, keyboardManager, timer, stateManager);
     }
 

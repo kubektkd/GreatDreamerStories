@@ -16,7 +16,7 @@ public class Engine {
     private final Window window;
     public final Keyboard keyboard;
     public final Mouse mouse;
-//    public final Resources resources;
+    // public final Resources resources;
     public final StateManager stateManager;
 
     private final FrameTimer timer;
@@ -26,14 +26,14 @@ public class Engine {
     private BufferStrategy bs;
     private Graphics g;
 
-//    protected Engine(Window window, Mouse mouse, Keyboard keyboard, FrameTimer timer, StateManager stateManager, Resources resources) {
+    // protected Engine(Window window, Mouse mouse, Keyboard keyboard, FrameTimer timer, StateManager stateManager, Resources resources) {
     protected Engine(Window window, Mouse mouse, Keyboard keyboard, FrameTimer timer, StateManager stateManager) {
         this.window = window;
         this.mouse = mouse;
         this.keyboard = keyboard;
         this.timer = timer;
         this.stateManager = stateManager;
-//        this.resources = resources;
+        // this.resources = resources;
     }
 
     public static Engine instance() {
@@ -43,10 +43,10 @@ public class Engine {
     }
 
     public void update() {
-//        Ui.update(getDeltaSeconds());
+        // Ui.update(getDeltaSeconds());
         keyboard.update();
-//        mouse.update();
-//        window.update();
+        // mouse.update();
+        // window.update();
         timer.update();
         stateManager.updateState();
         

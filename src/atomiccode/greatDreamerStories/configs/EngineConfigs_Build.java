@@ -8,19 +8,12 @@ public class EngineConfigs_Build extends EngineConfigs {
 
     public EngineConfigs_Build(String version) {
         windowTitle = "Great Dreamer Stories - v"+version;
-        vsync = true;
-        msaa = true;
-        fps = 60;
-        uiSize = 1;
-        fullscreen = true;
-        windowMinHeight = 0;
-        windowMinWidth = 0;
-        windowWidth = 1280;
-        windowHeight = 720;
+        minResolution = Resolution.SMALL;
+        resolution = Resolution.HD;
         language = "PL";
-//        resources.colours.addPalette(loadColourPalette());
         defaultState = new MainMenuState();
         initialState = new SplashState();
-//        debugger = new DebuggerConfigs();
+        // resources.colours.addPalette(loadColourPalette());
+        // debugger = new DebuggerConfigs();
     }
 }

@@ -6,8 +6,6 @@ import java.awt.Graphics;
 
 public enum GameState implements State {
 
-    SPLASH_SCREEN(),
-    MAIN_MENU(),
     UI(),
     BATTLE(),
     NORMAL();

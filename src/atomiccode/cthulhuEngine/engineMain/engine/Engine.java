@@ -45,7 +45,7 @@ public class Engine {
     public void update() {
         // Ui.update(getDeltaSeconds());
         keyboard.update();
-        // mouse.update();
+        mouse.update();
         // window.update();
         timer.update();
         stateManager.updateState();

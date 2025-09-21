@@ -37,6 +37,11 @@ public class Mouse implements MouseListener, MouseMotionListener {
     public void mouseEntered(MouseEvent e) {}
     public void mouseExited(MouseEvent e) {}
 
+    public void update() {
+        // Mouse update logic can be added here if needed
+        // Currently just tracking position and button states
+    }
+    
     public int getX() { return mouseX; }
     public int getY() { return mouseY; }
     public boolean isLeftPressed() { return leftPressed; }

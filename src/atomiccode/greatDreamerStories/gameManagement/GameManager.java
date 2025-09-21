@@ -22,6 +22,10 @@ public class GameManager implements Runnable {
         while(running) {
             engine.update();
             engine.render();
+
+            if (engine.isCloseRequested()) {
+                System.exit(0);
+            }
         }
     }
 

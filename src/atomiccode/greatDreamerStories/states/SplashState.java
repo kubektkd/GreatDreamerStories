@@ -91,7 +91,7 @@ public class SplashState implements State {
                     loadSplashImage();
                 } else {
                     // All splash screens complete, transition to main menu
-                    Engine.instance().stateManager.suggestState(new MainMenuState(), false);
+                    Engine.instance().startFadeTransition(new MainMenuState(), Color.BLACK, 0.75f);
                 }
             }
         }

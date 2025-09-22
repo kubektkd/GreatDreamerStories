@@ -15,38 +15,37 @@ Engine.instance().stateManager.setState(new NewState());
 Use fade transitions:
 ```java
 // New way (smooth fade transition)
-Engine.instance().startFadeTransition(new NewState(), Color.BLACK, 1.0f);
+Engine.instance().stateProcessor.setState(new NewState());
 ```
 
 ### Parameters
 
 - `newState`: The state to transition to
-- `fadeColor`: The color to fade to/from (usually Color.BLACK or Color.WHITE)
-- `fadeDuration`: Duration of the fade in seconds (e.g., 1.0f for 1 second)
+- **Automatic fade settings**: Uses default black fade with 0.5 second duration
 
 ### Example Implementations
 
 #### MainMenuState to CharacterSelectState
 ```java
 startButton.setOnClick(() -> {
-    Engine.instance().startFadeTransition(new CharacterSelectState(), Color.BLACK, 1.0f);
+    Engine.instance().stateProcessor.setState(new CharacterSelectState());
 });
 ```
 
-#### Different Fade Colors
+#### Push/Pop States
 ```java
-// Fade to white
-Engine.instance().startFadeTransition(new NewState(), Color.WHITE, 0.5f);
+// Push state onto stack with fade
+Engine.instance().stateProcessor.pushState(new NewState());
 
-// Fade to custom color
-Engine.instance().startFadeTransition(new NewState(), new Color(100, 50, 200), 2.0f);
+// Pop current state with fade
+Engine.instance().stateProcessor.popState();
 ```
 
 ### Checking Transition Status
 
 You can check if a transition is in progress:
 ```java
-if (Engine.instance().isTransitioning()) {
+if (Engine.instance().stateProcessor.isTransitioning()) {
     // Don't process input or start new transitions
     return;
 }
@@ -56,25 +55,36 @@ if (Engine.instance().isTransitioning()) {
 
 For debugging or advanced control, you can access the current fade state:
 ```java
-FadeState currentFade = Engine.instance().getCurrentFade();
+FadeState currentFade = Engine.instance().stateProcessor.getCurrentFade();
 if (currentFade != null) {
-    float progress = currentFade.getProgress(); // 0.0 to 1.0
-    System.out.println("Fade progress: " + (progress * 100) + "%");
+    // Access fade information for debugging
+    System.out.println("Fade type: " + currentFade.getFadeType());
+    System.out.println("Fade complete: " + currentFade.isComplete());
 }
 ```
 
 ## How It Works
 
-1. **Fade Out**: The current state fades to the specified color
+1. **Fade Out**: The current state fades to black (0.5s)
 2. **State Switch**: When fade out completes, the state switches
-3. **Fade In**: The new state fades in from the specified color
+3. **Fade In**: The new state fades in from black (0.5s)
 
 The StateProcessor automatically handles the timing and rendering of these transitions, so states don't need to implement their own fade logic.
+
+## Special Cases
+
+### SplashState Internal Fades
+The SplashState has its own internal fade system for transitions between splash images:
+- **Fade Out**: Current image fades to black (0.5s)
+- **Image Switch**: Load next image while screen is black
+- **Fade In**: New image fades in from black (0.5s)
+
+This works independently of the StateProcessor's fade system.
 
 ## Benefits
 
 - **Smooth Transitions**: No jarring instant state changes
 - **Professional Look**: Polished user experience
 - **Easy to Use**: Simple API for developers
-- **Flexible**: Customizable colors and durations
+- **Automatic**: Default settings work for most cases
 - **Non-blocking**: States can still update during transitions

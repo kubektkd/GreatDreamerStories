@@ -47,8 +47,8 @@ public class MainMenuState implements State {
         
         // Set button actions
         startButton.setOnClick(() -> {
-            // Use fade transition instead of direct state change
-            Engine.instance().startFadeTransition(new CharacterSelectState(), Color.BLACK, 0.5f);
+            // State change will automatically trigger fade transition
+            Engine.instance().stateProcessor.setState(new CharacterSelectState());
         });
         
         settingsButton.setOnClick(() -> {

@@ -2,20 +2,28 @@ package atomiccode.cthulhuEngine.inputsOutputs.stateControl;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.util.List;
 
+/**
+ * Handles all state processing: rendering, updates, and transitions
+ */
 public class StateProcessor {
 
+    private static final float DEFAULT_FADE_DURATION = 0.5f;
+    private final StateManager stateManager;
     private FadeState currentFade;
     private State pendingState;
     private boolean isTransitioning;
 
-    public StateProcessor(List<State> states) {
+    public StateProcessor(StateManager stateManager) {
+        this.stateManager = stateManager;
         this.currentFade = null;
         this.pendingState = null;
         this.isTransitioning = false;
     }
 
+    /**
+     * Update all states and handle transitions
+     */
     public void update(float deltaTime) {
         // Update fade animation if active
         if (currentFade != null) {
@@ -24,20 +32,36 @@ public class StateProcessor {
             // Check if fade is complete
             if (currentFade.isComplete()) {
                 if (currentFade.getFadeType() == FadeState.FadeType.FADE_IN) {
-                    // Fade out complete (used FADE_IN), switch to pending state and start fade in
+                    // Fade out complete, switch to pending state and start fade in
                     if (pendingState != null) {
                         switchToState(pendingState);
                         startFadeIn();
                     }
                 } else {
-                    // Fade in complete (used FADE_OUT), transition finished
+                    // Fade in complete, transition finished
                     finishTransition();
                 }
             }
         }
+        
+        // Update current state (allow updates during transitions for states like SplashState)
+        State currentState = stateManager.getCurrentState();
+        if (currentState != null) {
+            currentState.tick();
+            currentState.update();
+        }
     }
 
+    /**
+     * Render all states with fade overlay
+     */
     public void render(Graphics2D g) {
+        // Render current state
+        State currentState = stateManager.getCurrentState();
+        if (currentState != null) {
+            currentState.render(g);
+        }
+        
         // Render fade overlay if active
         if (currentFade != null) {
             currentFade.render(g);
@@ -45,9 +69,62 @@ public class StateProcessor {
     }
     
     /**
+     * Set state with automatic fade transition
+     */
+    public void setState(State newState) {
+        if (isTransitioning) {
+            return; // Ignore if already transitioning
+        }
+        
+        if (newState == null || newState == stateManager.getCurrentState()) {
+            return; // No change needed
+        }
+        
+        // Start fade transition
+        startFadeTransition(newState, Color.BLACK, DEFAULT_FADE_DURATION);
+    }
+    
+    /**
+     * Push state onto stack with fade transition
+     */
+    public void pushState(State newState) {
+        if (isTransitioning) {
+            return; // Ignore if already transitioning
+        }
+        
+        if (newState == null) {
+            return;
+        }
+        
+        // Start fade transition
+        startFadeTransition(newState, Color.BLACK, DEFAULT_FADE_DURATION);
+    }
+    
+    /**
+     * Pop state from stack with fade transition
+     */
+    public void popState() {
+        if (isTransitioning) {
+            return; // Ignore if already transitioning
+        }
+        
+        if (stateManager.size() <= 1) {
+            return; // Can't pop the last state
+        }
+        
+        // Start fade transition to previous state
+        State previousState = stateManager.getCurrentState();
+        stateManager.popState(); // Remove current state
+        State targetState = stateManager.getCurrentState();
+        stateManager.pushState(previousState); // Restore for now
+        
+        startFadeTransition(targetState, Color.BLACK, DEFAULT_FADE_DURATION);
+    }
+    
+    /**
      * Start a fade transition to a new state
      */
-    public void startFadeTransition(State newState, Color fadeColor, float fadeDuration) {
+    private void startFadeTransition(State newState, Color fadeColor, float fadeDuration) {
         if (isTransitioning) {
             return; // Already transitioning
         }
@@ -59,7 +136,6 @@ public class StateProcessor {
     
     /**
      * Start fade out animation (current state to black)
-     * Use FADE_IN to make overlay go from transparent to opaque (normal to black)
      */
     private void startFadeOut(Color fadeColor, float duration) {
         currentFade = new FadeState(FadeState.FadeType.FADE_IN, fadeColor, duration, null);
@@ -68,7 +144,6 @@ public class StateProcessor {
     
     /**
      * Start fade in animation (black to new state)
-     * Use FADE_OUT to make overlay go from opaque to transparent (black to normal)
      */
     private void startFadeIn() {
         if (currentFade != null) {
@@ -83,10 +158,8 @@ public class StateProcessor {
      * Switch to a new state (called during fade out)
      */
     private void switchToState(State newState) {
-        // Use StateManager to handle the state transition
         if (newState != null) {
-            // Get the StateManager from Engine and switch states
-            atomiccode.cthulhuEngine.engineMain.engine.Engine.instance().stateManager.setState(newState);
+            stateManager.setState(newState);
         }
     }
     
@@ -107,10 +180,9 @@ public class StateProcessor {
     }
     
     /**
-     * Get the current fade state
+     * Get the current state
      */
-    public FadeState getCurrentFade() {
-        return currentFade;
+    public State getCurrentState() {
+        return stateManager.getCurrentState();
     }
-    
 }

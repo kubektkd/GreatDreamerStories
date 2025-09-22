@@ -10,15 +10,10 @@ import atomiccode.greatDreamerStories.gameManagement.GameManager;
 public class Game {
     
     private GameManager gameManager;
-    private String title;
-    private int width, height;
+    private String version;
     
     /**
-     * Creates a new Game instance with the specified title and dimensions.
-     * 
-     * @param title The title of the game
-     * @param width The width of the game window
-     * @param height The height of the game window
+     * Creates a new Game instance.
      */
     public Game() {
         this.gameManager = new GameManager();
@@ -30,6 +25,7 @@ public class Game {
      * @param configs The engine configuration to use
      */
     public void init(EngineConfigs configs) {
+        this.version = configs.version;
         gameManager.init(configs);
     }
     
@@ -46,31 +42,27 @@ public class Game {
     public void stop() {
         gameManager.stop();
     }
-    
+
     /**
-     * Gets the game title.
+     * Gets the game version.
      * 
-     * @return The game title
+     * @return The game version
      */
-    public String getTitle() {
-        return title;
+    public String getVersion() {
+        return version;
     }
-    
+
     /**
-     * Gets the game width.
+     * Returns the singleton instance of the Game.
      * 
-     * @return The game width
+     * @return The singleton Game instance
      */
-    public int getWidth() {
-        return width;
-    }
-    
-    /**
-     * Gets the game height.
-     * 
-     * @return The game height
-     */
-    public int getHeight() {
-        return height;
+    private static Game instance;
+
+    public static Game getInstance() {
+        if (instance == null) {
+            instance = new Game();
+        }
+        return instance;
     }
 }

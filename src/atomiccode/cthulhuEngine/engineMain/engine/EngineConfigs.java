@@ -14,6 +14,7 @@ public class EngineConfigs {
 
     public String windowTitle = "CthulhuEngine";
     public String language = "EN";
+    public String version = "0.0.1";
 
     public Mode windowMode = Mode.WINDOWED;
     public int fps = 60;

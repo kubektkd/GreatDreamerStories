@@ -7,7 +7,8 @@ import atomiccode.greatDreamerStories.states.MainMenuState;
 public class EngineConfigs_Build extends EngineConfigs {
 
     public EngineConfigs_Build(String version) {
-        windowTitle = "Great Dreamer Stories - v"+version;
+        this.version = version;
+        windowTitle = "Great Dreamer Stories - v" + version;
         resolution = Resolution.HD;
         minResolution = Resolution.SMALL;
         language = "PL";

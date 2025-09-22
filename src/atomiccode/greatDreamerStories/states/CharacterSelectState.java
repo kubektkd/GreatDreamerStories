@@ -34,7 +34,7 @@ public class CharacterSelectState implements State {
         backButton.setColors(normalColor, hoverColor, pressedColor, textColor);
 
         // Set button fonts
-        Font buttonFont = new Font("Arial", Font.PLAIN, 18);
+        Font buttonFont = Engine.instance().resources.getFont("Milonga/Milonga-Regular.ttf", 18);
         backButton.setFont(buttonFont);
 
         // Set button actions
@@ -95,16 +95,64 @@ public class CharacterSelectState implements State {
         Graphics2D g2d = (Graphics2D) g;
         
         // Draw title
+        Font titleFont = Engine.instance().resources.getFont("Milonga/Milonga-Regular.ttf", 48);
         g2d.setColor(Color.WHITE);
-        g2d.setFont(new Font("Arial", Font.BOLD, 48));
+        g2d.setFont(titleFont);
         FontMetrics titleMetrics = g2d.getFontMetrics();
         String title = "Choose your character";
         int titleX = centerX - titleMetrics.stringWidth(title) / 2;
-        int titleY = centerY - 150;
+        int titleY = centerY - 180;
         g2d.drawString(title, titleX, titleY);
 
+        // Draw 8 character slots in two rows of 4, centered horizontally
+        int slotRows = 2;
+        int slotCols = 4;
+        int slotCount = 8;
+        int slotWidth = 100;
+        int slotHeight = 120;
+        int slotSpacingX = 40;
+        int slotSpacingY = 30;
+
+        // Calculate total width and height of the grid
+        int gridWidth = slotCols * slotWidth + (slotCols - 1) * slotSpacingX;
+        int gridHeight = slotRows * slotHeight + (slotRows - 1) * slotSpacingY;
+
+        int gridStartX = centerX - gridWidth / 2;
+        int gridStartY = centerY - gridHeight / 2 + 20;
+
+        for (int i = 0; i < slotCount; i++) {
+            int row = i / slotCols;
+            int col = i % slotCols;
+            int slotX = gridStartX + col * (slotWidth + slotSpacingX);
+            int slotY = gridStartY + row * (slotHeight + slotSpacingY);
+
+            // Draw slot background
+            g2d.setColor(new Color(40, 40, 60, 220));
+            g2d.fillRoundRect(slotX, slotY, slotWidth, slotHeight, 18, 18);
+
+            // Draw border (highlight if selected)
+            if (i == selectedIndex) {
+                g2d.setColor(new Color(120, 180, 255));
+                g2d.setStroke(new java.awt.BasicStroke(4f));
+            } else {
+                g2d.setColor(new Color(100, 100, 120));
+                g2d.setStroke(new java.awt.BasicStroke(2f));
+            }
+            g2d.drawRoundRect(slotX, slotY, slotWidth, slotHeight, 18, 18);
+
+            // Draw character number or placeholder
+            String charLabel = "Slot " + (i + 1);
+            Font charFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 18);
+            g2d.setFont(charFont);
+            FontMetrics charMetrics = g2d.getFontMetrics();
+            int labelX = slotX + (slotWidth - charMetrics.stringWidth(charLabel)) / 2;
+            int labelY = slotY + slotHeight / 2 + charMetrics.getAscent() / 2;
+            g2d.setColor(Color.WHITE);
+            g2d.drawString(charLabel, labelX, labelY);
+        }
+
         // Position and render buttons
-        int buttonStartY = centerY - 50;
+        int buttonStartY = centerY + gridHeight - 50;
         
         backButton.x = centerX - 100;
         backButton.y = buttonStartY;

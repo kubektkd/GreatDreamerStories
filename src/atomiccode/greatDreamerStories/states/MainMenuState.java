@@ -64,7 +64,7 @@ public class MainMenuState implements State {
         exitButton.setColors(normalColor, hoverColor, pressedColor, textColor);
         
         // Set button fonts
-        Font buttonFont = new Font("Arial", Font.PLAIN, 18);
+        Font buttonFont = Engine.instance().resources.getFont("Milonga/Milonga-Regular.ttf", 18);
         startButton.setFont(buttonFont);
         settingsButton.setFont(buttonFont);
         exitButton.setFont(buttonFont);
@@ -250,8 +250,9 @@ public class MainMenuState implements State {
             g2d.drawImage(logoImage, logoX, logoY, scaledLogoWidth, scaledLogoHeight, null);
         } else {
             // Fallback to text title if logo fails to load
+            Font titleFont = Engine.instance().resources.getFont("Milonga/Milonga-Regular.ttf", 48);
             g2d.setColor(Color.WHITE);
-            g2d.setFont(new Font("Arial", Font.BOLD, 48));
+            g2d.setFont(titleFont);
             String title = "Great Dreamer Stories";
             int baseTitleX = 50;
             int baseTitleY = centerY / 4;
@@ -278,8 +279,9 @@ public class MainMenuState implements State {
         exitButton.render(g);
         
         // Draw instructions
+        Font infoFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 14);
         g2d.setColor(new Color(200, 200, 200));
-        g2d.setFont(new Font("Arial", Font.PLAIN, 14));
+        g2d.setFont(infoFont);
         String instructions = "Use mouse to click or arrow keys + Enter to navigate";
         FontMetrics instMetrics = g2d.getFontMetrics();
         int instX = Math.max(25, centerX - instMetrics.stringWidth(instructions) / 2);
@@ -288,7 +290,7 @@ public class MainMenuState implements State {
 
         // Draw version
         g2d.setColor(new Color(200, 200, 200));
-        g2d.setFont(new Font("Arial", Font.PLAIN, 14));
+        g2d.setFont(infoFont);
         String version = Game.getInstance().getVersion();
         String versionText = "Version " + (version != null ? version : "Unknown");
         FontMetrics versionMetrics = g2d.getFontMetrics();

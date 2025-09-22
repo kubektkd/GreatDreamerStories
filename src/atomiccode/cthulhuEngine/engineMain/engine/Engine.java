@@ -75,6 +75,10 @@ public class Engine {
 
         // Begin drawing - StateProcessor handles all rendering
         Graphics2D g2d = (Graphics2D) g;
+        
+        // Enable antialiasing globally for all states
+        Resources.enableAntialiasing(g2d);
+        
         stateProcessor.render(g2d);
         // End drawing
 

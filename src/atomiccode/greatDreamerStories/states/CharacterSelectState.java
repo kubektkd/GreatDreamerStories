@@ -7,9 +7,6 @@ import java.awt.*;
 
 public class CharacterSelectState implements State {
 
-    private static final int FADE_DURATION_MS = 1000; // 1 second fade
-    private long startTime;
-    private boolean hasStarted = false;
 
     @Override
     public int getPriority() {
@@ -19,8 +16,6 @@ public class CharacterSelectState implements State {
     @Override
     public void onEnter() {
         // Character select initialization
-        startTime = System.currentTimeMillis();
-        hasStarted = true;
     }
 
     @Override
@@ -48,23 +43,12 @@ public class CharacterSelectState implements State {
         g.setColor(new Color(20, 20, 40)); // Dark blue background
         g.fillRect(0, 0, windowWidth, windowHeight);
         
-        // Calculate fade alpha
-        float alpha = 1.0f;
-        if (hasStarted) {
-            long currentTime = System.currentTimeMillis();
-            long elapsedTime = currentTime - startTime;
-            if (elapsedTime < FADE_DURATION_MS) {
-                alpha = (float) elapsedTime / FADE_DURATION_MS;
-            }
-        }
-        
         // Calculate center position
         int centerX = windowWidth / 2;
         int centerY = windowHeight / 2;
         
-        // Draw main menu title with alpha
+        // Draw main menu title
         Graphics2D g2d = (Graphics2D) g;
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
         
         // Draw title
         g2d.setColor(Color.WHITE);

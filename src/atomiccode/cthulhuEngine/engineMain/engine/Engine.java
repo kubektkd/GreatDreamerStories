@@ -1,6 +1,7 @@
 package atomiccode.cthulhuEngine.engineMain.engine;
 
 import atomiccode.cthulhuEngine.inputsOutputs.stateControl.StateManager;
+import atomiccode.cthulhuEngine.inputsOutputs.stateControl.StateProcessor;
 import atomiccode.cthulhuEngine.inputsOutputs.timing.FrameTimer;
 import atomiccode.cthulhuEngine.inputsOutputs.userInputs.Keyboard;
 import atomiccode.cthulhuEngine.inputsOutputs.userInputs.Mouse;
@@ -8,6 +9,7 @@ import atomiccode.cthulhuEngine.inputsOutputs.windowing.Window;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.image.BufferStrategy;
 
 public class Engine {
@@ -17,7 +19,7 @@ public class Engine {
     public final Keyboard keyboard;
     public final Mouse mouse;
     // public final Resources resources;
-    public final StateManager stateManager;
+    public final StateProcessor stateProcessor;
 
     private final FrameTimer timer;
 
@@ -32,7 +34,9 @@ public class Engine {
         this.mouse = mouse;
         this.keyboard = keyboard;
         this.timer = timer;
-        this.stateManager = stateManager;
+        
+        // Initialize StateProcessor with StateManager
+        this.stateProcessor = new StateProcessor(stateManager);
         // this.resources = resources;
     }
 
@@ -48,13 +52,9 @@ public class Engine {
         mouse.update();
         // window.update();
         timer.update();
-        stateManager.updateState();
         
-        // Update current state
-        if (stateManager.getState() != null) {
-            stateManager.getState().tick();
-            stateManager.getState().update();
-        }
+        // Update StateProcessor (handles everything: states, updates, transitions)
+        stateProcessor.update(getDeltaSeconds());
     }
 
     public void render() {
@@ -69,9 +69,9 @@ public class Engine {
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, window.getCanvas().getWidth(), window.getCanvas().getHeight());
 
-        // Begin drawing
-        if (stateManager.getState() != null)
-            stateManager.getState().render(g);
+        // Begin drawing - StateProcessor handles all rendering
+        Graphics2D g2d = (Graphics2D) g;
+        stateProcessor.render(g2d);
         // End drawing
 
         bs.show();
@@ -97,6 +97,7 @@ public class Engine {
     public Window getWindow() {
         return window;
     }
+    
 
 
     public static Engine init() {

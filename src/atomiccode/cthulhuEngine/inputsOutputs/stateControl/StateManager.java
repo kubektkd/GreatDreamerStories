@@ -1,104 +1,85 @@
 package atomiccode.cthulhuEngine.inputsOutputs.stateControl;
 
-import java.util.LinkedList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Stack;
 
+/**
+ * Simple state stack/queue for managing state transitions
+ * No rendering or update logic - just state management
+ */
 public class StateManager {
 
+    private final Stack<State> stateStack = new Stack<>();
     private final State defaultState;
-
-    private State currentState;
-    private List<QueuedState> stateQueue = new LinkedList<>();
 
     public StateManager(State defaultState, State initialState) {
         this.defaultState = defaultState;
-        this.currentState = initialState;
-        // Call onEnter for the initial state
-        if (currentState != null) {
-            currentState.onEnter();
+        if (initialState != null) {
+            stateStack.push(initialState);
+            initialState.onEnter(); // Call onEnter for initial state
         }
     }
 
-    public void suggestState(State state, boolean waitForEndRequest) {
-        QueuedState queuedState = new QueuedState(state, waitForEndRequest);
-        sortStateIntoQueue(queuedState);
-    }
-
-    public void endState(State state) {
-        Iterator<QueuedState> iterator = stateQueue.iterator();
-        while (iterator.hasNext()) {
-            QueuedState queuedState = iterator.next();
-            if (queuedState.state == state) {
-                iterator.remove();
-                return;
-            }
+    /**
+     * Push a new state onto the stack
+     */
+    public void pushState(State state) {
+        if (state != null) {
+            stateStack.push(state);
+            state.onEnter(); // Call onEnter when state is added
         }
     }
 
-    public State getState() {
-        return currentState;
-    }
-    
-    public void setState(State newState) {
-        suggestState(newState, false);
+    /**
+     * Pop the current state from the stack
+     */
+    public State popState() {
+        if (stateStack.isEmpty()) {
+            return defaultState;
+        }
+        return stateStack.pop();
     }
 
-    public void updateState() {
-        State nextState = getNextState();
-        cleanQueue();
-        if (currentState == nextState) {
-            return;
+    /**
+     * Replace the current state
+     */
+    public void setState(State state) {
+        if (!stateStack.isEmpty()) {
+            stateStack.pop();
         }
-        switchState(nextState);
-    }
-
-    private void switchState(State newState) {
-        if (currentState != null) {
-            currentState.onExit();
-        }
-        currentState = newState;
-        if (currentState != null) {
-            currentState.onEnter();
+        if (state != null) {
+            stateStack.push(state);
+            state.onEnter(); // Call onEnter when state is added
         }
     }
 
-    private State getNextState() {
-        if (stateQueue.isEmpty()) {
-            return currentState; // Don't switch if no state is queued
+    /**
+     * Get the current state (top of stack)
+     */
+    public State getCurrentState() {
+        if (stateStack.isEmpty()) {
+            return defaultState;
         }
-        return stateQueue.getFirst().state;
+        return stateStack.peek();
     }
 
-    private void cleanQueue() {
-        Iterator<QueuedState> iterator = stateQueue.iterator();
-        while (iterator.hasNext()) {
-            QueuedState state = iterator.next();
-            if (!state.waitForEndRequest && state.state != currentState) {
-                iterator.remove();
-            }
-        }
+    /**
+     * Check if stack is empty
+     */
+    public boolean isEmpty() {
+        return stateStack.isEmpty();
     }
 
-    private void sortStateIntoQueue(QueuedState newState) {
-        for (int i = 0; i < stateQueue.size(); i++) {
-            if (stateQueue.get(i).state.getPriority() > newState.state.getPriority()) {
-                stateQueue.add(i, newState);
-                return;
-            }
-        }
-        stateQueue.add(newState);
+    /**
+     * Get stack size
+     */
+    public int size() {
+        return stateStack.size();
     }
 
-    public static class QueuedState {
-
-        private final State state;
-        private final boolean waitForEndRequest;
-
-        private QueuedState(State state, boolean waitForEndRequest) {
-            this.state = state;
-            this.waitForEndRequest = waitForEndRequest;
-        }
-
+    /**
+     * Clear all states
+     */
+    public void clear() {
+        stateStack.clear();
     }
 }

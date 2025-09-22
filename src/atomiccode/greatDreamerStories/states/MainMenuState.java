@@ -9,9 +9,6 @@ import java.awt.event.KeyEvent;
 
 public class MainMenuState implements State {
     
-    private static final int FADE_DURATION_MS = 1000; // 1 second fade
-    private long startTime;
-    private boolean hasStarted = false;
     
     // Menu buttons
     private Button startButton, settingsButton, exitButton;
@@ -26,8 +23,6 @@ public class MainMenuState implements State {
     @Override
     public void onEnter() {
         // Main menu initialization
-        startTime = System.currentTimeMillis();
-        hasStarted = true;
         
         // Initialize buttons (will be positioned in render method)
         startButton = new Button(0, 0, 200, 50, "Start Game");
@@ -52,7 +47,8 @@ public class MainMenuState implements State {
         
         // Set button actions
         startButton.setOnClick(() -> {
-            Engine.instance().stateManager.setState(new CharacterSelectState());
+            // State change will automatically trigger fade transition
+            Engine.instance().stateProcessor.setState(new CharacterSelectState());
         });
         
         settingsButton.setOnClick(() -> {
@@ -117,23 +113,12 @@ public class MainMenuState implements State {
         g.setColor(new Color(20, 20, 40)); // Dark blue background
         g.fillRect(0, 0, windowWidth, windowHeight);
         
-        // Calculate fade alpha
-        float alpha = 1.0f;
-        if (hasStarted) {
-            long currentTime = System.currentTimeMillis();
-            long elapsedTime = currentTime - startTime;
-            if (elapsedTime < FADE_DURATION_MS) {
-                alpha = (float) elapsedTime / FADE_DURATION_MS;
-            }
-        }
-        
         // Calculate center position
         int centerX = windowWidth / 2;
         int centerY = windowHeight / 2;
         
-        // Draw main menu title with alpha
+        // Draw main menu title
         Graphics2D g2d = (Graphics2D) g;
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
         
         // Draw title
         g2d.setColor(Color.WHITE);
@@ -161,14 +146,12 @@ public class MainMenuState implements State {
         exitButton.render(g);
         
         // Draw instructions
-        g2d.setColor(new Color(200, 200, 200, (int)(alpha * 255)));
+        g2d.setColor(new Color(200, 200, 200));
         g2d.setFont(new Font("Arial", Font.PLAIN, 14));
         String instructions = "Use mouse to click or arrow keys + Enter to navigate";
         FontMetrics instMetrics = g2d.getFontMetrics();
         int instX = centerX - instMetrics.stringWidth(instructions) / 2;
         int instY = centerY + 200;
         g2d.drawString(instructions, instX, instY);
-        
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
     }
 }

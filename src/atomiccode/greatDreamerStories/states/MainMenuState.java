@@ -4,6 +4,7 @@ import atomiccode.cthulhuEngine.inputsOutputs.stateControl.State;
 import atomiccode.cthulhuEngine.engineMain.engine.Engine;
 import atomiccode.greatDreamerStories.Game;
 import atomiccode.cthulhuEngine.ui.Button;
+import atomiccode.greatDreamerStories.decorations.Snowflake;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -11,6 +12,8 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 public class MainMenuState implements State {
     
@@ -36,6 +39,12 @@ public class MainMenuState implements State {
     private final float LOGO_ANIMATION_AMPLITUDE_Y = 10.0f; // How far up and down it moves
     private final float LOGO_ANIMATION_AMPLITUDE_X = 3.0f; // How far left and right it sways
     
+    // Snowflake animation
+    private ArrayList<Snowflake> snowflakes;
+    private float snowflakeSpawnTimer = 0.0f;
+    private final float SNOWFLAKE_SPAWN_INTERVAL = 0.5f; // Spawn a snowflake every 0.5 seconds
+    private final int MAX_SNOWFLAKES = 20; // Maximum number of snowflakes on screen
+    
     @Override
     public int getPriority() {
         return 1; // Lower priority than splash screen
@@ -47,6 +56,9 @@ public class MainMenuState implements State {
         loadBackgroundImage();
         loadLogoImage();
         loadBackgroundMusic();
+        
+        // Initialize snowflake system
+        snowflakes = new ArrayList<>();
         
         // Initialize buttons (will be positioned in render method)
         startButton = new Button(0, 0, 200, 50, "Start Game");
@@ -86,6 +98,11 @@ public class MainMenuState implements State {
         
         // Create button array for keyboard navigation
         menuButtons = new Button[]{startButton, settingsButton, exitButton};
+        
+        // Initialize selection state - first button should be selected by default
+        for (int i = 0; i < menuButtons.length; i++) {
+            menuButtons[i].setSelected(i == selectedIndex);
+        }
     }
     
     private void loadBackgroundImage() {
@@ -141,8 +158,10 @@ public class MainMenuState implements State {
     
     @Override
     public void tick() {
+        float deltaTime = Engine.instance().getDeltaSeconds();
+        
         // Update logo animation
-        logoAnimationTime += Engine.instance().getDeltaSeconds() * LOGO_ANIMATION_SPEED;
+        logoAnimationTime += deltaTime * LOGO_ANIMATION_SPEED;
         
         // Calculate smooth floating offset using simpler, gentler wave patterns
         // Vertical movement (up/down) - simple sine wave for smooth motion
@@ -150,6 +169,9 @@ public class MainMenuState implements State {
         
         // Horizontal movement (left/right) - gentle sway with different frequency
         logoAnimationOffsetX = (float) Math.sin(logoAnimationTime * 0.6 + 1.2) * LOGO_ANIMATION_AMPLITUDE_X;
+        
+        // Update snowflake system
+        updateSnowflakes(deltaTime);
         
         // Handle keyboard navigation
         if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_UP)) {
@@ -163,6 +185,30 @@ public class MainMenuState implements State {
         }
         if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_ESCAPE)) {
             Engine.instance().requestClose();
+        }
+    }
+    
+    private void updateSnowflakes(float deltaTime) {
+        // Spawn new snowflakes
+        snowflakeSpawnTimer += deltaTime;
+        if (snowflakeSpawnTimer >= SNOWFLAKE_SPAWN_INTERVAL && snowflakes.size() < MAX_SNOWFLAKES) {
+            int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
+            float spawnX = (float) (Math.random() * windowWidth);
+            float spawnY = -20.0f; // Start above the screen
+            snowflakes.add(new Snowflake(spawnX, spawnY));
+            snowflakeSpawnTimer = 0.0f;
+        }
+        
+        // Update existing snowflakes
+        Iterator<Snowflake> iterator = snowflakes.iterator();
+        while (iterator.hasNext()) {
+            Snowflake snowflake = iterator.next();
+            snowflake.update(deltaTime);
+            
+            // Remove inactive snowflakes
+            if (!snowflake.isActive()) {
+                iterator.remove();
+            }
         }
     }
     
@@ -282,7 +328,7 @@ public class MainMenuState implements State {
         Font infoFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 14);
         g2d.setColor(new Color(200, 200, 200));
         g2d.setFont(infoFont);
-        String instructions = "Use mouse to click or arrow keys + Enter to navigate";
+        String instructions = "Use mouse or arrow keys + Enter to navigate";
         FontMetrics instMetrics = g2d.getFontMetrics();
         int instX = Math.max(25, centerX - instMetrics.stringWidth(instructions) / 2);
         int instY = centerY + 175;
@@ -297,5 +343,18 @@ public class MainMenuState implements State {
         int versionX = windowWidth - versionMetrics.stringWidth(versionText) - 15;
         int versionY = windowHeight - 15;
         g2d.drawString(versionText, versionX, versionY);
+        
+        // Render snowflakes
+        renderSnowflakes(g2d);
+    }
+    
+    private void renderSnowflakes(Graphics2D g2d) {
+        // Enable antialiasing for smooth snowflake rendering
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        // Render all active snowflakes
+        for (Snowflake snowflake : snowflakes) {
+            snowflake.render(g2d);
+        }
     }
 }

@@ -20,10 +20,7 @@ public class Game {
      * @param width The width of the game window
      * @param height The height of the game window
      */
-    public Game(String title, int width, int height) {
-        this.title = title;
-        this.width = width;
-        this.height = height;
+    public Game() {
         this.gameManager = new GameManager();
     }
     

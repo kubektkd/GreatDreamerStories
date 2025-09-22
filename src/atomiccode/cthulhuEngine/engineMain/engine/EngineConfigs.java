@@ -7,6 +7,7 @@ import atomiccode.greatDreamerStories.configs.Resolution;
 
 public class EngineConfigs {
 
+    // Default config values
     public Resolution resolution = Resolution.HD;
     public Resolution minResolution = Resolution.SMALL;
     public float uiSize = 1;

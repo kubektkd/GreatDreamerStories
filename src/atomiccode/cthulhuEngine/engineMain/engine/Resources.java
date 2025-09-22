@@ -23,7 +23,9 @@ public class Resources {
         }
     }
 
-    // TODO: add methods for loading sounds, fonts, etc.
+    // Audio methods removed - use Engine.instance().audioManager instead
+
+    // TODO: add methods for loading fonts, etc.
     // TODO: implement a caching and lazy load mechanisms
 
 }

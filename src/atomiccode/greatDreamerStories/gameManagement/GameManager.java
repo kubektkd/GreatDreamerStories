@@ -24,6 +24,7 @@ public class GameManager implements Runnable {
             engine.render();
 
             if (engine.isCloseRequested()) {
+                engine.cleanup();
                 System.exit(0);
             }
         }

@@ -32,9 +32,9 @@ public class EngineCreator {
 
         FrameTimer timer = new FrameTimer(configs.fps);
         StateManager stateManager = new StateManager(configs.defaultState, configs.initialState);
+        Resources resources = new Resources();
 
-        // return new Engine(window, mouseManager, keyboardManager, timer, stateManager, configs.resources);
-        return new Engine(window, mouseManager, keyboardManager, timer, stateManager);
+        return new Engine(window, mouseManager, keyboardManager, timer, stateManager, resources);
     }
 
     private static void addInputListeners(Window window, Mouse mouseManager, Keyboard keyManager) {

@@ -27,6 +27,15 @@ public class MainMenuState implements State {
     private int selectedIndex = 0;
     private Button[] menuButtons;
     
+    
+    // Logo animation
+    private float logoAnimationTime = 0.0f;
+    private float logoAnimationOffsetY = 0.0f; // Vertical floating offset
+    private float logoAnimationOffsetX = 0.0f; // Horizontal swaying offset
+    private final float LOGO_ANIMATION_SPEED = 1.0f; // Speed of the floating animation (half the original speed)
+    private final float LOGO_ANIMATION_AMPLITUDE_Y = 10.0f; // How far up and down it moves
+    private final float LOGO_ANIMATION_AMPLITUDE_X = 3.0f; // How far left and right it sways
+    
     @Override
     public int getPriority() {
         return 1; // Lower priority than splash screen
@@ -37,6 +46,7 @@ public class MainMenuState implements State {
         // Main menu initialization
         loadBackgroundImage();
         loadLogoImage();
+        loadBackgroundMusic();
         
         // Initialize buttons (will be positioned in render method)
         startButton = new Button(0, 0, 200, 50, "Start Game");
@@ -108,13 +118,39 @@ public class MainMenuState implements State {
         }
     }
     
+    private void loadBackgroundMusic() {
+        try {
+            File audioFile = new File("sound/Barghest_Fell.wav");
+            if (audioFile.exists()) {
+                Engine.instance().audioManager.loadAudio("background_music", audioFile.getAbsolutePath());
+                Engine.instance().audioManager.playMusicWithFade("background_music", 0.3f); // Set volume to 30% with fade
+            } else {
+                System.err.println("Background music file not found: " + audioFile.getAbsolutePath());
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading background music: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
     @Override
     public void onExit() {
-        // Cleanup when leaving main menu
+        // Don't stop music here - let the new state handle music transitions
+        // The centralized audio manager will handle smooth transitions
     }
     
     @Override
     public void tick() {
+        // Update logo animation
+        logoAnimationTime += Engine.instance().getDeltaSeconds() * LOGO_ANIMATION_SPEED;
+        
+        // Calculate smooth floating offset using simpler, gentler wave patterns
+        // Vertical movement (up/down) - simple sine wave for smooth motion
+        logoAnimationOffsetY = (float) Math.sin(logoAnimationTime) * LOGO_ANIMATION_AMPLITUDE_Y;
+        
+        // Horizontal movement (left/right) - gentle sway with different frequency
+        logoAnimationOffsetX = (float) Math.sin(logoAnimationTime * 0.6 + 1.2) * LOGO_ANIMATION_AMPLITUDE_X;
+        
         // Handle keyboard navigation
         if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_UP)) {
             selectedIndex = (selectedIndex - 1 + menuButtons.length) % menuButtons.length;
@@ -204,9 +240,12 @@ public class MainMenuState implements State {
             int scaledLogoWidth = (int) (logoWidth * scale);
             int scaledLogoHeight = (int) (logoHeight * scale);
             
-            // Position logo
-            int logoX = centerX - scaledLogoWidth / 2;
-            int logoY = centerY / 4;
+            // Position logo with floating animation (both X and Y movement)
+            int baseLogoX = centerX - scaledLogoWidth / 2;
+            int baseLogoY = centerY / 4;
+            // Use pre-calculated smooth floating offsets for both X and Y
+            int logoX = baseLogoX + Math.round(logoAnimationOffsetX);
+            int logoY = baseLogoY + Math.round(logoAnimationOffsetY);
             
             g2d.drawImage(logoImage, logoX, logoY, scaledLogoWidth, scaledLogoHeight, null);
         } else {
@@ -214,8 +253,11 @@ public class MainMenuState implements State {
             g2d.setColor(Color.WHITE);
             g2d.setFont(new Font("Arial", Font.BOLD, 48));
             String title = "Great Dreamer Stories";
-            int titleX = 50;
-            int titleY = centerY / 4;
+            int baseTitleX = 50;
+            int baseTitleY = centerY / 4;
+            // Use pre-calculated smooth floating offsets for both X and Y (text fallback)
+            int titleX = baseTitleX + Math.round(logoAnimationOffsetX);
+            int titleY = baseTitleY + Math.round(logoAnimationOffsetY);
             g2d.drawString(title, titleX, titleY);
         }
         

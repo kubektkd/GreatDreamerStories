@@ -18,8 +18,9 @@ public class Engine {
     private final Window window;
     public final Keyboard keyboard;
     public final Mouse mouse;
-    // public final Resources resources;
+    public final Resources resources;
     public final StateProcessor stateProcessor;
+    public final AudioManager audioManager;
 
     private final FrameTimer timer;
 
@@ -28,8 +29,7 @@ public class Engine {
     private BufferStrategy bs;
     private Graphics g;
 
-    // protected Engine(Window window, Mouse mouse, Keyboard keyboard, FrameTimer timer, StateManager stateManager, Resources resources) {
-    protected Engine(Window window, Mouse mouse, Keyboard keyboard, FrameTimer timer, StateManager stateManager) {
+    protected Engine(Window window, Mouse mouse, Keyboard keyboard, FrameTimer timer, StateManager stateManager, Resources resources) {
         this.window = window;
         this.mouse = mouse;
         this.keyboard = keyboard;
@@ -37,7 +37,8 @@ public class Engine {
         
         // Initialize StateProcessor with StateManager
         this.stateProcessor = new StateProcessor(stateManager);
-        // this.resources = resources;
+        this.resources = resources;
+        this.audioManager = AudioManager.getInstance();
     }
 
     public static Engine instance() {
@@ -52,6 +53,9 @@ public class Engine {
         mouse.update();
         // window.update();
         timer.update();
+        
+        // Update audio manager for smooth transitions
+        audioManager.update(getDeltaSeconds());
         
         // Update StateProcessor (handles everything: states, updates, transitions)
         stateProcessor.update(getDeltaSeconds());
@@ -96,6 +100,12 @@ public class Engine {
     
     public Window getWindow() {
         return window;
+    }
+    
+    public void cleanup() {
+        if (audioManager != null) {
+            audioManager.cleanup();
+        }
     }
     
 

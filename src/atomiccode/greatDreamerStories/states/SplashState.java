@@ -15,7 +15,7 @@ public class SplashState implements State {
     private static final int FADE_DURATION_MS = 500; // 0.5 seconds for fade transitions
     
     // Multiple splash images
-    private String[] splashImagePaths = {"res/splashscreen-logo.jpg", "res/splashscreen.jpg"};
+    private String[] splashImagePaths = {"res/splash/splashscreen-logo.jpg", "res/splash/splashscreen.jpg"};
     private int currentImageIndex = 0;
     private long imageLoadTime;
     private boolean hasStarted = false;

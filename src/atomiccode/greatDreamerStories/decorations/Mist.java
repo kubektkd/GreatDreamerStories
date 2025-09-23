@@ -86,12 +86,12 @@ public class Mist {
     private void loadMistImages() {
         try {
             // Load all mist images
-            mistImage1 = loadMistImage("res/mist.png", "Mist image 1");
-            mistImage2 = loadMistImage("res/mist2.png", "Mist image 2");
-            mistImage3 = loadMistImage("res/mist3.png", "Mist image 3");
-            mistImage4 = loadMistImage("res/mist4.png", "Mist image 4");
-            mistImage5 = loadMistImage("res/mist5.png", "Mist image 5");
-            mistImage6 = loadMistImage("res/mist6.png", "Mist image 6");
+            mistImage1 = loadMistImage("res/misc/mist.png", "Mist image 1");
+            mistImage2 = loadMistImage("res/misc/mist2.png", "Mist image 2");
+            mistImage3 = loadMistImage("res/misc/mist3.png", "Mist image 3");
+            mistImage4 = loadMistImage("res/misc/mist4.png", "Mist image 4");
+            mistImage5 = loadMistImage("res/misc/mist5.png", "Mist image 5");
+            mistImage6 = loadMistImage("res/misc/mist6.png", "Mist image 6");
             
             // Check if at least some images loaded successfully
             imageLoaded = (mistImage1 != null || mistImage2 != null || mistImage3 != null || 

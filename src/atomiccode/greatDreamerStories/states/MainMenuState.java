@@ -22,9 +22,11 @@ public class MainMenuState implements State {
     private BufferedImage backgroundImage;
     private boolean imageLoaded = false;
     
-    // Logo image
+    // Logo images
     private BufferedImage logoImage;
     private boolean logoLoaded = false;
+    private BufferedImage cocLogoImage;
+    private boolean cocLogoLoaded = false;
     
     // Menu buttons
     private Button startButton, settingsButton, exitButton;
@@ -61,7 +63,7 @@ public class MainMenuState implements State {
     public void onEnter() {
         // Main menu initialization
         loadBackgroundImage();
-        loadLogoImage();
+        loadLogoImages();
         loadBackgroundMusic();
         
         // Initialize snowflake system
@@ -120,7 +122,7 @@ public class MainMenuState implements State {
     
     private void loadBackgroundImage() {
         try {
-            File imageFile = new File("res/main-menu-bg.jpg");
+            File imageFile = new File("res/backgrounds/menu/main-menu-bg.jpg");
             if (imageFile.exists()) {
                 backgroundImage = ImageIO.read(imageFile);
                 imageLoaded = true;
@@ -133,14 +135,21 @@ public class MainMenuState implements State {
         }
     }
     
-    private void loadLogoImage() {
+    private void loadLogoImages() {
         try {
-            File imageFile = new File("res/game-logo-white.png");
+            File imageFile = new File("res/logos/game-logo-white.png");
             if (imageFile.exists()) {
                 logoImage = ImageIO.read(imageFile);
                 logoLoaded = true;
             } else {
                 System.err.println("Logo image not found: " + imageFile.getAbsolutePath());
+            }
+            imageFile = new File("res/logos/coc-logo-white.png");
+            if (imageFile.exists()) {
+                cocLogoImage = ImageIO.read(imageFile);
+                cocLogoLoaded = true;
+            } else {
+                System.err.println("CoC logo image not found: " + imageFile.getAbsolutePath());
             }
         } catch (IOException e) {
             System.err.println("Error loading logo image: " + e.getMessage());
@@ -150,7 +159,7 @@ public class MainMenuState implements State {
     
     private void loadBackgroundMusic() {
         try {
-            File audioFile = new File("sound/Barghest_Fell.wav");
+            File audioFile = new File("res/sound/Barghest_Fell.wav");
             if (audioFile.exists()) {
                 Engine.instance().audioManager.loadAudio("background_music", audioFile.getAbsolutePath());
                 Engine.instance().audioManager.playMusicWithFade("background_music", 0.3f); // Set volume to 30% with fade
@@ -390,6 +399,19 @@ public class MainMenuState implements State {
             int titleX = baseTitleX + Math.round(logoAnimationOffsetX);
             int titleY = baseTitleY + Math.round(logoAnimationOffsetY);
             g2d.drawString(title, titleX, titleY);
+        }
+
+        // Draw CoC logo
+        if (cocLogoLoaded && cocLogoImage != null) {
+            int logoWidth = cocLogoImage.getWidth();
+            int logoHeight = cocLogoImage.getHeight();
+
+            float scale = (float) 0.5f;
+
+            int scaledLogoWidth = (int) (logoWidth * scale);
+            int scaledLogoHeight = (int) (logoHeight * scale);
+
+            g2d.drawImage(cocLogoImage, 20, windowHeight - scaledLogoHeight - 20, scaledLogoWidth, scaledLogoHeight, null);
         }
         
         // Position and render buttons

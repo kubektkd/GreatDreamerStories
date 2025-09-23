@@ -28,11 +28,9 @@ public class Resources {
         }
     }
 
-    // Audio methods removed - use Engine.instance().audioManager instead
-
     public Font getFont(String fontPath, int size) {
         try {
-            File fontFile = new File("fonts/" + fontPath);
+            File fontFile = new File("res/fonts/" + fontPath);
             if (fontFile.exists()) {
                 InputStream fontStream = new FileInputStream(fontFile);
                 Font customFont = Font.createFont(Font.TRUETYPE_FONT, fontStream);

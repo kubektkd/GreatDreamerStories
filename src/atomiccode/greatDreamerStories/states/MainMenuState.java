@@ -104,7 +104,6 @@ public class MainMenuState implements State {
         
         settingsButton.setOnClick(() -> {
             // TODO: Implement settings state
-            System.out.println("Settings clicked - not implemented yet");
         });
         
         exitButton.setOnClick(() -> {
@@ -159,7 +158,7 @@ public class MainMenuState implements State {
     
     private void loadBackgroundMusic() {
         try {
-            File audioFile = new File("res/sound/Barghest_Fell.wav");
+            File audioFile = new File("res/sound/Barghest_Fell.ogg");
             if (audioFile.exists()) {
                 Engine.instance().audioManager.loadAudio("background_music", audioFile.getAbsolutePath());
                 Engine.instance().audioManager.playMusicWithFade("background_music", 0.3f); // Set volume to 30% with fade

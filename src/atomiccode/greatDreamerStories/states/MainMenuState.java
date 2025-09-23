@@ -5,6 +5,7 @@ import atomiccode.cthulhuEngine.engineMain.engine.Engine;
 import atomiccode.greatDreamerStories.Game;
 import atomiccode.cthulhuEngine.ui.Button;
 import atomiccode.greatDreamerStories.decorations.Snowflake;
+import atomiccode.greatDreamerStories.decorations.Mist;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -45,6 +46,12 @@ public class MainMenuState implements State {
     private final float SNOWFLAKE_SPAWN_INTERVAL = 0.5f; // Spawn a snowflake every 0.5 seconds
     private final int MAX_SNOWFLAKES = 20; // Maximum number of snowflakes on screen
     
+    // Mist animation
+    private ArrayList<Mist> mistParticles;
+    private float mistSpawnTimer = 0.0f;
+    private final float MIST_SPAWN_INTERVAL = 2.0f; // Spawn mist every 2 seconds
+    private final int MAX_MIST_PARTICLES = 25; // Maximum number of mist particles on screen
+    
     @Override
     public int getPriority() {
         return 1; // Lower priority than splash screen
@@ -59,6 +66,12 @@ public class MainMenuState implements State {
         
         // Initialize snowflake system
         snowflakes = new ArrayList<>();
+        
+        // Initialize mist system
+        mistParticles = new ArrayList<>();
+        
+        // Spawn initial mist particles across the window width
+        spawnInitialMist();
         
         // Initialize buttons (will be positioned in render method)
         startButton = new Button(0, 0, 200, 50, "Start Game");
@@ -173,6 +186,9 @@ public class MainMenuState implements State {
         // Update snowflake system
         updateSnowflakes(deltaTime);
         
+        // Update mist system
+        updateMist(deltaTime);
+        
         // Handle keyboard navigation
         if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_UP)) {
             selectedIndex = (selectedIndex - 1 + menuButtons.length) % menuButtons.length;
@@ -207,6 +223,74 @@ public class MainMenuState implements State {
             
             // Remove inactive snowflakes
             if (!snowflake.isActive()) {
+                iterator.remove();
+            }
+        }
+    }
+    
+    private void spawnInitialMist() {
+        int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
+        int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
+        
+        // Spawn 15-20 initial mist particles across the window width
+        int initialMistCount = 15 + (int) (Math.random() * 6); // 15-20 particles
+        
+        for (int i = 0; i < initialMistCount; i++) {
+            // Distribute mist particles with more concentration in the center
+            float mistX;
+            float random = (float) Math.random();
+            
+            if (random < 0.6f) {
+                // 60% of mist in the center area (smaller zone to account for large image sizes)
+                float centerStart = windowWidth * 0.4f;  // Start closer to center
+                float centerEnd = windowWidth * 0.6f;    // End closer to center
+                mistX = centerStart + (float) (Math.random() * (centerEnd - centerStart));
+            } else if (random < 0.8f) {
+                // 20% of mist in the left area (accounting for image size)
+                float leftEnd = windowWidth * 0.25f;  // Smaller left zone
+                mistX = (float) (Math.random() * leftEnd);
+            } else {
+                // 20% of mist in the right area (accounting for image size)
+                float rightStart = windowWidth * 0.75f;  // Smaller right zone
+                mistX = rightStart + (float) (Math.random() * (windowWidth - rightStart));
+            }
+            
+            // Position mist in the bottom third of the screen with some variation
+            float mistY = windowHeight - 100.0f + (float) (Math.random() * 100.0f);
+            
+            // Create mist particle
+            Mist mist = new Mist(mistX, mistY);
+            mistParticles.add(mist);
+        }
+    }
+    
+    private void updateMist(float deltaTime) {
+        // Spawn new mist particles (less frequent since we have initial mist)
+        mistSpawnTimer += deltaTime;
+        if (mistSpawnTimer >= MIST_SPAWN_INTERVAL && mistParticles.size() < MAX_MIST_PARTICLES) {
+            int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
+            int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
+            
+            // Spawn mist from both sides randomly
+            float spawnX;
+            if (Math.random() < 0.5) {
+                spawnX = -50.0f; // Start off-screen to the left
+            } else {
+                spawnX = windowWidth + 50.0f; // Start off-screen to the right
+            }
+            float spawnY = windowHeight - 150.0f + (float) (Math.random() * 100.0f); // Bottom area with variation
+            mistParticles.add(new Mist(spawnX, spawnY));
+            mistSpawnTimer = 0.0f;
+        }
+        
+        // Update existing mist particles
+        Iterator<Mist> iterator = mistParticles.iterator();
+        while (iterator.hasNext()) {
+            Mist mist = iterator.next();
+            mist.update(deltaTime);
+            
+            // Remove inactive mist particles
+            if (!mist.isActive()) {
                 iterator.remove();
             }
         }
@@ -346,6 +430,9 @@ public class MainMenuState implements State {
         
         // Render snowflakes
         renderSnowflakes(g2d);
+        
+        // Render mist
+        renderMist(g2d);
     }
     
     private void renderSnowflakes(Graphics2D g2d) {
@@ -355,6 +442,17 @@ public class MainMenuState implements State {
         // Render all active snowflakes
         for (Snowflake snowflake : snowflakes) {
             snowflake.render(g2d);
+        }
+    }
+    
+    private void renderMist(Graphics2D g2d) {
+        // Enable antialiasing for smooth mist rendering
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+        
+        // Render all active mist particles
+        for (Mist mist : mistParticles) {
+            mist.render(g2d);
         }
     }
 }

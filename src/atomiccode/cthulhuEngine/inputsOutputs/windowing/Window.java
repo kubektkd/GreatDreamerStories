@@ -1,6 +1,9 @@
 package atomiccode.cthulhuEngine.inputsOutputs.windowing;
 
 import javax.swing.*;
+
+import atomiccode.cthulhuEngine.engineMain.engine.EngineConfigs;
+
 import java.awt.*;
 
 public class Window {
@@ -15,24 +18,26 @@ public class Window {
 
     private String title;
     private int width, height;
+    private Dimension minResolution;
 
     private GraphicsDevice gd;
 
-    public Window(String title, int width, int height, Mode mode) {
-        this.title = title;
-        this.width = width;
-        this.height = height;
+    public Window(EngineConfigs configs) {
+        this.minResolution = new Dimension(configs.minResolution.getWidth(), configs.minResolution.getHeight());
+        this.title = configs.windowTitle;
+        this.width = configs.resolution.getWidth();
+        this.height = configs.resolution.getHeight();
 
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         gd = ge.getDefaultScreenDevice();
 
         createWindow();
-        setMode(mode); // default mode
+        setMode(configs.windowMode); // default mode
     }
 
     private void createWindow() {
         canvas = new Canvas();
-        canvas.setMinimumSize(new Dimension(640, 480));
+        canvas.setMinimumSize(minResolution);
         // canvas.setPreferredSize(new Dimension(frame.getWidth(), frame.getHeight()));
         // canvas.setMaximumSize(new Dimension(width, height));
         canvas.setFocusable(false);
@@ -60,7 +65,7 @@ public class Window {
             case MAXIMIZED:
                 frame.setUndecorated(false);
                 frame.setResizable(true);
-                frame.setMinimumSize(new Dimension(640, 480));
+                frame.setMinimumSize(minResolution);
                 frame.pack();
                 frame.setLocationRelativeTo(null);
                 frame.setVisible(true);
@@ -71,7 +76,7 @@ public class Window {
                 frame.setUndecorated(false);
                 frame.setResizable(true);
                 frame.setSize(width, height);
-                frame.setMinimumSize(new Dimension(640, 480));
+                frame.setMinimumSize(minResolution);
                 frame.setLocationRelativeTo(null);
                 frame.setVisible(true);
                 break;

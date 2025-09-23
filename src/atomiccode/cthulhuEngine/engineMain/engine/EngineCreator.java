@@ -24,7 +24,7 @@ public class EngineCreator {
             throw new IllegalArgumentException("EngineConfigs cannot be null");
         }
 
-        Window window = new Window(configs.windowTitle, configs.resolution.getWidth(), configs.resolution.getHeight(), configs.windowMode);
+        Window window = new Window(configs);
         Mouse mouseManager = new Mouse();
         Keyboard keyboardManager = new Keyboard();
 

@@ -11,7 +11,7 @@ public class EngineConfigs_Build extends EngineConfigs {
         this.version = version;
         windowTitle = "Great Dreamer Stories - v" + version;
         resolution = Resolution.HD;
-        minResolution = Resolution.SMALL;
+        minResolution = Resolution.LARGE;
         windowMode = Mode.WINDOWED;
         language = "PL";
         defaultState = new MainMenuState();

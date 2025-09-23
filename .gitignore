@@ -28,6 +28,10 @@ bin/
 !.vscode/settings.json
 !.vscode/launch.json
 
+### Cursor ###
+.cursor/
+!.cursor/rules/
+
 ### Mac OS ###
 .DS_Store
 

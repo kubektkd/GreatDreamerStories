@@ -1,5 +1,6 @@
 package atomiccode.greatDreamerStories.decorations;
 
+import atomiccode.cthulhuEngine.engineMain.engine.EngineFiles;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
@@ -86,12 +87,12 @@ public class Mist {
     private void loadMistImages() {
         try {
             // Load all mist images
-            mistImage1 = loadMistImage("res/misc/mist.png", "Mist image 1");
-            mistImage2 = loadMistImage("res/misc/mist2.png", "Mist image 2");
-            mistImage3 = loadMistImage("res/misc/mist3.png", "Mist image 3");
-            mistImage4 = loadMistImage("res/misc/mist4.png", "Mist image 4");
-            mistImage5 = loadMistImage("res/misc/mist5.png", "Mist image 5");
-            mistImage6 = loadMistImage("res/misc/mist6.png", "Mist image 6");
+            mistImage1 = loadMistImage("misc/mist.png", "Mist image 1");
+            mistImage2 = loadMistImage("misc/mist2.png", "Mist image 2");
+            mistImage3 = loadMistImage("misc/mist3.png", "Mist image 3");
+            mistImage4 = loadMistImage("misc/mist4.png", "Mist image 4");
+            mistImage5 = loadMistImage("misc/mist5.png", "Mist image 5");
+            mistImage6 = loadMistImage("misc/mist6.png", "Mist image 6");
             
             // Check if at least some images loaded successfully
             imageLoaded = (mistImage1 != null || mistImage2 != null || mistImage3 != null || 
@@ -105,7 +106,7 @@ public class Mist {
     
     private BufferedImage loadMistImage(String path, String name) {
         try {
-            File mistFile = new File(path);
+            File mistFile = EngineFiles.getResourceFile(path);
             if (mistFile.exists()) {
                 return ImageIO.read(mistFile);
             } else {

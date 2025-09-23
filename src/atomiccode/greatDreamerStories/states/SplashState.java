@@ -2,6 +2,7 @@ package atomiccode.greatDreamerStories.states;
 
 import atomiccode.cthulhuEngine.inputsOutputs.stateControl.State;
 import atomiccode.cthulhuEngine.engineMain.engine.Engine;
+import atomiccode.cthulhuEngine.engineMain.engine.EngineFiles;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -15,7 +16,7 @@ public class SplashState implements State {
     private static final int FADE_DURATION_MS = 500; // 0.5 seconds for fade transitions
     
     // Multiple splash images
-    private String[] splashImagePaths = {"res/splash/splashscreen-logo.jpg", "res/splash/splashscreen.jpg"};
+    private String[] splashImagePaths = {"splash/splashscreen-logo.jpg", "splash/splashscreen.jpg"};
     private int currentImageIndex = 0;
     private long imageLoadTime;
     private boolean hasStarted = false;
@@ -47,7 +48,7 @@ public class SplashState implements State {
         
         try {
             String imagePath = splashImagePaths[currentImageIndex];
-            File imageFile = new File(imagePath);
+            File imageFile = EngineFiles.getResourceFile(imagePath);
             if (imageFile.exists()) {
                 splashImage = ImageIO.read(imageFile);
                 imageLoaded = true;

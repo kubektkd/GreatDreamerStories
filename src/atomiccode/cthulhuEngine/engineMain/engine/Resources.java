@@ -30,7 +30,7 @@ public class Resources {
 
     public Font getFont(String fontPath, int size) {
         try {
-            File fontFile = new File("res/fonts/" + fontPath);
+            File fontFile = EngineFiles.getResourceFile("fonts/" + fontPath);
             if (fontFile.exists()) {
                 InputStream fontStream = new FileInputStream(fontFile);
                 Font customFont = Font.createFont(Font.TRUETYPE_FONT, fontStream);

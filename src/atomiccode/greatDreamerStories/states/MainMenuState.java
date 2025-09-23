@@ -2,6 +2,7 @@ package atomiccode.greatDreamerStories.states;
 
 import atomiccode.cthulhuEngine.inputsOutputs.stateControl.State;
 import atomiccode.cthulhuEngine.engineMain.engine.Engine;
+import atomiccode.cthulhuEngine.engineMain.engine.EngineFiles;
 import atomiccode.greatDreamerStories.Game;
 import atomiccode.cthulhuEngine.ui.Button;
 import atomiccode.greatDreamerStories.decorations.Snowflake;
@@ -121,7 +122,7 @@ public class MainMenuState implements State {
     
     private void loadBackgroundImage() {
         try {
-            File imageFile = new File("res/backgrounds/menu/main-menu-bg.jpg");
+            File imageFile = EngineFiles.getResourceFile("backgrounds/menu/main-menu-bg.jpg");
             if (imageFile.exists()) {
                 backgroundImage = ImageIO.read(imageFile);
                 imageLoaded = true;
@@ -136,14 +137,14 @@ public class MainMenuState implements State {
     
     private void loadLogoImages() {
         try {
-            File imageFile = new File("res/logos/game-logo-white.png");
+            File imageFile = EngineFiles.getResourceFile("logos/game-logo-white.png");
             if (imageFile.exists()) {
                 logoImage = ImageIO.read(imageFile);
                 logoLoaded = true;
             } else {
                 System.err.println("Logo image not found: " + imageFile.getAbsolutePath());
             }
-            imageFile = new File("res/logos/coc-logo-white.png");
+            imageFile = EngineFiles.getResourceFile("logos/coc-logo-white.png");
             if (imageFile.exists()) {
                 cocLogoImage = ImageIO.read(imageFile);
                 cocLogoLoaded = true;
@@ -158,7 +159,7 @@ public class MainMenuState implements State {
     
     private void loadBackgroundMusic() {
         try {
-            File audioFile = new File("res/sound/Barghest_Fell.ogg");
+            File audioFile = EngineFiles.getResourceFile("sound/Barghest_Fell.ogg");
             if (audioFile.exists()) {
                 Engine.instance().audioManager.loadAudio("background_music", audioFile.getAbsolutePath());
                 Engine.instance().audioManager.playMusicWithFade("background_music", 0.3f); // Set volume to 30% with fade

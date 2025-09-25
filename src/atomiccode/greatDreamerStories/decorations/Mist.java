@@ -17,6 +17,18 @@ public class Mist {
     private boolean isActive;
     private float animationTime;
     
+    // Transition state management
+    private enum MistState {
+        FADING_IN,
+        ACTIVE,
+        FADING_OUT
+    }
+    private MistState currentState;
+    private float transitionAlpha;
+    private float transitionTime;
+    private static final float FADE_IN_DURATION = 2.0f;
+    private static final float FADE_OUT_DURATION = 1.5f;
+    
     // Mist images
     private BufferedImage mistImage1;
     private BufferedImage mistImage2;
@@ -54,6 +66,11 @@ public class Mist {
         this.isActive = true;
         this.animationTime = (float) (Math.random() * Math.PI * 2); // Random starting phase
         
+        // Initialize transition state
+        this.currentState = MistState.FADING_IN;
+        this.transitionAlpha = 0.0f;
+        this.transitionTime = 0.0f;
+        
         // Choose random mist image from all available images
         if (imageLoaded) {
             selectRandomMistImage();
@@ -65,6 +82,9 @@ public class Mist {
     
     public void update(float deltaTime) {
         if (!isActive) return;
+        
+        // Update transition state
+        updateTransitionState(deltaTime);
         
         // Update position with horizontal movement
         x += velocityX * deltaTime;
@@ -78,9 +98,45 @@ public class Mist {
         // Organic size pulsing (calculated in render method)
         // Organic alpha pulsing (calculated in render method)
         
-        // Deactivate if moved too far off screen (handle both directions)
-        if (x < -size * 2 || x > 1920 + size * 2) { // Extended bounds for bidirectional movement
-            isActive = false;
+        // Start fade-out if moved too far off screen (handle both directions)
+        if ((x < -size * 2 || x > 1920 + size * 2) && currentState != MistState.FADING_OUT) {
+            startFadeOut();
+        }
+    }
+    
+    private void updateTransitionState(float deltaTime) {
+        transitionTime += deltaTime;
+        
+        switch (currentState) {
+            case FADING_IN:
+                // Gradually increase alpha from 0 to 1 over FADE_IN_DURATION
+                transitionAlpha = Math.min(1.0f, transitionTime / FADE_IN_DURATION);
+                if (transitionTime >= FADE_IN_DURATION) {
+                    currentState = MistState.ACTIVE;
+                    transitionAlpha = 1.0f;
+                }
+                break;
+                
+            case ACTIVE:
+                // Full alpha in active state
+                transitionAlpha = 1.0f;
+                break;
+                
+            case FADING_OUT:
+                // Gradually decrease alpha from 1 to 0 over FADE_OUT_DURATION
+                float fadeProgress = transitionTime / FADE_OUT_DURATION;
+                transitionAlpha = Math.max(0.0f, 1.0f - fadeProgress);
+                if (transitionTime >= FADE_OUT_DURATION) {
+                    isActive = false;
+                }
+                break;
+        }
+    }
+    
+    public void startFadeOut() {
+        if (currentState != MistState.FADING_OUT) {
+            currentState = MistState.FADING_OUT;
+            transitionTime = 0.0f;
         }
     }
     
@@ -155,7 +211,10 @@ public class Mist {
         
         // Calculate organic alpha variation
         float alphaPulse = (float) (Math.sin(animationTime * 0.7 + 1.2) * alphaVariation);
-        float currentAlpha = Math.max(0.05f, Math.min(0.4f, alpha + alphaPulse));
+        float baseAlpha = Math.max(0.05f, Math.min(0.4f, alpha + alphaPulse));
+        
+        // Apply transition alpha to the base alpha
+        float currentAlpha = baseAlpha * transitionAlpha;
         
         // Set alpha for transparency
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, currentAlpha));

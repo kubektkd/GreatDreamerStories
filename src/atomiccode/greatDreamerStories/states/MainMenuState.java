@@ -283,11 +283,11 @@ public class MainMenuState implements State {
             // Spawn mist from both sides randomly
             float spawnX;
             if (Math.random() < 0.5) {
-                spawnX = -50.0f; // Start off-screen to the left
+                spawnX = 0.0f; // Start from the left side
             } else {
-                spawnX = windowWidth + 50.0f; // Start off-screen to the right
+                spawnX = windowWidth; // Start from the right side
             }
-            float spawnY = windowHeight - 150.0f + (float) (Math.random() * 100.0f); // Bottom area with variation
+            float spawnY = windowHeight - 50.0f + (float) (Math.random() * 50.0f); // Bottom area with variation
             mistParticles.add(new Mist(spawnX, spawnY));
             mistSpawnTimer = 0.0f;
         }

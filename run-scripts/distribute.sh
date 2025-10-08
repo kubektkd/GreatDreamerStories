@@ -117,6 +117,8 @@ jpackage \
     ## "Xmx" is the maximum memory allocation for the JVM
 echo
 
+# TODO: Add Linux and Mac distribution building
+
 # Cleaning up
 echo -ne "${YELLOW}Cleaning up... ${NC}"
 rm -rf "${OUTPUT_DIR}/classes"

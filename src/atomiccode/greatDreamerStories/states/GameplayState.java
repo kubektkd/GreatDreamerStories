@@ -154,7 +154,7 @@ public class GameplayState implements State {
         
         // Position and render buttons
         backButton.x = centerX - 100;
-        backButton.y = windowHeight - 100;
+        backButton.y = windowHeight - 150;
         backButton.render(g);
         
         // Draw instructions

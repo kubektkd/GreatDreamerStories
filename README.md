@@ -28,37 +28,35 @@ git clone <repository-url>
 cd GreatDreamerStories
 ```
 
-### 2. Compile and Run
+### 2. How to Run
 
 **Simply use Cursor's launch configuration:**
 - Press **Ctrl+F5** to run
 - Press **F5** to debug
 
+<small> If this doesn't work, try compiling the code first. </small>
+
 ## 📦 Creating Distributions
 
-### Build All Platforms
+### Compile the code
 ```bash
-build_distribution.bat
+./run-scripts/compile.sh
 ```
 
-### Build Specific Platform
+### Build Distribution
 ```bash
-build_distribution.bat windows  # Windows only
-build_distribution.bat linux    # Linux only
-build_distribution.bat mac      # Mac only
+./run-scripts/distribute.sh
 ```
 
 ### Distribution Output
-- **Windows**: `dist/GreatDreamerStories-Windows/`
-- **Linux**: `dist/GreatDreamerStories-Linux/`
-- **Mac**: `dist/GreatDreamerStories-Mac/`
+```bash
+dist/GreatDreamerStories/GreatDreamerStories.exe
+```
 
-Each distribution includes:
+Distribution includes:
 - Compiled game files
-- Game resources (sounds, images)
-- Platform-specific launcher
-- Setup instructions (README.txt)
-- Audio support (WAV, OGG)
+- Game resources and additional libraries
+- Ready to use game launcher
 
 ## 🔧 Configuration
 
@@ -83,6 +81,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🙏 Acknowledgments
 
 - [Tabletop Audio](https://tabletopaudio.com/) for audio files
-- JavaFX team for cross-platform media support
-- OpenJDK community for Java development tools
 - Game development community for inspiration and feedback
+- All supporters and beta testers

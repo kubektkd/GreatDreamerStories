@@ -35,8 +35,11 @@ bin/
 ### Mac OS ###
 .DS_Store
 
+### External Libraries ###
+lib/
 
 ### Resources ###
-lib/
+audio/
 sound/
+video/
 saves/*

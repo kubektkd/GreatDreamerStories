@@ -4,9 +4,16 @@
 
 Great Dreamer Stories is a Visual Novel game project enriched with a turn-based combat system and classic RPG mechanics inspired by Call of Cthulhu. Set in a Nordic Noir atmosphere, the story begins in modern times in a small Scandinavian town, where you play as the chief of the local police station. As you investigate mysterious events and unravel dark secrets, you'll navigate both the psychological and supernatural, blending narrative-driven choices with strategic combat and RPG progression.
 
+<img width="1910" height="1044" alt="image" src="https://github.com/user-attachments/assets/d015154e-feae-4636-b880-401894e6f79f" />
+
 ## 🎮 Overview
 
 Great Dreamer Stories is powered by a custom-built game engine, the CthulhuEngine, which has been developed specifically for this project to support both visual novel storytelling and turn-based RPG mechanics. The engine is designed for flexibility and extensibility, allowing for advanced features such as dynamic narrative branching, AI-driven character behaviors, and seamless integration of audio-visual assets. This foundation enables the game to deliver a unique blend of narrative depth and strategic gameplay. The engine allows for expansion of the game by adding additional stories that the Player's character can explore in sequence. Each story acts as a single RPG session, after which the Player can improve their character's stats.
+
+## 📋Current State
+
+The game is in very early stage with working main menu (having some features building the atmosphere of the game), player character creation tool, and simple save/load system.
+The main game is only a placeholder at this time, and will be available when all basic and necessary funtionalities will be at MVP state.
 
 ## 🛠️ Development Requirements
 

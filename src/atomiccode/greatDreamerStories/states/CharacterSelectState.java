@@ -15,6 +15,7 @@ public class CharacterSelectState implements State {
     private int selectedIndex = 0;
     private Button[] menuButtons;
     private SaveManager saveManager;
+    private static final int SLOT_COLS = 4;
     
     // Slot interaction
     private int hoveredSlot = -1;
@@ -75,35 +76,36 @@ public class CharacterSelectState implements State {
     public void tick() {
         // Handle keyboard navigation
         if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_ENTER)) {
-            if (selectedIndex == 0) {
-                menuButtons[selectedIndex].click();
+            if (selectedIndex == saveManager.getMaxSlots()) {
+                backButton.click();
             } else {
                 // Handle character slot selection
-                int slotIndex = selectedIndex - 1;
-                handleSlotSelection(slotIndex);
+                handleSlotSelection(selectedIndex);
             }
         }
         
         // Handle arrow key navigation
         if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_UP)) {
-            if (selectedIndex >= 4) {
-                selectedIndex -= 4; // Move up one row
+            if (selectedIndex == saveManager.getMaxSlots()) {
+                selectedIndex = saveManager.getMaxSlots() - SLOT_COLS; // Move from back button to bottom row
+            } else if (selectedIndex >= SLOT_COLS) {
+                selectedIndex -= SLOT_COLS; // Move up one row
             }
         }
         if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_DOWN)) {
-            if (selectedIndex <= 4) {
-                selectedIndex += 4; // Move down one row
-            } else if (selectedIndex > 8) {
-                selectedIndex = 0; // Go to back button
+            if (selectedIndex < saveManager.getMaxSlots() - SLOT_COLS) {
+                selectedIndex += SLOT_COLS; // Move down one row
+            } else if (selectedIndex < saveManager.getMaxSlots()) {
+                selectedIndex = saveManager.getMaxSlots(); // Move from bottom row to back button
             }
         }
         if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_LEFT)) {
-            if (selectedIndex > 1) {
+            if (selectedIndex < saveManager.getMaxSlots() && selectedIndex % SLOT_COLS > 0) {
                 selectedIndex--;
             }
         }
         if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_RIGHT)) {
-            if (selectedIndex >= 1 && selectedIndex < 8) {
+            if (selectedIndex < saveManager.getMaxSlots() - 1 && selectedIndex % SLOT_COLS < SLOT_COLS - 1) {
                 selectedIndex++;
             }
         }
@@ -124,10 +126,8 @@ public class CharacterSelectState implements State {
             button.update(mouseX, mouseY, mousePressed);
         }
         
-        // Update selection state for keyboard navigation
-        for (int i = 0; i < menuButtons.length; i++) {
-            menuButtons[i].setSelected(i == selectedIndex);
-        }
+        // Back button is focused after the character slots in keyboard order.
+        backButton.setSelected(selectedIndex == saveManager.getMaxSlots());
         
         // Check for mouse hover over character slots
         updateSlotHover(mouseX, mouseY);
@@ -146,7 +146,7 @@ public class CharacterSelectState implements State {
         
         // Calculate slot positions (same as in render method)
         int slotRows = 2;
-        int slotCols = 4;
+        int slotCols = SLOT_COLS;
         int slotWidth = 100;
         int slotHeight = 120;
         int slotSpacingX = 40;
@@ -237,7 +237,7 @@ public class CharacterSelectState implements State {
 
         // Draw 8 character slots in two rows of 4, centered horizontally
         int slotRows = 2;
-        int slotCols = 4;
+        int slotCols = SLOT_COLS;
         int slotCount = saveManager.getMaxSlots();
         int slotWidth = 100;
         int slotHeight = 120;
@@ -271,6 +271,7 @@ public class CharacterSelectState implements State {
         
         backButton.x = centerX - 100;
         backButton.y = buttonStartY;
+        g2d.setStroke(new BasicStroke(1f));
         backButton.render(g);
     }
     
@@ -279,7 +280,7 @@ public class CharacterSelectState implements State {
         boolean isOccupied = character != null;
         boolean isAvailable = slotIndex == saveManager.getFirstAvailableSlot();
         boolean isHovered = hoveredSlot == slotIndex;
-        boolean isSelected = selectedIndex == slotIndex + 1; // +1 because selectedIndex 0 is back button
+        boolean isSelected = selectedIndex == slotIndex;
         
         // Determine slot appearance
         Color backgroundColor;

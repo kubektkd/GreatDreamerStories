@@ -3,6 +3,7 @@
 echo "Building Great Dreamer Stories..."
 
 # Create output directory
+rm -rf out
 mkdir -p out
 
 # Compile all Java files

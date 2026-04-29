@@ -12,16 +12,25 @@ import java.awt.event.KeyEvent;
 public class CharacterSelectState implements State {
 
     private Button backButton;
+    private Button confirmDeleteButton;
+    private Button cancelDeleteButton;
     private int selectedIndex = 0;
     private Button[] menuButtons;
     private SaveManager saveManager;
     private static final int SLOT_COLS = 4;
+    private static final int DELETE_CONFIRM_BUTTON_WIDTH = 160;
+    private static final int DELETE_CONFIRM_BUTTON_HEIGHT = 40;
     
     // Slot interaction
     private int hoveredSlot = -1;
     private String tooltipText = "";
     private long tooltipStartTime = 0;
     private static final long TOOLTIP_DELAY = 1000; // 1 second delay before showing tooltip
+    private boolean wasRightPressed = false;
+    
+    // Delete confirmation
+    private boolean confirmingDelete = false;
+    private int pendingDeleteSlot = -1;
     
     // Colors and fonts
     private Font buttonFont;
@@ -47,21 +56,32 @@ public class CharacterSelectState implements State {
 
         // Initialize buttons
         backButton = new Button(0, 0, 200, 50, "Back");
+        confirmDeleteButton = new Button(0, 0, DELETE_CONFIRM_BUTTON_WIDTH, DELETE_CONFIRM_BUTTON_HEIGHT, "Delete");
+        cancelDeleteButton = new Button(0, 0, DELETE_CONFIRM_BUTTON_WIDTH, DELETE_CONFIRM_BUTTON_HEIGHT, "Cancel");
 
         // Set button colors
         Color normalColor = new Color(50, 50, 50, 200);
         Color hoverColor = new Color(70, 70, 70, 200);
         Color pressedColor = new Color(30, 30, 30, 200);
         Color textColor = Color.WHITE;
+        Color deleteNormalColor = new Color(120, 40, 40, 220);
+        Color deleteHoverColor = new Color(160, 60, 60, 220);
+        Color deletePressedColor = new Color(90, 30, 30, 220);
         
         backButton.setColors(normalColor, hoverColor, pressedColor, textColor);
+        confirmDeleteButton.setColors(deleteNormalColor, deleteHoverColor, deletePressedColor, textColor);
+        cancelDeleteButton.setColors(normalColor, hoverColor, pressedColor, textColor);
         backButton.setFont(buttonFont);
+        confirmDeleteButton.setFont(buttonFont);
+        cancelDeleteButton.setFont(buttonFont);
 
         // Set button actions
         backButton.setOnClick(() -> {
             // State change will automatically trigger fade transition
             Engine.instance().stateProcessor.setState(new MainMenuState());
         });
+        confirmDeleteButton.setOnClick(this::confirmDeleteSlot);
+        cancelDeleteButton.setOnClick(this::cancelDeleteSlot);
 
         // Create button array for keyboard navigation
         menuButtons = new Button[]{backButton};
@@ -74,6 +94,16 @@ public class CharacterSelectState implements State {
 
     @Override
     public void tick() {
+        if (confirmingDelete) {
+            if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_ENTER)) {
+                confirmDeleteSlot();
+            }
+            if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_ESCAPE)) {
+                cancelDeleteSlot();
+            }
+            return;
+        }
+        
         // Handle keyboard navigation
         if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_ENTER)) {
             if (selectedIndex == saveManager.getMaxSlots()) {
@@ -109,6 +139,9 @@ public class CharacterSelectState implements State {
                 selectedIndex++;
             }
         }
+        if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_DELETE)) {
+            requestDeleteSlot(selectedIndex);
+        }
         
         if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_ESCAPE)) {
             backButton.click();
@@ -121,6 +154,16 @@ public class CharacterSelectState implements State {
         int mouseX = Engine.instance().mouse.getX();
         int mouseY = Engine.instance().mouse.getY();
         boolean mousePressed = Engine.instance().mouse.isLeftPressed();
+        boolean rightPressed = Engine.instance().mouse.isRightPressed();
+        
+        if (confirmingDelete) {
+            updateDeleteConfirmationButtons();
+            confirmDeleteButton.update(mouseX, mouseY, mousePressed);
+            cancelDeleteButton.update(mouseX, mouseY, mousePressed);
+            backButton.setSelected(false);
+            wasRightPressed = rightPressed;
+            return;
+        }
         
         for (Button button : menuButtons) {
             button.update(mouseX, mouseY, mousePressed);
@@ -136,6 +179,11 @@ public class CharacterSelectState implements State {
         if (mousePressed && hoveredSlot != -1) {
             handleSlotSelection(hoveredSlot);
         }
+        
+        if (rightPressed && !wasRightPressed && hoveredSlot != -1) {
+            requestDeleteSlot(hoveredSlot);
+        }
+        wasRightPressed = rightPressed;
     }
     
     private void updateSlotHover(int mouseX, int mouseY) {
@@ -208,6 +256,48 @@ public class CharacterSelectState implements State {
         }
         // If it's not an available slot, do nothing
     }
+    
+    private void requestDeleteSlot(int slotIndex) {
+        if (slotIndex < 0 || slotIndex >= saveManager.getMaxSlots()) {
+            return;
+        }
+        if (saveManager.getCharacter(slotIndex) == null) {
+            return;
+        }
+        
+        pendingDeleteSlot = slotIndex;
+        confirmingDelete = true;
+    }
+    
+    private void confirmDeleteSlot() {
+        if (pendingDeleteSlot >= 0 && pendingDeleteSlot < saveManager.getMaxSlots()) {
+            saveManager.deleteCharacter(pendingDeleteSlot);
+            if (hoveredSlot == pendingDeleteSlot) {
+                updateTooltipText(hoveredSlot);
+            }
+        }
+        
+        cancelDeleteSlot();
+    }
+    
+    private void cancelDeleteSlot() {
+        confirmingDelete = false;
+        pendingDeleteSlot = -1;
+    }
+    
+    private void updateDeleteConfirmationButtons() {
+        int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
+        int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
+        int buttonY = windowHeight / 2 + 50;
+        int spacing = 20;
+        int totalButtonWidth = DELETE_CONFIRM_BUTTON_WIDTH * 2 + spacing;
+        int startX = (windowWidth - totalButtonWidth) / 2;
+        
+        confirmDeleteButton.x = startX;
+        confirmDeleteButton.y = buttonY;
+        cancelDeleteButton.x = startX + DELETE_CONFIRM_BUTTON_WIDTH + spacing;
+        cancelDeleteButton.y = buttonY;
+    }
 
     @Override
     public void render(Graphics g) {
@@ -273,6 +363,49 @@ public class CharacterSelectState implements State {
         backButton.y = buttonStartY;
         g2d.setStroke(new BasicStroke(1f));
         backButton.render(g);
+        
+        if (confirmingDelete) {
+            drawDeleteConfirmation(g2d, windowWidth, windowHeight);
+        }
+    }
+    
+    private void drawDeleteConfirmation(Graphics2D g2d, int windowWidth, int windowHeight) {
+        Character character = saveManager.getCharacter(pendingDeleteSlot);
+        String characterName = character != null ? character.getName() : "this character";
+        
+        g2d.setColor(new Color(0, 0, 0, 150));
+        g2d.fillRect(0, 0, windowWidth, windowHeight);
+        
+        int popupWidth = 520;
+        int popupHeight = 220;
+        int popupX = (windowWidth - popupWidth) / 2;
+        int popupY = (windowHeight - popupHeight) / 2;
+        
+        g2d.setColor(new Color(30, 30, 50, 245));
+        g2d.fillRoundRect(popupX, popupY, popupWidth, popupHeight, 18, 18);
+        
+        g2d.setColor(new Color(160, 80, 80));
+        g2d.setStroke(new BasicStroke(3f));
+        g2d.drawRoundRect(popupX, popupY, popupWidth, popupHeight, 18, 18);
+        
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(buttonFont);
+        drawCenteredString(g2d, "Delete character?", popupX, popupY + 45, popupWidth);
+        
+        g2d.setFont(tooltipFont);
+        drawCenteredString(g2d, "This will permanently delete \"" + characterName + "\".", popupX, popupY + 85, popupWidth);
+        drawCenteredString(g2d, "Press Enter to delete or Esc to cancel.", popupX, popupY + 110, popupWidth);
+        
+        updateDeleteConfirmationButtons();
+        g2d.setStroke(new BasicStroke(1f));
+        confirmDeleteButton.render(g2d);
+        cancelDeleteButton.render(g2d);
+    }
+    
+    private void drawCenteredString(Graphics2D g2d, String text, int x, int y, int width) {
+        FontMetrics metrics = g2d.getFontMetrics();
+        int textX = x + (width - metrics.stringWidth(text)) / 2;
+        g2d.drawString(text, textX, y);
     }
     
     private void drawCharacterSlot(Graphics2D g2d, int slotIndex, int slotX, int slotY, int slotWidth, int slotHeight) {
@@ -360,20 +493,20 @@ public class CharacterSelectState implements State {
                 character.getStrength(), character.getDexterity(), character.getIntelligence());
         FontMetrics statsMetrics = g2d.getFontMetrics();
         int statsX = slotX + (slotWidth - statsMetrics.stringWidth(stats)) / 2;
-        int statsY = slotY + 60;
+        int statsY = slotY + 70;
         g2d.drawString(stats, statsX, statsY);
         
         String stats2 = String.format("P%d C%d", 
                 character.getPerception(), character.getCharisma());
         int stats2X = slotX + (slotWidth - statsMetrics.stringWidth(stats2)) / 2;
-        int stats2Y = slotY + 75;
+        int stats2Y = slotY + 85;
         g2d.drawString(stats2, stats2X, stats2Y);
         
         // Last played info
         g2d.setColor(new Color(180, 180, 180));
         String playtime = String.format("%dh", character.getTotalPlaytime() / 60);
         int playtimeX = slotX + (slotWidth - statsMetrics.stringWidth(playtime)) / 2;
-        int playtimeY = slotY + 95;
+        int playtimeY = slotY + 110;
         g2d.drawString(playtime, playtimeX, playtimeY);
     }
     

@@ -197,12 +197,16 @@ public class GameplayState implements State {
         
         // Stats display
         g2d.setColor(Color.WHITE);
-        String stats = String.format("STR:%d  DEX:%d  INT:%d  PER:%d  CHA:%d", 
+        String stats = String.format("STR:%d  POW:%d  EDU:%d  CON:%d  INT:%d  APP:%d  LCK:%d  SIZ:%d  DEX:%d", 
                 selectedCharacter.getStrength(),
-                selectedCharacter.getDexterity(),
+                selectedCharacter.getPower(),
+                selectedCharacter.getEducation(),
+                selectedCharacter.getConstitution(),
                 selectedCharacter.getIntelligence(),
-                selectedCharacter.getPerception(),
-                selectedCharacter.getCharisma());
+                selectedCharacter.getAppearance(),
+                selectedCharacter.getLuck(),
+                selectedCharacter.getSize(),
+                selectedCharacter.getDexterity());
         int statsX = panelX + (panelWidth - textMetrics.stringWidth(stats)) / 2;
         g2d.drawString(stats, statsX, panelY + 70);
         

@@ -89,7 +89,7 @@ public class Button {
         g2d.fillRect(x, y, width, height);
         
         // Draw button border
-        g2d.setColor(selected ? Color.CYAN : Color.GRAY);
+        g2d.setColor(selected ? Color.LIGHT_GRAY : Color.GRAY);
         g2d.drawRect(x, y, width, height);
         
         // Draw text

@@ -1,5 +1,6 @@
 package atomiccode.greatDreamerStories.states;
 
+import atomiccode.cthulhuEngine.engineMain.engine.Resources;
 import atomiccode.cthulhuEngine.inputsOutputs.stateControl.State;
 import atomiccode.cthulhuEngine.engineMain.engine.Engine;
 import atomiccode.cthulhuEngine.ui.Button;
@@ -14,6 +15,27 @@ import java.awt.event.KeyEvent;
  * Allows players to distribute skill points, select gender, and name their character.
  */
 public class CharacterCreationState implements State {
+    private static final int MAX_NAME_LENGTH = 24;
+    private static final int STAT_COUNT = 9;
+    private static final int ATTR_PANEL_TOP_OFFSET = 80;
+    private static final int ATTR_PANEL_HEIGHT = 410;
+    private static final int STAT_ROW_TOP_OFFSET = 34;
+    private static final int STAT_ROW_SPACING = 42;
+    private static final int CREATE_BUTTON_WIDTH = 210;
+    private static final int BACK_BUTTON_WIDTH = 130;
+    private static final int ACTION_BUTTON_HEIGHT = 48;
+    private static final int ACTION_BUTTON_GAP = 16;
+    private static final int GENDER_BUTTON_WIDTH = 130;
+    private static final int GENDER_BUTTON_HEIGHT = 38;
+    private static final int GENDER_BUTTON_GAP = 12;
+    private static final Color BUTTON_DISABLED_COLOR = new Color(13, 14, 17);
+    private static final Color BUTTON_DISABLED_TEXT_COLOR = new Color(65, 66, 70);
+    private static final String[] STAT_NAMES = {"Strength", "Power", "Education", "Constitution", "Intelligence", "Appearance", "Luck", "Size", "Dexterity"};
+    private static final String[] STAT_CODES = {"STR", "POW", "EDU", "CON", "INT", "APP", "LCK", "SIZ", "DEX"};
+    private static final String MALE_PORTRAIT = "characters/main-officer-male.jfif";
+    private static final String FEMALE_PORTRAIT = "characters/main-officer-female.jfif";
+    private static final String FALLBACK_PORTRAIT = "characters/test.jfif";
+    private static final String DEFAULT_CHARACTER_NAME = "Officer Björn";
     
     private final int targetSlot;
     private final State returnState;
@@ -22,32 +44,59 @@ public class CharacterCreationState implements State {
     private String characterName = "";
     private Character.Gender selectedGender = Character.Gender.MALE;
     private int strength = Character.MIN_STAT_VALUE;
-    private int dexterity = Character.MIN_STAT_VALUE;
+    private int power = Character.MIN_STAT_VALUE;
+    private int education = Character.MIN_STAT_VALUE;
+    private int constitution = Character.MIN_STAT_VALUE;
     private int intelligence = Character.MIN_STAT_VALUE;
-    private int perception = Character.MIN_STAT_VALUE;
-    private int charisma = Character.MIN_STAT_VALUE;
+    private int appearance = Character.MIN_STAT_VALUE;
+    private int luck = Character.MIN_STAT_VALUE;
+    private int size = Character.MIN_STAT_VALUE;
+    private int dexterity = Character.MIN_STAT_VALUE;
     
     // UI components
     private Button[] genderButtons;
+    private Button[] statBigIncButtons;
     private Button[] statIncButtons;
+    private Button[] statBigDecButtons;
     private Button[] statDecButtons;
     private Button createButton;
-    private Button cancelButton;
+    private Button backButton;
     private Button[] menuButtons;
+    private Rectangle nameBoxBounds = new Rectangle();
+    private int layoutWidth;
+    private int layoutHeight;
+    private int layoutX;
+    private int layoutY;
+    private int leftWidth;
+    private int rightX;
+    private int portraitSize;
+    private int portraitX;
+    private int portraitY;
+    private int attrPanelX;
+    private int attrPanelY;
+    private int attrPanelWidth;
+    private int attrPanelHeight;
     
     // Input handling
     private boolean isTypingName = false;
     private int selectedIndex = 0;
+    private boolean wasMousePressed = false;
     
     // Colors and fonts
-    private Color normalColor = new Color(50, 50, 50, 200);
-    private Color hoverColor = new Color(70, 70, 70, 200);
-    private Color pressedColor = new Color(30, 30, 30, 200);
-    private Color textColor = Color.WHITE;
-    private Color selectedColor = new Color(100, 150, 255, 200);
+    private final Color pageColor = new Color(8, 9, 11);
+    private final Color panelColor = new Color(11, 12, 15, 210);
+    private final Color borderColor = new Color(55, 58, 65);
+    private final Color mutedBorderColor = new Color(31, 34, 40);
+    private final Color textColor = new Color(235, 233, 225);
+    private final Color mutedTextColor = new Color(116, 116, 116);
+    private final Color selectedColor = new Color(245, 244, 238);
+    private final Color selectedTextColor = new Color(18, 18, 18);
     private Font buttonFont;
     private Font titleFont;
     private Font labelFont;
+    private Font smallFont;
+    private Image malePortrait;
+    private Image femalePortrait;
     
     public CharacterCreationState(int targetSlot, State returnState) {
         this.targetSlot = targetSlot;
@@ -61,116 +110,167 @@ public class CharacterCreationState implements State {
     
     @Override
     public boolean isOpaque() {
-        return false; // Allow background to show through
+        return true;
     }
     
     @Override
     public void onEnter() {
         // Initialize fonts
-        buttonFont = Engine.instance().resources.getFont("Milonga/Milonga-Regular.ttf", 16);
-        titleFont = Engine.instance().resources.getFont("Milonga/Milonga-Regular.ttf", 24);
-        labelFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 14);
+        buttonFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 14);
+        titleFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 30);
+        labelFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 12);
+        smallFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 10);
+        malePortrait = loadPortrait(MALE_PORTRAIT);
+        femalePortrait = loadPortrait(FEMALE_PORTRAIT);
         
         initializeButtons();
         resetCharacterData();
     }
+
+    private Image loadPortrait(String portraitPath) {
+        try {
+            return Engine.instance().resources.getImage(portraitPath);
+        } catch (RuntimeException e) {
+            return Engine.instance().resources.getImage(FALLBACK_PORTRAIT);
+        }
+    }
     
     private void initializeButtons() {
         // Gender selection buttons
-        genderButtons = new Button[Character.Gender.values().length];
-        for (int i = 0; i < Character.Gender.values().length; i++) {
-            Character.Gender gender = Character.Gender.values()[i];
-            genderButtons[i] = new Button(0, 0, 80, 30, gender.getDisplayName());
-            genderButtons[i].setColors(normalColor, hoverColor, pressedColor, textColor);
+        genderButtons = new Button[]{new Button(0, 0, GENDER_BUTTON_WIDTH, GENDER_BUTTON_HEIGHT, "MALE OFFICER"),
+                                     new Button(0, 0, GENDER_BUTTON_WIDTH, GENDER_BUTTON_HEIGHT, "FEMALE OFFICER")};
+        Character.Gender[] selectableGenders = {Character.Gender.MALE, Character.Gender.FEMALE};
+        for (int i = 0; i < genderButtons.length; i++) {
+            Character.Gender gender = selectableGenders[i];
+            genderButtons[i].setColors(new Color(12, 13, 16), selectedColor, new Color(32, 32, 32), textColor);
             genderButtons[i].setFont(buttonFont);
             final Character.Gender selectedGender = gender;
             genderButtons[i].setOnClick(() -> this.selectedGender = selectedGender);
         }
         
         // Stat adjustment buttons
-        statIncButtons = new Button[5];
-        statDecButtons = new Button[5];
+        statBigIncButtons = new Button[STAT_COUNT];
+        statIncButtons = new Button[STAT_COUNT];
+        statBigDecButtons = new Button[STAT_COUNT];
+        statDecButtons = new Button[STAT_COUNT];
         
-        for (int i = 0; i < 5; i++) {
-            statIncButtons[i] = new Button(0, 0, 25, 25, "+");
-            statIncButtons[i].setColors(normalColor, hoverColor, pressedColor, textColor);
-            statIncButtons[i].setFont(buttonFont);
+        for (int i = 0; i < STAT_COUNT; i++) {
+            statBigIncButtons[i] = new Button(0, 0, 26, 22, "++");
+            statBigIncButtons[i].setColors(new Color(18, 20, 24), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
+            statBigIncButtons[i].setFont(smallFont);
             
-            statDecButtons[i] = new Button(0, 0, 25, 25, "-");
-            statDecButtons[i].setColors(normalColor, hoverColor, pressedColor, textColor);
-            statDecButtons[i].setFont(buttonFont);
+            statIncButtons[i] = new Button(0, 0, 22, 22, "+");
+            statIncButtons[i].setColors(new Color(18, 20, 24), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
+            statIncButtons[i].setFont(smallFont);
+            
+            statBigDecButtons[i] = new Button(0, 0, 26, 22, "--");
+            statBigDecButtons[i].setColors(new Color(18, 20, 24), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
+            statBigDecButtons[i].setFont(smallFont);
+            
+            statDecButtons[i] = new Button(0, 0, 22, 22, "-");
+            statDecButtons[i].setColors(new Color(18, 20, 24), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
+            statDecButtons[i].setFont(smallFont);
             
             final int statIndex = i;
-            statIncButtons[i].setOnClick(() -> incrementStat(statIndex));
-            statDecButtons[i].setOnClick(() -> decrementStat(statIndex));
+            statBigIncButtons[i].setOnClick(() -> adjustStat(statIndex, 10));
+            statIncButtons[i].setOnClick(() -> adjustStat(statIndex, 1));
+            statBigDecButtons[i].setOnClick(() -> adjustStat(statIndex, -10));
+            statDecButtons[i].setOnClick(() -> adjustStat(statIndex, -1));
         }
         
         // Action buttons
-        createButton = new Button(0, 0, 100, 40, "Create");
-        createButton.setColors(new Color(50, 120, 50, 200), new Color(70, 140, 70, 200), 
-                              new Color(30, 100, 30, 200), textColor);
+        createButton = new Button(0, 0, CREATE_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT, "CREATE CHARACTER  >");
+        createButton.setColors(selectedColor, new Color(210, 208, 198), new Color(165, 163, 154), selectedTextColor);
         createButton.setFont(buttonFont);
         createButton.setOnClick(this::createCharacter);
-        
-        cancelButton = new Button(0, 0, 100, 40, "Cancel");
-        cancelButton.setColors(new Color(120, 50, 50, 200), new Color(140, 70, 70, 200), 
-                              new Color(100, 30, 30, 200), textColor);
-        cancelButton.setFont(buttonFont);
-        cancelButton.setOnClick(this::cancelCreation);
-        
+
+        backButton = new Button(0, 0, BACK_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT, "<  BACK");
+        backButton.setColors(new Color(12, 13, 16), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
+        backButton.setFont(buttonFont);
+        backButton.setOnClick(this::cancelCreation);
+
         // Setup menu buttons array for navigation
-        menuButtons = new Button[genderButtons.length + statIncButtons.length + statDecButtons.length + 2];
+        menuButtons = new Button[genderButtons.length + statBigIncButtons.length + statIncButtons.length +
+                                 statBigDecButtons.length + statDecButtons.length + 2];
         int index = 0;
         System.arraycopy(genderButtons, 0, menuButtons, index, genderButtons.length);
         index += genderButtons.length;
+        System.arraycopy(statBigIncButtons, 0, menuButtons, index, statBigIncButtons.length);
+        index += statBigIncButtons.length;
         System.arraycopy(statIncButtons, 0, menuButtons, index, statIncButtons.length);
         index += statIncButtons.length;
+        System.arraycopy(statBigDecButtons, 0, menuButtons, index, statBigDecButtons.length);
+        index += statBigDecButtons.length;
         System.arraycopy(statDecButtons, 0, menuButtons, index, statDecButtons.length);
         index += statDecButtons.length;
-        menuButtons[index++] = createButton;
-        menuButtons[index] = cancelButton;
+        menuButtons[index++] = backButton;
+        menuButtons[index] = createButton;
     }
     
     private void resetCharacterData() {
-        characterName = "Officer Smith";
+        characterName = DEFAULT_CHARACTER_NAME;
         selectedGender = Character.Gender.MALE;
-        strength = Character.MIN_STAT_VALUE;
-        dexterity = Character.MIN_STAT_VALUE;
-        intelligence = Character.MIN_STAT_VALUE;
-        perception = Character.MIN_STAT_VALUE;
-        charisma = Character.MIN_STAT_VALUE;
+        strength = Character.INITIAL_STAT_VALUE;
+        power = Character.INITIAL_STAT_VALUE;
+        education = Character.INITIAL_STAT_VALUE;
+        constitution = Character.INITIAL_STAT_VALUE;
+        intelligence = Character.INITIAL_STAT_VALUE;
+        appearance = Character.INITIAL_STAT_VALUE;
+        luck = Character.INITIAL_STAT_VALUE;
+        size = Character.INITIAL_STAT_VALUE;
+        dexterity = Character.INITIAL_STAT_VALUE;
     }
     
-    private void incrementStat(int statIndex) {
-        if (getRemainingPoints() <= 0) return;
-        
+    private void adjustStat(int statIndex, int amount) {
+        int currentValue = getStatValue(statIndex);
+        if (!canAdjustStat(currentValue, amount)) {
+            return;
+        }
+        int adjustedValue = currentValue + amount;
+
         switch (statIndex) {
-            case 0: if (strength < Character.MAX_STAT_VALUE) strength++; break;
-            case 1: if (dexterity < Character.MAX_STAT_VALUE) dexterity++; break;
-            case 2: if (intelligence < Character.MAX_STAT_VALUE) intelligence++; break;
-            case 3: if (perception < Character.MAX_STAT_VALUE) perception++; break;
-            case 4: if (charisma < Character.MAX_STAT_VALUE) charisma++; break;
+            case 0: strength = adjustedValue; break;
+            case 1: power = adjustedValue; break;
+            case 2: education = adjustedValue; break;
+            case 3: constitution = adjustedValue; break;
+            case 4: intelligence = adjustedValue; break;
+            case 5: appearance = adjustedValue; break;
+            case 6: luck = adjustedValue; break;
+            case 7: size = adjustedValue; break;
+            case 8: dexterity = adjustedValue; break;
         }
     }
-    
-    private void decrementStat(int statIndex) {
-        switch (statIndex) {
-            case 0: if (strength > Character.MIN_STAT_VALUE) strength--; break;
-            case 1: if (dexterity > Character.MIN_STAT_VALUE) dexterity--; break;
-            case 2: if (intelligence > Character.MIN_STAT_VALUE) intelligence--; break;
-            case 3: if (perception > Character.MIN_STAT_VALUE) perception--; break;
-            case 4: if (charisma > Character.MIN_STAT_VALUE) charisma--; break;
+
+    private boolean canAdjustStat(int currentValue, int amount) {
+        if (amount > 0) {
+            return currentValue + amount <= Character.MAX_STAT_VALUE && getRemainingPoints() >= amount;
         }
+        return currentValue + amount >= Character.MIN_STAT_VALUE;
     }
     
     private int getRemainingPoints() {
-        int usedPoints = strength + dexterity + intelligence + perception + charisma;
+        int usedPoints = strength + power + education + constitution + intelligence + appearance + luck + size + dexterity;
         return Character.INITIAL_SKILL_POINTS - usedPoints;
+    }
+
+    private int getStatValue(int statIndex) {
+        switch (statIndex) {
+            case 0: return strength;
+            case 1: return power;
+            case 2: return education;
+            case 3: return constitution;
+            case 4: return intelligence;
+            case 5: return appearance;
+            case 6: return luck;
+            case 7: return size;
+            case 8: return dexterity;    
+            default: return Character.INITIAL_STAT_VALUE;
+        }
     }
     
     private void createCharacter() {
         if (characterName.trim().isEmpty()) {
-            characterName = "Officer Smith"; // Default name
+            characterName = DEFAULT_CHARACTER_NAME; // Default name
         }
         
         if (getRemainingPoints() != 0) {
@@ -179,7 +279,7 @@ public class CharacterCreationState implements State {
         
         try {
             Character newCharacter = new Character(characterName.trim(), selectedGender, 
-                                                 strength, dexterity, intelligence, perception, charisma);
+                                                 strength, power, education, constitution, intelligence, appearance, luck, size, dexterity);
             
             if (SaveManager.getInstance().saveCharacter(newCharacter, targetSlot)) {
                 // Character created successfully, return to character select
@@ -212,10 +312,6 @@ public class CharacterCreationState implements State {
                     menuButtons[selectedIndex].click();
                 }
             }
-            
-            if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_SPACE)) {
-                isTypingName = true;
-            }
         }
         
         if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_ESCAPE)) {
@@ -224,7 +320,6 @@ public class CharacterCreationState implements State {
     }
     
     private void handleNameInput() {
-        // Simple text input handling
         if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_ENTER)) {
             isTypingName = false;
             return;
@@ -239,18 +334,28 @@ public class CharacterCreationState implements State {
             if (characterName.length() > 0) {
                 characterName = characterName.substring(0, characterName.length() - 1);
             }
+            return;
         }
-        
-        // Note: For full text input, you'd want to implement proper key-to-character mapping
-        // This is a simplified version
+
+        java.lang.Character typedCharacter = getTypedCharacter();
+        if (typedCharacter != null && characterName.length() < MAX_NAME_LENGTH) {
+            characterName += typedCharacter;
+        }
     }
     
     @Override
     public void update() {
+        updateLayout();
+        
         // Update all buttons
         int mouseX = Engine.instance().mouse.getX();
         int mouseY = Engine.instance().mouse.getY();
         boolean mousePressed = Engine.instance().mouse.isLeftPressed();
+
+        if (mousePressed && !wasMousePressed) {
+            isTypingName = nameBoxBounds.contains(mouseX, mouseY);
+        }
+        wasMousePressed = mousePressed;
         
         for (Button button : menuButtons) {
             if (button != null) {
@@ -261,154 +366,293 @@ public class CharacterCreationState implements State {
         // Update selection highlighting
         for (int i = 0; i < menuButtons.length; i++) {
             if (menuButtons[i] != null) {
-                menuButtons[i].setSelected(i == selectedIndex);
+                menuButtons[i].setSelected(!isTypingName && i == selectedIndex);
             }
         }
         
         // Update gender button highlighting
+        genderButtons[0].setSelected(selectedGender == Character.Gender.MALE);
+        genderButtons[1].setSelected(selectedGender == Character.Gender.FEMALE);
+        updateGenderButtonColors();
+        updateStatButtonColors();
+        updateCreateButtonColor();
+    }
+
+    private void updateGenderButtonColors() {
         for (int i = 0; i < genderButtons.length; i++) {
-            Character.Gender gender = Character.Gender.values()[i];
-            genderButtons[i].setSelected(gender == selectedGender);
+            boolean isSelected = (i == 0 && selectedGender == Character.Gender.MALE) ||
+                                 (i == 1 && selectedGender == Character.Gender.FEMALE);
+            genderButtons[i].setColors(new Color(12, 13, 16), isSelected ? selectedColor : new Color(42, 43, 48), new Color(32, 32, 32),
+                                       isSelected ? selectedTextColor : textColor);
         }
+    }
+
+    private void updateStatButtonColors() {
+        for (int i = 0; i < STAT_COUNT; i++) {
+            boolean atMinimum = getStatValue(i) <= Character.MIN_STAT_VALUE;
+            boolean atMaximum = getStatValue(i) >= Character.MAX_STAT_VALUE;
+            int remainingPoints = getRemainingPoints();
+            setStatButtonEnabled(statBigDecButtons[i], !atMinimum && canAdjustStat(getStatValue(i), -10));
+            setStatButtonEnabled(statDecButtons[i], !atMinimum);
+            setStatButtonEnabled(statIncButtons[i], !atMaximum && remainingPoints >= 1);
+            setStatButtonEnabled(statBigIncButtons[i], !atMaximum && canAdjustStat(getStatValue(i), 10));
+        }
+    }
+
+    private void setStatButtonEnabled(Button button, boolean enabled) {
+        if (enabled) {
+            button.setColors(new Color(18, 20, 24), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
+        } else {
+            button.setColors(BUTTON_DISABLED_COLOR, BUTTON_DISABLED_COLOR, BUTTON_DISABLED_COLOR, BUTTON_DISABLED_TEXT_COLOR);
+        }
+    }
+
+    private void updateCreateButtonColor() {
+        if (getRemainingPoints() == 0) {
+            createButton.setColors(selectedColor, new Color(210, 208, 198), new Color(165, 163, 154), selectedTextColor);
+        } else {
+            createButton.setColors(BUTTON_DISABLED_COLOR, BUTTON_DISABLED_COLOR, BUTTON_DISABLED_COLOR, BUTTON_DISABLED_TEXT_COLOR);
+        }
+    }
+
+    private void updateLayout() {
+        int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
+        int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
+        layoutWidth = Math.min(windowWidth - 120, 1060);
+        layoutHeight = Math.min(windowHeight - 90, 620);
+        layoutX = (windowWidth - layoutWidth) / 2;
+        layoutY = (windowHeight - layoutHeight) / 2;
+
+        int leftX = layoutX;
+        leftWidth = Math.max(360, layoutWidth * 44 / 100);
+        int leftContentWidth = leftWidth - 30;
+        int leftContentCenterX = leftX + leftContentWidth / 2;
+        int genderButtonGroupWidth = GENDER_BUTTON_WIDTH * 2 + GENDER_BUTTON_GAP;
+        portraitSize = Math.min(260, leftWidth - 160);
+        portraitX = leftContentCenterX - portraitSize / 2;
+        portraitY = layoutY + 100;
+
+        genderButtons[0].x = leftContentCenterX - genderButtonGroupWidth / 2;
+        genderButtons[0].y = portraitY + portraitSize + 22;
+        genderButtons[1].x = genderButtons[0].x + GENDER_BUTTON_WIDTH + GENDER_BUTTON_GAP;
+        genderButtons[1].y = genderButtons[0].y;
+
+        nameBoxBounds.setBounds(leftX, genderButtons[0].y + 82, leftContentWidth, 92);
+
+        rightX = layoutX + leftWidth + 40;
+        int rightWidth = layoutX + layoutWidth - rightX;
+        attrPanelX = rightX;
+        attrPanelY = layoutY + ATTR_PANEL_TOP_OFFSET;
+        attrPanelWidth = Math.max(330, rightWidth - 10);
+        attrPanelHeight = ATTR_PANEL_HEIGHT;
+
+        for (int i = 0; i < STAT_COUNT; i++) {
+            int rowY = getStatRowY(i);
+            statBigDecButtons[i].x = attrPanelX + 118;
+            statBigDecButtons[i].y = rowY - 4;
+            statDecButtons[i].x = attrPanelX + 148;
+            statDecButtons[i].y = rowY - 4;
+            statIncButtons[i].x = attrPanelX + attrPanelWidth - 102;
+            statIncButtons[i].y = rowY - 4;
+            statBigIncButtons[i].x = attrPanelX + attrPanelWidth - 74;
+            statBigIncButtons[i].y = rowY - 4;
+        }
+
+        createButton.x = attrPanelX + attrPanelWidth - CREATE_BUTTON_WIDTH;
+        createButton.y = layoutY + layoutHeight - 62;
+        backButton.x = createButton.x - ACTION_BUTTON_GAP - BACK_BUTTON_WIDTH;
+        backButton.y = createButton.y;
+    }
+
+    private int getStatRowY(int statIndex) {
+        return attrPanelY + STAT_ROW_TOP_OFFSET + statIndex * STAT_ROW_SPACING;
     }
     
     @Override
     public void render(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
-        
-        // Get window dimensions
+        Resources.enableAntialiasing(g2d);
+        updateLayout();
+
         int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
         int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
-        
-        // Draw semi-transparent overlay
-        g2d.setColor(new Color(0, 0, 0, 150));
+
+        g2d.setColor(pageColor);
         g2d.fillRect(0, 0, windowWidth, windowHeight);
-        
-        // Draw popup background
-        int popupWidth = 500;
-        int popupHeight = 600;
-        int popupX = (windowWidth - popupWidth) / 2;
-        int popupY = (windowHeight - popupHeight) / 2;
-        
-        g2d.setColor(new Color(30, 30, 50, 240));
-        g2d.fillRoundRect(popupX, popupY, popupWidth, popupHeight, 20, 20);
-        
-        g2d.setColor(new Color(100, 100, 120));
-        g2d.setStroke(new BasicStroke(3f));
-        g2d.drawRoundRect(popupX, popupY, popupWidth, popupHeight, 20, 20);
-        
-        // Draw title
-        g2d.setColor(Color.WHITE);
+
+        drawSubtleBackground(g2d, windowWidth, windowHeight);
+
+        g2d.setColor(textColor);
         g2d.setFont(titleFont);
-        FontMetrics titleMetrics = g2d.getFontMetrics();
-        String title = "Create New Character";
-        int titleX = popupX + (popupWidth - titleMetrics.stringWidth(title)) / 2;
-        g2d.drawString(title, titleX, popupY + 40);
-        
-        // Current Y position for UI elements
-        int currentY = popupY + 80;
-        
-        // Draw name input
+        g2d.drawString("NEW INVESTIGATOR", layoutX, layoutY + 38);
+        g2d.setFont(smallFont);
+        g2d.setColor(mutedTextColor);
+        g2d.drawString("STOKSJÖ ARCHIVE // CLASSIFIED", layoutX + 2, layoutY + 62);
+        g2d.setColor(mutedBorderColor);
+        g2d.drawLine(layoutX, layoutY + 80, layoutX + leftWidth - 30, layoutY + 80);
+
+        g2d.setColor(textColor);
         g2d.setFont(labelFont);
-        g2d.setColor(Color.WHITE);
-        g2d.drawString("Name:", popupX + 30, currentY);
-        
-        // Name input box
-        int nameBoxX = popupX + 90;
-        int nameBoxY = currentY - 15;
-        int nameBoxWidth = 200;
-        int nameBoxHeight = 25;
-        
-        Color nameBoxColor = isTypingName ? selectedColor : normalColor;
-        g2d.setColor(nameBoxColor);
-        g2d.fillRect(nameBoxX, nameBoxY, nameBoxWidth, nameBoxHeight);
-        g2d.setColor(Color.GRAY);
-        g2d.drawRect(nameBoxX, nameBoxY, nameBoxWidth, nameBoxHeight);
-        
-        g2d.setColor(Color.WHITE);
-        g2d.setFont(buttonFont);
-        g2d.drawString(characterName, nameBoxX + 5, nameBoxY + 17);
-        
-        currentY += 50;
-        
-        // Draw gender selection
-        g2d.setFont(labelFont);
-        g2d.drawString("Gender:", popupX + 30, currentY);
-        
-        for (int i = 0; i < genderButtons.length; i++) {
-            genderButtons[i].x = popupX + 90 + i * 90;
-            genderButtons[i].y = currentY - 15;
-            genderButtons[i].render(g);
+        g2d.drawString("SUBJECT'S PROFILE", rightX, layoutY + 38);
+        g2d.setFont(smallFont);
+        g2d.setColor(mutedTextColor);
+        g2d.drawString("ATTRIBUTES", rightX, layoutY + 62);
+
+        g2d.setFont(titleFont);
+        g2d.setColor(textColor);
+        String remaining = String.valueOf(getRemainingPoints());
+        FontMetrics remainingMetrics = g2d.getFontMetrics();
+        g2d.drawString(remaining, layoutX + layoutWidth - remainingMetrics.stringWidth(remaining) - 20, layoutY + 45);
+        g2d.setFont(smallFont);
+        g2d.setColor(mutedTextColor);
+        g2d.drawString("PTS REMAINING", layoutX + layoutWidth - 94, layoutY + 62);
+
+        drawPortrait(g2d, portraitX, portraitY, portraitSize);
+        genderButtons[0].render(g2d);
+        genderButtons[1].render(g2d);
+
+        drawNameBox(g2d);
+        drawAttributesPanel(g2d);
+        drawCreateStatus(g2d);
+
+        backButton.render(g2d);
+        createButton.render(g2d);
+    }
+
+    private void drawCreateStatus(Graphics2D g2d) {
+        if (getRemainingPoints() == 0) {
+            return;
         }
-        
-        currentY += 60;
-        
-        // Draw occupation (fixed)
-        g2d.setColor(Color.WHITE);
-        g2d.setFont(labelFont);
-        g2d.drawString("Occupation: Chief Police Officer", popupX + 30, currentY);
-        
-        currentY += 40;
-        
-        // Draw stats section
-        g2d.setFont(labelFont);
-        g2d.drawString("Distribute Skill Points:", popupX + 30, currentY);
-        
-        currentY += 25;
-        
-        g2d.setFont(buttonFont);
-        String pointsText = "Remaining Points: " + getRemainingPoints();
-        g2d.setColor(getRemainingPoints() == 0 ? Color.GREEN : Color.YELLOW);
-        g2d.drawString(pointsText, popupX + 30, currentY);
-        
-        currentY += 30;
-        
-        // Draw stat controls
-        String[] statNames = {"Strength", "Dexterity", "Intelligence", "Perception", "Charisma"};
-        int[] statValues = {strength, dexterity, intelligence, perception, charisma};
-        
-        for (int i = 0; i < 5; i++) {
-            g2d.setColor(Color.WHITE);
-            g2d.setFont(labelFont);
-            g2d.drawString(statNames[i] + ":", popupX + 30, currentY + 17);
-            
-            // Decrease button
-            statDecButtons[i].x = popupX + 180;
-            statDecButtons[i].y = currentY;
-            statDecButtons[i].render(g);
-            
-            // Stat value
-            g2d.setFont(buttonFont);
-            String valueText = String.valueOf(statValues[i]);
-            FontMetrics valueMetrics = g2d.getFontMetrics();
-            int valueX = popupX + 220 - valueMetrics.stringWidth(valueText) / 2;
-            g2d.drawString(valueText, valueX, currentY + 17);
-            
-            // Increase button
-            statIncButtons[i].x = popupX + 235;
-            statIncButtons[i].y = currentY;
-            statIncButtons[i].render(g);
-            
-            currentY += 35;
+
+        g2d.setColor(mutedTextColor);
+        g2d.setFont(smallFont);
+        String status = "USE ALL REMAINING POINTS TO CREATE";
+        FontMetrics metrics = g2d.getFontMetrics();
+        int statusX = createButton.x + (CREATE_BUTTON_WIDTH - metrics.stringWidth(status)) / 2;
+        g2d.drawString(status, statusX, createButton.y - 12);
+    }
+
+    private void drawSubtleBackground(Graphics2D g2d, int windowWidth, int windowHeight) {
+        g2d.setColor(new Color(255, 255, 255, 8));
+        for (int y = 0; y < windowHeight; y += 4) {
+            g2d.drawLine(0, y, windowWidth, y);
         }
-        
-        currentY += 20;
-        
-        // Draw action buttons
-        createButton.x = popupX + popupWidth - 220;
-        createButton.y = currentY;
-        createButton.render(g);
-        
-        cancelButton.x = popupX + popupWidth - 110;
-        cancelButton.y = currentY;
-        cancelButton.render(g);
-        
-        // Draw instructions
-        g2d.setColor(Color.LIGHT_GRAY);
+    }
+
+    private void drawPortrait(Graphics2D g2d, int x, int y, int size) {
+        g2d.setColor(Color.BLACK);
+        g2d.fillRect(x, y, size, size);
+        g2d.setColor(borderColor);
+        g2d.drawRect(x, y, size, size);
+
+        Image portrait = selectedGender == Character.Gender.FEMALE ? femalePortrait : malePortrait;
+        if (portrait != null) {
+            g2d.drawImage(portrait, x + 1, y + 1, size - 2, size - 2, null);
+        }
+    }
+
+    private void drawNameBox(Graphics2D g2d) {
+        g2d.setColor(panelColor);
+        g2d.fillRect(nameBoxBounds.x, nameBoxBounds.y, nameBoxBounds.width, nameBoxBounds.height);
+        g2d.setColor(isTypingName ? selectedColor : mutedBorderColor);
+        g2d.drawRect(nameBoxBounds.x, nameBoxBounds.y, nameBoxBounds.width, nameBoxBounds.height);
+
+        g2d.setColor(mutedTextColor);
+        g2d.setFont(smallFont);
+        g2d.drawString("SUBJECT NAME", nameBoxBounds.x + 18, nameBoxBounds.y + 24);
+
+        g2d.setColor(textColor);
+        g2d.setFont(buttonFont);
+        String displayName = characterName + (isTypingName && System.currentTimeMillis() % 1000 < 500 ? "_" : "");
+        g2d.drawString(displayName, nameBoxBounds.x + 18, nameBoxBounds.y + 58);
+        g2d.setColor(borderColor);
+        g2d.drawLine(nameBoxBounds.x + 18, nameBoxBounds.y + 72,
+                     nameBoxBounds.x + nameBoxBounds.width - 18, nameBoxBounds.y + 72);
+    }
+
+    private void drawAttributesPanel(Graphics2D g2d) {
+        g2d.setColor(panelColor);
+        g2d.fillRect(attrPanelX, attrPanelY, attrPanelWidth, attrPanelHeight);
+        g2d.setColor(borderColor);
+        g2d.drawRect(attrPanelX, attrPanelY, attrPanelWidth, attrPanelHeight);
+
+        for (int i = 0; i < STAT_COUNT; i++) {
+            drawAttributeRow(g2d, i);
+        }
+    }
+
+    private void drawAttributeRow(Graphics2D g2d, int statIndex) {
+        int statValue = getStatValue(statIndex);
+        int rowY = getStatRowY(statIndex);
+        int sliderX = attrPanelX + 186;
+        int sliderWidth = attrPanelWidth - 306;
+        int sliderY = rowY + 7;
+        int min = 0;
+        int max = 99;
+        int knobX = sliderX + ((statValue - min) * sliderWidth) / (max - min);
+
+        g2d.setColor(textColor);
         g2d.setFont(labelFont);
-        String instructions = "TAB: Edit name | ESC: Cancel | Use all " + Character.INITIAL_SKILL_POINTS + " points to create";
-        FontMetrics instrMetrics = g2d.getFontMetrics();
-        int instrX = popupX + (popupWidth - instrMetrics.stringWidth(instructions)) / 2;
-        g2d.drawString(instructions, instrX, popupY + popupHeight - 20);
+        g2d.drawString(STAT_NAMES[statIndex].toUpperCase(), attrPanelX + 20, rowY + 4);
+        g2d.setFont(smallFont);
+        g2d.setColor(mutedTextColor);
+        g2d.drawString(STAT_CODES[statIndex], attrPanelX + 20, rowY + 18);
+
+        statBigDecButtons[statIndex].render(g2d);
+        statDecButtons[statIndex].render(g2d);
+
+        g2d.setColor(new Color(52, 54, 60));
+        g2d.drawLine(sliderX, sliderY, sliderX + sliderWidth, sliderY);
+        g2d.setColor(new Color(55, 55, 58));
+        int tickX = sliderX + sliderWidth / 2;
+        g2d.drawLine(tickX, sliderY - 5, tickX, sliderY + 5);
+        g2d.setFont(smallFont);
+        g2d.setColor(mutedTextColor);
+        g2d.drawString("0", sliderX - 3, sliderY + 16);
+        g2d.drawString("99", sliderX + sliderWidth - 8, sliderY + 16);
+        g2d.setColor(selectedColor);
+        g2d.drawLine(sliderX, sliderY, knobX, sliderY);
+        g2d.fillRect(knobX - 2, sliderY - 7, 4, 14);
+
+        statIncButtons[statIndex].render(g2d);
+        statBigIncButtons[statIndex].render(g2d);
+
+        g2d.setColor(textColor);
+        g2d.setFont(buttonFont);
+        String valueText = String.valueOf(statValue);
+        FontMetrics valueMetrics = g2d.getFontMetrics();
+        g2d.drawString(valueText, attrPanelX + attrPanelWidth - 20 - valueMetrics.stringWidth(valueText), rowY + 12);
+    }
+
+    private java.lang.Character getTypedCharacter() {
+        boolean shift = Engine.instance().keyboard.keyPressed(KeyEvent.VK_SHIFT);
+
+        for (int key = KeyEvent.VK_A; key <= KeyEvent.VK_Z; key++) {
+            if (Engine.instance().keyboard.keyJustPressed(key)) {
+                char typed = (char) ('a' + key - KeyEvent.VK_A);
+                return shift ? java.lang.Character.toUpperCase(typed) : typed;
+            }
+        }
+
+        for (int key = KeyEvent.VK_0; key <= KeyEvent.VK_9; key++) {
+            if (Engine.instance().keyboard.keyJustPressed(key)) {
+                return (char) ('0' + key - KeyEvent.VK_0);
+            }
+        }
+
+        if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_SPACE)) {
+            return ' ';
+        }
+        if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_MINUS)) {
+            return '-';
+        }
+        if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_QUOTE)) {
+            return '\"';
+        }
+        if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_PERIOD)) {
+            return '.';
+        }
+
+        return null;
     }
 }

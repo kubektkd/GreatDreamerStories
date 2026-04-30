@@ -489,18 +489,24 @@ public class CharacterSelectState implements State {
         // Mini stats
         g2d.setColor(textColor);
         g2d.setFont(new Font("Arial", Font.PLAIN, 10));
-        String stats = String.format("S%d D%d I%d", 
-                character.getStrength(), character.getDexterity(), character.getIntelligence());
+        String stats = String.format("S%d P%d E%d", 
+                character.getStrength(), character.getPower(), character.getEducation());
         FontMetrics statsMetrics = g2d.getFontMetrics();
         int statsX = slotX + (slotWidth - statsMetrics.stringWidth(stats)) / 2;
-        int statsY = slotY + 70;
+        int statsY = slotY + 62;
         g2d.drawString(stats, statsX, statsY);
         
-        String stats2 = String.format("P%d C%d", 
-                character.getPerception(), character.getCharisma());
+        String stats2 = String.format("C%d I%d A%d", 
+                character.getConstitution(), character.getIntelligence(), character.getAppearance());
         int stats2X = slotX + (slotWidth - statsMetrics.stringWidth(stats2)) / 2;
-        int stats2Y = slotY + 85;
+        int stats2Y = slotY + 77;
         g2d.drawString(stats2, stats2X, stats2Y);
+
+        String stats3 = String.format("L%d S%d D%d", 
+                character.getLuck(), character.getSize(), character.getDexterity());
+        int stats3X = slotX + (slotWidth - statsMetrics.stringWidth(stats3)) / 2;
+        int stats3Y = slotY + 92;
+        g2d.drawString(stats3, stats3X, stats3Y);
         
         // Last played info
         g2d.setColor(new Color(180, 180, 180));

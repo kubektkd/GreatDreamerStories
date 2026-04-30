@@ -17,10 +17,14 @@ public class Character implements Serializable {
     
     // Character stats (total of 20 points to distribute)
     private int strength;      // Physical power and combat effectiveness
-    private int dexterity;     // Agility, reflexes, and precision
+    private int power;         // Physical power and combat effectiveness
+    private int education;     // Education and knowledge
+    private int constitution;  // Constitution and health
     private int intelligence;  // Reasoning, memory, and problem-solving
-    private int perception;    // Awareness, intuition, and observation
-    private int charisma;      // Leadership, persuasion, and social skills
+    private int appearance;    // Physical appearance and attractiveness
+    private int luck;          // Chance and good fortune
+    private int size;          // Physical size and carrying capacity
+    private int dexterity;     // Agility, reflexes, and precision
     
     // Story progress
     private int currentStoryIndex;    // Which story the character is currently on
@@ -32,15 +36,15 @@ public class Character implements Serializable {
     private LocalDateTime lastPlayedAt;
     
     // Total skill points available for distribution (at character creation)
-    public static final int INITIAL_SKILL_POINTS = 20;
-    public static final int MIN_STAT_VALUE = 1;
-    public static final int MAX_STAT_VALUE = 10;
+    public static final int INITIAL_SKILL_POINTS = 500;
+    public static final int INITIAL_STAT_VALUE = 50;
+    public static final int MIN_STAT_VALUE = 15;
+    public static final int MAX_STAT_VALUE = 90;
     public static final int MAX_STORIES = 10; // Room for future story expansions
     
     public enum Gender {
         MALE("Male"),
-        FEMALE("Female"),
-        OTHER("Other");
+        FEMALE("Female");
         
         private final String displayName;
         
@@ -56,15 +60,19 @@ public class Character implements Serializable {
     /**
      * Constructor for creating a new character
      */
-    public Character(String name, Gender gender, int strength, int dexterity, 
-                    int intelligence, int perception, int charisma) {
+    public Character(String name, Gender gender, int strength, int power, int education, int constitution,
+                    int intelligence, int appearance, int luck, int size, int dexterity) {
         this.name = name;
         this.gender = gender;
         this.strength = strength;
-        this.dexterity = dexterity;
+        this.power = power;
+        this.education = education;
+        this.constitution = constitution;
         this.intelligence = intelligence;
-        this.perception = perception;
-        this.charisma = charisma;
+        this.appearance = appearance;
+        this.luck = luck;
+        this.size = size;
+        this.dexterity = dexterity;
         
         this.currentStoryIndex = 0;
         this.completedStories = new boolean[MAX_STORIES];
@@ -82,13 +90,17 @@ public class Character implements Serializable {
      * Validates that the character's stats are properly distributed
      */
     public boolean isValidStatDistribution() {
-        int total = strength + dexterity + intelligence + perception + charisma;
+        int total = strength + power + education + constitution + intelligence + appearance + luck + size + dexterity;
         return total == INITIAL_SKILL_POINTS &&
                strength >= MIN_STAT_VALUE && strength <= MAX_STAT_VALUE &&
-               dexterity >= MIN_STAT_VALUE && dexterity <= MAX_STAT_VALUE &&
+               power >= MIN_STAT_VALUE && power <= MAX_STAT_VALUE &&
+               education >= MIN_STAT_VALUE && education <= MAX_STAT_VALUE &&
+               constitution >= MIN_STAT_VALUE && constitution <= MAX_STAT_VALUE &&
                intelligence >= MIN_STAT_VALUE && intelligence <= MAX_STAT_VALUE &&
-               perception >= MIN_STAT_VALUE && perception <= MAX_STAT_VALUE &&
-               charisma >= MIN_STAT_VALUE && charisma <= MAX_STAT_VALUE;
+               appearance >= MIN_STAT_VALUE && appearance <= MAX_STAT_VALUE &&
+               luck >= MIN_STAT_VALUE && luck <= MAX_STAT_VALUE &&
+               size >= MIN_STAT_VALUE && size <= MAX_STAT_VALUE &&
+               dexterity >= MIN_STAT_VALUE && dexterity <= MAX_STAT_VALUE;
     }
     
     /**
@@ -128,9 +140,9 @@ public class Character implements Serializable {
             if (completed) completedCount++;
         }
         
-        return String.format("%s (%s)\nSTR:%d DEX:%d INT:%d PER:%d CHA:%d\nStories: %d/%d completed\nPlaytime: %dh %dm", 
+        return String.format("%s (%s)\nSTR:%d POW:%d EDU:%d CON:%d INT:%d APP:%d LCK:%d SIZ:%d DEX:%d\nStories: %d/%d completed\nPlaytime: %dh %dm", 
             name, gender.getDisplayName(),
-            strength, dexterity, intelligence, perception, charisma,
+            strength, power, education, constitution, intelligence, appearance, luck, size, dexterity,
             completedCount, MAX_STORIES,
             totalPlaytime / 60, totalPlaytime % 60);
     }
@@ -147,17 +159,29 @@ public class Character implements Serializable {
     public int getStrength() { return strength; }
     public void setStrength(int strength) { this.strength = strength; }
     
-    public int getDexterity() { return dexterity; }
-    public void setDexterity(int dexterity) { this.dexterity = dexterity; }
+    public int getPower() { return power; }
+    public void setPower(int power) { this.power = power; }
+    
+    public int getEducation() { return education; }
+    public void setEducation(int education) { this.education = education; }
+    
+    public int getConstitution() { return constitution; }
+    public void setConstitution(int constitution) { this.constitution = constitution; }
     
     public int getIntelligence() { return intelligence; }
     public void setIntelligence(int intelligence) { this.intelligence = intelligence; }
     
-    public int getPerception() { return perception; }
-    public void setPerception(int perception) { this.perception = perception; }
+    public int getAppearance() { return appearance; }
+    public void setAppearance(int appearance) { this.appearance = appearance; }
     
-    public int getCharisma() { return charisma; }
-    public void setCharisma(int charisma) { this.charisma = charisma; }
+    public int getLuck() { return luck; }
+    public void setLuck(int luck) { this.luck = luck; }
+    
+    public int getSize() { return size; }
+    public void setSize(int size) { this.size = size; }
+
+    public int getDexterity() { return dexterity; }
+    public void setDexterity(int dexterity) { this.dexterity = dexterity; }
     
     public int getCurrentStoryIndex() { return currentStoryIndex; }
     public void setCurrentStoryIndex(int currentStoryIndex) { this.currentStoryIndex = currentStoryIndex; }

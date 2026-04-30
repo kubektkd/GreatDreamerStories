@@ -92,7 +92,7 @@ public class MainMenuState implements State {
         exitButton.setColors(normalColor, hoverColor, pressedColor, textColor);
         
         // Set button fonts
-        Font buttonFont = Engine.instance().resources.getFont("Milonga/Milonga-Regular.ttf", 18);
+        Font buttonFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 18);
         startButton.setFont(buttonFont);
         settingsButton.setFont(buttonFont);
         exitButton.setFont(buttonFont);
@@ -429,18 +429,9 @@ public class MainMenuState implements State {
         exitButton.x = centerX - 100;
         exitButton.y = buttonStartY + buttonSpacing * 2;
         exitButton.render(g);
-        
-        // Draw instructions
-        Font infoFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 14);
-        g2d.setColor(new Color(200, 200, 200));
-        g2d.setFont(infoFont);
-        String instructions = "Use mouse or arrow keys + Enter to navigate";
-        FontMetrics instMetrics = g2d.getFontMetrics();
-        int instX = Math.max(25, centerX - instMetrics.stringWidth(instructions) / 2);
-        int instY = centerY + 175;
-        g2d.drawString(instructions, instX, instY);
 
         // Draw version
+        Font infoFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 14);
         g2d.setColor(new Color(200, 200, 200));
         g2d.setFont(infoFont);
         String version = Game.getInstance().getVersion();

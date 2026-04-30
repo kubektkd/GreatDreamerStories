@@ -1,5 +1,6 @@
 package atomiccode.greatDreamerStories.states;
 
+import atomiccode.cthulhuEngine.engineMain.engine.Resources;
 import atomiccode.cthulhuEngine.inputsOutputs.stateControl.State;
 import atomiccode.cthulhuEngine.engineMain.engine.Engine;
 import atomiccode.cthulhuEngine.ui.Button;
@@ -18,8 +19,13 @@ public class CharacterSelectState implements State {
     private Button[] menuButtons;
     private SaveManager saveManager;
     private static final int SLOT_COLS = 4;
+    private static final int SLOT_HEIGHT = 168;
+    private static final int SLOT_SPACING_X = 20;
+    private static final int SLOT_SPACING_Y = 24;
+    private static final int ACTION_BUTTON_WIDTH = 130;
+    private static final int ACTION_BUTTON_HEIGHT = 48;
     private static final int DELETE_CONFIRM_BUTTON_WIDTH = 160;
-    private static final int DELETE_CONFIRM_BUTTON_HEIGHT = 40;
+    private static final int DELETE_CONFIRM_BUTTON_HEIGHT = 48;
     
     // Slot interaction
     private int hoveredSlot = -1;
@@ -33,10 +39,27 @@ public class CharacterSelectState implements State {
     private int pendingDeleteSlot = -1;
     
     // Colors and fonts
+    private final Color pageColor = new Color(8, 9, 11);
+    private final Color lineBorderColor = new Color(31, 34, 40);
+    private final Color borderColor = new Color(55, 58, 65);
+    private final Color mutedBorderColor = new Color(155, 155, 155);
+    private final Color textColor = new Color(235, 233, 225);
+    private final Color mutedTextColor = new Color(116, 116, 116);
+    private final Color selectedColor = new Color(245, 244, 238);
+    private final Color dangerColor = new Color(125, 42, 42);
+    private final Color dangerHoverColor = new Color(160, 58, 58);
     private Font buttonFont;
     private Font titleFont;
     private Font slotFont;
     private Font tooltipFont;
+    private int layoutWidth;
+    private int layoutHeight;
+    private int layoutX;
+    private int layoutY;
+    private int gridStartX;
+    private int gridStartY;
+    private int gridWidth;
+    private int slotWidth;
 
     @Override
     public int getPriority() {
@@ -49,28 +72,20 @@ public class CharacterSelectState implements State {
         saveManager = SaveManager.getInstance();
         
         // Initialize fonts
-        buttonFont = Engine.instance().resources.getFont("Milonga/Milonga-Regular.ttf", 18);
-        titleFont = Engine.instance().resources.getFont("Milonga/Milonga-Regular.ttf", 48);
-        slotFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 24);
+        buttonFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 14);
+        titleFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 30);
+        slotFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 22);
         tooltipFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 12);
 
         // Initialize buttons
-        backButton = new Button(0, 0, 200, 50, "Back");
-        confirmDeleteButton = new Button(0, 0, DELETE_CONFIRM_BUTTON_WIDTH, DELETE_CONFIRM_BUTTON_HEIGHT, "Delete");
-        cancelDeleteButton = new Button(0, 0, DELETE_CONFIRM_BUTTON_WIDTH, DELETE_CONFIRM_BUTTON_HEIGHT, "Cancel");
+        backButton = new Button(0, 0, ACTION_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT, "<  BACK");
+        confirmDeleteButton = new Button(0, 0, DELETE_CONFIRM_BUTTON_WIDTH, DELETE_CONFIRM_BUTTON_HEIGHT, "DELETE");
+        cancelDeleteButton = new Button(0, 0, DELETE_CONFIRM_BUTTON_WIDTH, DELETE_CONFIRM_BUTTON_HEIGHT, "CANCEL");
 
         // Set button colors
-        Color normalColor = new Color(50, 50, 50, 200);
-        Color hoverColor = new Color(70, 70, 70, 200);
-        Color pressedColor = new Color(30, 30, 30, 200);
-        Color textColor = Color.WHITE;
-        Color deleteNormalColor = new Color(120, 40, 40, 220);
-        Color deleteHoverColor = new Color(160, 60, 60, 220);
-        Color deletePressedColor = new Color(90, 30, 30, 220);
-        
-        backButton.setColors(normalColor, hoverColor, pressedColor, textColor);
-        confirmDeleteButton.setColors(deleteNormalColor, deleteHoverColor, deletePressedColor, textColor);
-        cancelDeleteButton.setColors(normalColor, hoverColor, pressedColor, textColor);
+        backButton.setColors(new Color(12, 13, 16), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
+        confirmDeleteButton.setColors(dangerColor, dangerHoverColor, new Color(90, 30, 30), textColor);
+        cancelDeleteButton.setColors(new Color(12, 13, 16), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
         backButton.setFont(buttonFont);
         confirmDeleteButton.setFont(buttonFont);
         cancelDeleteButton.setFont(buttonFont);
@@ -117,7 +132,7 @@ public class CharacterSelectState implements State {
         // Handle arrow key navigation
         if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_UP)) {
             if (selectedIndex == saveManager.getMaxSlots()) {
-                selectedIndex = saveManager.getMaxSlots() - SLOT_COLS; // Move from back button to bottom row
+                selectedIndex = saveManager.getMaxSlots() - 1; // Move from back button to bottom row
             } else if (selectedIndex >= SLOT_COLS) {
                 selectedIndex -= SLOT_COLS; // Move up one row
             }
@@ -150,6 +165,8 @@ public class CharacterSelectState implements State {
 
     @Override
     public void update() {
+        updateLayout();
+        
         // Update button states
         int mouseX = Engine.instance().mouse.getX();
         int mouseY = Engine.instance().mouse.getY();
@@ -186,36 +203,34 @@ public class CharacterSelectState implements State {
         wasRightPressed = rightPressed;
     }
     
-    private void updateSlotHover(int mouseX, int mouseY) {
+    private void updateLayout() {
         int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
         int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
-        int centerX = windowWidth / 2;
-        int centerY = windowHeight / 2;
+        layoutWidth = Math.min(windowWidth - 120, 1060);
+        layoutHeight = Math.min(windowHeight - 90, 620);
+        layoutX = (windowWidth - layoutWidth) / 2;
+        layoutY = (windowHeight - layoutHeight) / 2;
+        gridWidth = layoutWidth;
+        slotWidth = (gridWidth - (SLOT_COLS - 1) * SLOT_SPACING_X) / SLOT_COLS;
+        gridStartX = layoutX;
+        gridStartY = layoutY + 120;
         
-        // Calculate slot positions (same as in render method)
-        int slotRows = 2;
-        int slotCols = SLOT_COLS;
-        int slotWidth = 100;
-        int slotHeight = 120;
-        int slotSpacingX = 40;
-        int slotSpacingY = 30;
-        
-        int gridWidth = slotCols * slotWidth + (slotCols - 1) * slotSpacingX;
-        int gridHeight = slotRows * slotHeight + (slotRows - 1) * slotSpacingY;
-        int gridStartX = centerX - gridWidth / 2;
-        int gridStartY = centerY - gridHeight / 2 + 20;
-        
+        backButton.x = layoutX + layoutWidth - ACTION_BUTTON_WIDTH;
+        backButton.y = layoutY + layoutHeight - 62;
+    }
+    
+    private void updateSlotHover(int mouseX, int mouseY) {
         int oldHoveredSlot = hoveredSlot;
         hoveredSlot = -1;
         
         for (int i = 0; i < saveManager.getMaxSlots(); i++) {
-            int row = i / slotCols;
-            int col = i % slotCols;
-            int slotX = gridStartX + col * (slotWidth + slotSpacingX);
-            int slotY = gridStartY + row * (slotHeight + slotSpacingY);
+            int row = i / SLOT_COLS;
+            int col = i % SLOT_COLS;
+            int slotX = gridStartX + col * (slotWidth + SLOT_SPACING_X);
+            int slotY = gridStartY + row * (SLOT_HEIGHT + SLOT_SPACING_Y);
             
             if (mouseX >= slotX && mouseX <= slotX + slotWidth &&
-                mouseY >= slotY && mouseY <= slotY + slotHeight) {
+                mouseY >= slotY && mouseY <= slotY + SLOT_HEIGHT) {
                 hoveredSlot = i;
                 break;
             }
@@ -301,53 +316,44 @@ public class CharacterSelectState implements State {
 
     @Override
     public void render(Graphics g) {
+        updateLayout();
+        
         // Get window dimensions from the engine
         int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
         int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
-        
-        // Set background color
-        g.setColor(new Color(20, 20, 40)); // Dark blue background
-        g.fillRect(0, 0, windowWidth, windowHeight);
-        
-        // Calculate center position
-        int centerX = windowWidth / 2;
-        int centerY = windowHeight / 2;
-        
-        // Draw main menu title
         Graphics2D g2d = (Graphics2D) g;
+        Resources.enableAntialiasing(g2d);
         
-        // Draw title
-        g2d.setColor(Color.WHITE);
+        g2d.setColor(pageColor);
+        g2d.fillRect(0, 0, windowWidth, windowHeight);
+        drawSubtleBackground(g2d, windowWidth, windowHeight);
+        
+        g2d.setColor(textColor);
         g2d.setFont(titleFont);
-        FontMetrics titleMetrics = g2d.getFontMetrics();
-        String title = "Choose your character";
-        int titleX = centerX - titleMetrics.stringWidth(title) / 2;
-        int titleY = centerY - 180;
-        g2d.drawString(title, titleX, titleY);
-
-        // Draw 8 character slots in two rows of 4, centered horizontally
-        int slotRows = 2;
-        int slotCols = SLOT_COLS;
+        g2d.drawString("CHOOSE INVESTIGATOR", layoutX, layoutY + 38);
+        g2d.setFont(tooltipFont);
+        g2d.setColor(mutedTextColor);
+        g2d.drawString("STOKSJÖ POLICE ARCHIVE // CASE FILES", layoutX + 2, layoutY + 62);
+        g2d.setColor(lineBorderColor);
+        g2d.drawLine(layoutX, layoutY + 80, layoutX + gridStartX + gridWidth - layoutX, layoutY + 80);
+        
+        g2d.setColor(textColor);
+        g2d.setFont(titleFont);
+        String fileCount = String.valueOf(getOccupiedSlotCount());
+        FontMetrics countMetrics = g2d.getFontMetrics();
+        g2d.drawString(fileCount, layoutX + layoutWidth - countMetrics.stringWidth(fileCount) - 10, layoutY + 42);
+        g2d.setFont(tooltipFont);
+        g2d.setColor(mutedTextColor);
+        g2d.drawString("ACTIVE CASES", layoutX + layoutWidth - 90, layoutY + 62);
+        
         int slotCount = saveManager.getMaxSlots();
-        int slotWidth = 100;
-        int slotHeight = 120;
-        int slotSpacingX = 40;
-        int slotSpacingY = 30;
-
-        // Calculate total width and height of the grid
-        int gridWidth = slotCols * slotWidth + (slotCols - 1) * slotSpacingX;
-        int gridHeight = slotRows * slotHeight + (slotRows - 1) * slotSpacingY;
-
-        int gridStartX = centerX - gridWidth / 2;
-        int gridStartY = centerY - gridHeight / 2 + 20;
-
         for (int i = 0; i < slotCount; i++) {
-            int row = i / slotCols;
-            int col = i % slotCols;
-            int slotX = gridStartX + col * (slotWidth + slotSpacingX);
-            int slotY = gridStartY + row * (slotHeight + slotSpacingY);
+            int row = i / SLOT_COLS;
+            int col = i % SLOT_COLS;
+            int slotX = gridStartX + col * (slotWidth + SLOT_SPACING_X);
+            int slotY = gridStartY + row * (SLOT_HEIGHT + SLOT_SPACING_Y);
 
-            drawCharacterSlot(g2d, i, slotX, slotY, slotWidth, slotHeight);
+            drawCharacterSlot(g2d, i, slotX, slotY, slotWidth, SLOT_HEIGHT);
         }
 
         // Draw tooltip if hovering and enough time has passed
@@ -356,11 +362,6 @@ public class CharacterSelectState implements State {
             drawTooltip(g2d);
         }
 
-        // Position and render buttons
-        int buttonStartY = centerY + gridHeight / 2 + 100;
-        
-        backButton.x = centerX - 100;
-        backButton.y = buttonStartY;
         g2d.setStroke(new BasicStroke(1f));
         backButton.render(g);
         
@@ -369,11 +370,28 @@ public class CharacterSelectState implements State {
         }
     }
     
+    private int getOccupiedSlotCount() {
+        int occupiedSlots = 0;
+        for (int i = 0; i < saveManager.getMaxSlots(); i++) {
+            if (saveManager.getCharacter(i) != null) {
+                occupiedSlots++;
+            }
+        }
+        return occupiedSlots;
+    }
+    
+    private void drawSubtleBackground(Graphics2D g2d, int windowWidth, int windowHeight) {
+        g2d.setColor(new Color(255, 255, 255, 8));
+        for (int y = 0; y < windowHeight; y += 4) {
+            g2d.drawLine(0, y, windowWidth, y);
+        }
+    }
+    
     private void drawDeleteConfirmation(Graphics2D g2d, int windowWidth, int windowHeight) {
         Character character = saveManager.getCharacter(pendingDeleteSlot);
         String characterName = character != null ? character.getName() : "this character";
         
-        g2d.setColor(new Color(0, 0, 0, 150));
+        g2d.setColor(new Color(0, 0, 0, 175));
         g2d.fillRect(0, 0, windowWidth, windowHeight);
         
         int popupWidth = 520;
@@ -381,18 +399,19 @@ public class CharacterSelectState implements State {
         int popupX = (windowWidth - popupWidth) / 2;
         int popupY = (windowHeight - popupHeight) / 2;
         
-        g2d.setColor(new Color(30, 30, 50, 245));
-        g2d.fillRoundRect(popupX, popupY, popupWidth, popupHeight, 18, 18);
+        g2d.setColor(new Color(11, 12, 15, 245));
+        g2d.fillRect(popupX, popupY, popupWidth, popupHeight);
         
-        g2d.setColor(new Color(160, 80, 80));
-        g2d.setStroke(new BasicStroke(3f));
-        g2d.drawRoundRect(popupX, popupY, popupWidth, popupHeight, 18, 18);
+        g2d.setColor(dangerHoverColor);
+        g2d.setStroke(new BasicStroke(2f));
+        g2d.drawRect(popupX, popupY, popupWidth, popupHeight);
         
-        g2d.setColor(Color.WHITE);
+        g2d.setColor(textColor);
         g2d.setFont(buttonFont);
-        drawCenteredString(g2d, "Delete character?", popupX, popupY + 45, popupWidth);
+        drawCenteredString(g2d, "DELETE CHARACTER?", popupX, popupY + 45, popupWidth);
         
         g2d.setFont(tooltipFont);
+        g2d.setColor(mutedTextColor);
         drawCenteredString(g2d, "This will permanently delete \"" + characterName + "\".", popupX, popupY + 85, popupWidth);
         drawCenteredString(g2d, "Press Enter to delete or Esc to cancel.", popupX, popupY + 110, popupWidth);
         
@@ -414,44 +433,122 @@ public class CharacterSelectState implements State {
         boolean isAvailable = slotIndex == saveManager.getFirstAvailableSlot();
         boolean isHovered = hoveredSlot == slotIndex;
         boolean isSelected = selectedIndex == slotIndex;
-        
-        // Determine slot appearance
-        Color backgroundColor;
-        Color borderColor;
+
+        Color folderColor;
+        Color folderAccentColor;
+        Color slotBorderColor;
         Color textColor;
         
         if (isOccupied) {
-            // Occupied slot - normal colors
-            backgroundColor = isHovered ? new Color(60, 60, 80, 220) : new Color(40, 40, 60, 220);
-            borderColor = isSelected ? new Color(120, 180, 255) : new Color(100, 100, 120);
-            textColor = Color.WHITE;
+            folderColor = isHovered ? new Color(191, 151, 88) : new Color(174, 133, 72);
+            folderAccentColor = new Color(214, 182, 121);
+            slotBorderColor = isSelected ? selectedColor : borderColor;
+            textColor = new Color(38, 29, 18);
         } else if (isAvailable) {
-            // Available empty slot - highlighted
-            backgroundColor = isHovered ? new Color(80, 120, 80, 220) : new Color(60, 100, 60, 220);
-            borderColor = isSelected ? new Color(120, 255, 120) : new Color(120, 180, 120);
-            textColor = Color.WHITE;
+            folderColor = isHovered ? new Color(181, 139, 76) : new Color(157, 116, 61);
+            folderAccentColor = new Color(201, 166, 105);
+            slotBorderColor = isSelected ? selectedColor : new Color(86, 92, 84);
+            textColor = new Color(43, 31, 18);
         } else {
-            // Unavailable empty slot - grayed out
-            backgroundColor = new Color(30, 30, 40, 220);
-            borderColor = new Color(60, 60, 70);
-            textColor = new Color(100, 100, 110);
+            folderColor = new Color(75, 61, 42);
+            folderAccentColor = new Color(97, 80, 55);
+            slotBorderColor = mutedBorderColor;
+            textColor = new Color(118, 103, 78);
         }
-        
-        // Draw slot background
-        g2d.setColor(backgroundColor);
-        g2d.fillRoundRect(slotX, slotY, slotWidth, slotHeight, 18, 18);
 
-        // Draw border
-        g2d.setColor(borderColor);
-        g2d.setStroke(new BasicStroke(isSelected ? 4f : 2f));
-        g2d.drawRoundRect(slotX, slotY, slotWidth, slotHeight, 18, 18);
+        if (isOccupied) {
+            drawFolderPapers(g2d, slotX, slotY, slotWidth, slotHeight);
+        }
 
-        // Draw slot content
+        drawFolderShape(g2d, slotX, slotY, slotWidth, slotHeight, folderColor, folderAccentColor, slotBorderColor, isSelected);
+
         if (isOccupied) {
             drawOccupiedSlot(g2d, character, slotX, slotY, slotWidth, slotHeight, textColor);
         } else {
             drawEmptySlot(g2d, slotX, slotY, slotWidth, slotHeight, textColor, isAvailable);
         }
+    }
+
+    private void drawFolderPapers(Graphics2D g2d, int slotX, int slotY, int slotWidth, int slotHeight) {
+        int paperX = slotX + 18;
+        int paperY = slotY + 14;
+        int paperWidth = slotWidth - 34;
+        int paperHeight = slotHeight - 42;
+
+        g2d.setColor(new Color(224, 217, 194));
+        g2d.fillRect(paperX + 8, paperY + 4, paperWidth, paperHeight);
+        g2d.setColor(new Color(166, 153, 124));
+        g2d.drawRect(paperX + 8, paperY + 4, paperWidth, paperHeight);
+
+        g2d.setColor(new Color(236, 230, 206));
+        g2d.fillRect(paperX, paperY, paperWidth, paperHeight);
+        g2d.setColor(new Color(176, 162, 130));
+        g2d.drawRect(paperX, paperY, paperWidth, paperHeight);
+
+        g2d.setColor(new Color(125, 111, 84));
+        for (int line = 0; line < 4; line++) {
+            int y = paperY + 28 + line * 15;
+            g2d.drawLine(paperX + 16, y, paperX + paperWidth - 16, y);
+        }
+    }
+
+    private void drawFolderShape(Graphics2D g2d, int slotX, int slotY, int slotWidth, int slotHeight,
+                                 Color folderColor, Color folderAccentColor, Color borderColor, boolean isSelected) {
+        int tabHeight = 26;
+        int tabWidth = Math.max(72, slotWidth / 3);
+        int tabSlope = 16;
+        int bodyTop = slotY + tabHeight;
+
+        Polygon backTab = new Polygon();
+        backTab.addPoint(slotX + 10, bodyTop);
+        backTab.addPoint(slotX + 18, slotY + 7);
+        backTab.addPoint(slotX + tabWidth, slotY + 7);
+        backTab.addPoint(slotX + tabWidth + tabSlope, bodyTop);
+        backTab.addPoint(slotX + slotWidth - 8, bodyTop);
+        backTab.addPoint(slotX + slotWidth - 8, slotY + slotHeight - 8);
+        backTab.addPoint(slotX + 10, slotY + slotHeight - 8);
+
+        g2d.setColor(new Color(0, 0, 0, 70));
+        g2d.fillPolygon(translatePolygon(backTab, 4, 5));
+
+        g2d.setColor(folderAccentColor);
+        g2d.fillPolygon(backTab);
+
+        Polygon front = new Polygon();
+        front.addPoint(slotX, bodyTop + 8);
+        front.addPoint(slotX + slotWidth, bodyTop + 8);
+        front.addPoint(slotX + slotWidth - 8, slotY + slotHeight);
+        front.addPoint(slotX + 8, slotY + slotHeight);
+
+        g2d.setColor(folderColor);
+        g2d.fillPolygon(front);
+        g2d.setColor(isSelected ? borderColor : lineBorderColor);
+        g2d.setStroke(new BasicStroke(isSelected ? 3f : 1f));
+        g2d.drawPolygon(createFolderOutline(slotX, slotY, slotWidth, slotHeight, bodyTop, tabWidth, tabSlope));
+        g2d.setStroke(new BasicStroke(1f));
+    }
+
+    private Polygon createFolderOutline(int slotX, int slotY, int slotWidth, int slotHeight,
+                                        int bodyTop, int tabWidth, int tabSlope) {
+        Polygon outline = new Polygon();
+        outline.addPoint(slotX, bodyTop + 8);
+        outline.addPoint(slotX + 10, bodyTop);
+        outline.addPoint(slotX + 18, slotY + 7);
+        outline.addPoint(slotX + tabWidth, slotY + 7);
+        outline.addPoint(slotX + tabWidth + tabSlope, bodyTop);
+        outline.addPoint(slotX + slotWidth - 8, bodyTop);
+        outline.addPoint(slotX + slotWidth, bodyTop + 8);
+        outline.addPoint(slotX + slotWidth - 8, slotY + slotHeight);
+        outline.addPoint(slotX + 8, slotY + slotHeight);
+        return outline;
+    }
+
+    private Polygon translatePolygon(Polygon polygon, int dx, int dy) {
+        Polygon translated = new Polygon();
+        for (int i = 0; i < polygon.npoints; i++) {
+            translated.addPoint(polygon.xpoints[i] + dx, polygon.ypoints[i] + dy);
+        }
+        return translated;
     }
     
     private void drawOccupiedSlot(Graphics2D g2d, Character character, int slotX, int slotY, 
@@ -459,19 +556,19 @@ public class CharacterSelectState implements State {
         g2d.setColor(textColor);
         
         // Character name (truncated if too long)
-        g2d.setFont(tooltipFont);
+        g2d.setFont(slotFont);
         FontMetrics nameMetrics = g2d.getFontMetrics();
         String name = character.getName();
-        if (nameMetrics.stringWidth(name) > slotWidth - 10) {
+        if (nameMetrics.stringWidth(name) > slotWidth - 18) {
             // Truncate name if too long
-            while (nameMetrics.stringWidth(name + "...") > slotWidth - 10 && name.length() > 3) {
+            while (nameMetrics.stringWidth(name + "...") > slotWidth - 18 && name.length() > 3) {
                 name = name.substring(0, name.length() - 1);
             }
             name += "...";
         }
         
         int nameX = slotX + (slotWidth - nameMetrics.stringWidth(name)) / 2;
-        int nameY = slotY + 20;
+        int nameY = slotY + 60;
         g2d.drawString(name, nameX, nameY);
         
         // Character level/progress indicator
@@ -481,38 +578,34 @@ public class CharacterSelectState implements State {
         }
         
         String progressText = "Lvl " + (completedStories + 1);
-        int progressX = slotX + (slotWidth - nameMetrics.stringWidth(progressText)) / 2;
-        int progressY = slotY + 40;
-        g2d.setColor(new Color(150, 255, 150));
+        g2d.setFont(tooltipFont);
+        FontMetrics detailMetrics = g2d.getFontMetrics();
+        int progressX = slotX + (slotWidth - detailMetrics.stringWidth(progressText)) / 2;
+        int progressY = slotY + 85;
+        g2d.setColor(selectedColor);
         g2d.drawString(progressText, progressX, progressY);
         
         // Mini stats
         g2d.setColor(textColor);
-        g2d.setFont(new Font("Arial", Font.PLAIN, 10));
-        String stats = String.format("S%d P%d E%d", 
-                character.getStrength(), character.getPower(), character.getEducation());
+        g2d.setFont(tooltipFont);
+        String stats = String.format("STR:%d POW:%d EDU:%d CON:%d", 
+                character.getStrength(), character.getPower(), character.getEducation(), character.getConstitution());
         FontMetrics statsMetrics = g2d.getFontMetrics();
         int statsX = slotX + (slotWidth - statsMetrics.stringWidth(stats)) / 2;
-        int statsY = slotY + 62;
+        int statsY = slotY + 110;
         g2d.drawString(stats, statsX, statsY);
         
-        String stats2 = String.format("C%d I%d A%d", 
-                character.getConstitution(), character.getIntelligence(), character.getAppearance());
+        String stats2 = String.format("INT:%d APP:%d LCK:%d SIZ:%d DEX:%d", 
+                character.getIntelligence(), character.getAppearance(), character.getLuck(), character.getSize(), character.getDexterity());
         int stats2X = slotX + (slotWidth - statsMetrics.stringWidth(stats2)) / 2;
-        int stats2Y = slotY + 77;
+        int stats2Y = slotY + 125;
         g2d.drawString(stats2, stats2X, stats2Y);
-
-        String stats3 = String.format("L%d S%d D%d", 
-                character.getLuck(), character.getSize(), character.getDexterity());
-        int stats3X = slotX + (slotWidth - statsMetrics.stringWidth(stats3)) / 2;
-        int stats3Y = slotY + 92;
-        g2d.drawString(stats3, stats3X, stats3Y);
         
         // Last played info
-        g2d.setColor(new Color(180, 180, 180));
-        String playtime = String.format("%dh", character.getTotalPlaytime() / 60);
+        g2d.setColor(selectedColor);
+        String playtime = String.format("Playtime: %dh", character.getTotalPlaytime() / 60);
         int playtimeX = slotX + (slotWidth - statsMetrics.stringWidth(playtime)) / 2;
-        int playtimeY = slotY + 110;
+        int playtimeY = slotY + 155;
         g2d.drawString(playtime, playtimeX, playtimeY);
     }
     
@@ -522,7 +615,7 @@ public class CharacterSelectState implements State {
         g2d.setColor(textColor);
         g2d.setFont(slotFont);
         FontMetrics plusMetrics = g2d.getFontMetrics();
-        String plusSign = "+";
+        String plusSign = isAvailable ? "+" : "X";
         int plusX = slotX + (slotWidth - plusMetrics.stringWidth(plusSign)) / 2;
         int plusY = slotY + slotHeight / 2 + plusMetrics.getAscent() / 2;
         g2d.drawString(plusSign, plusX, plusY);
@@ -530,7 +623,7 @@ public class CharacterSelectState implements State {
         // Draw status text
         g2d.setFont(tooltipFont);
         FontMetrics statusMetrics = g2d.getFontMetrics();
-        String statusText = isAvailable ? "New" : "Locked";
+        String statusText = isAvailable ? "NEW FILE" : "LOCKED";
         int statusX = slotX + (slotWidth - statusMetrics.stringWidth(statusText)) / 2;
         int statusY = slotY + slotHeight - 15;
         g2d.drawString(statusText, statusX, statusY);
@@ -569,15 +662,15 @@ public class CharacterSelectState implements State {
         }
         
         // Draw tooltip background
-        g2d.setColor(new Color(30, 30, 30, 240));
-        g2d.fillRoundRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight, 8, 8);
+        g2d.setColor(new Color(11, 12, 15, 245));
+        g2d.fillRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight);
         
-        g2d.setColor(new Color(150, 150, 150));
+        g2d.setColor(borderColor);
         g2d.setStroke(new BasicStroke(1f));
-        g2d.drawRoundRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight, 8, 8);
+        g2d.drawRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight);
         
         // Draw tooltip text
-        g2d.setColor(Color.WHITE);
+        g2d.setColor(textColor);
         int lineY = tooltipY + tooltipMetrics.getAscent() + 5;
         for (String line : lines) {
             g2d.drawString(line, tooltipX + 10, lineY);

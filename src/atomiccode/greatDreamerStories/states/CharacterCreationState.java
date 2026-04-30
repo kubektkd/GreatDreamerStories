@@ -487,7 +487,7 @@ public class CharacterCreationState implements State {
         g2d.drawString("NEW INVESTIGATOR", layoutX, layoutY + 38);
         g2d.setFont(smallFont);
         g2d.setColor(mutedTextColor);
-        g2d.drawString("STOKSJÖ ARCHIVE // CLASSIFIED", layoutX + 2, layoutY + 62);
+        g2d.drawString("STOKSJÖ POLICE ARCHIVE // CLASSIFIED", layoutX + 2, layoutY + 62);
         g2d.setColor(mutedBorderColor);
         g2d.drawLine(layoutX, layoutY + 80, layoutX + leftWidth - 30, layoutY + 80);
 

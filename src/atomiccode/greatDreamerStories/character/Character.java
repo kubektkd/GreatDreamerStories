@@ -25,6 +25,9 @@ public class Character implements Serializable {
     private int luck;          // Chance and good fortune
     private int size;          // Physical size and carrying capacity
     private int dexterity;     // Agility, reflexes, and precision
+
+    // Character skills are derived from stats and fixed police occupation, not saved directly.
+    private transient CharacterSkillSet skills;
     
     // Story progress
     private int currentStoryIndex;    // Which story the character is currently on
@@ -84,6 +87,8 @@ public class Character implements Serializable {
         if (!isValidStatDistribution()) {
             throw new IllegalArgumentException("Invalid stat distribution. Must total " + INITIAL_SKILL_POINTS + " points with each stat between " + MIN_STAT_VALUE + " and " + MAX_STAT_VALUE);
         }
+
+        recalculateSkills();
     }
     
     /**
@@ -140,13 +145,39 @@ public class Character implements Serializable {
             if (completed) completedCount++;
         }
         
-        return String.format("%s (%s)\nSTR:%d POW:%d EDU:%d CON:%d INT:%d APP:%d LCK:%d SIZ:%d DEX:%d\nStories: %d/%d completed\nPlaytime: %dh %dm", 
+        return String.format("%s (%s)\nSTR:%d POW:%d EDU:%d CON:%d INT:%d APP:%d LCK:%d SIZ:%d DEX:%d\n%s\nStories: %d/%d completed\nPlaytime: %dh %dm",
             name, gender.getDisplayName(),
             strength, power, education, constitution, intelligence, appearance, luck, size, dexterity,
+            getKeySkillSummary(),
             completedCount, MAX_STORIES,
             totalPlaytime / 60, totalPlaytime % 60);
     }
-    
+
+    public void recalculateSkills() {
+        this.skills = SkillCalculator.calculateForPoliceOfficer(this);
+    }
+
+    public CharacterSkillSet getSkills() {
+        ensureSkills();
+        return skills;
+    }
+
+    public int getSkillValue(CharacterSkill skill) {
+        ensureSkills();
+        return skills.getValue(skill);
+    }
+
+    public String getKeySkillSummary() {
+        ensureSkills();
+        return skills.formatSkills(CharacterSkill.LAW, CharacterSkill.SPOT_HIDDEN, CharacterSkill.PSYCHOLOGY, CharacterSkill.FIREARMS_HANDGUN);
+    }
+
+    private void ensureSkills() {
+        if (skills == null) {
+            recalculateSkills();
+        }
+    }
+
     // Getters and setters
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -157,31 +188,31 @@ public class Character implements Serializable {
     public String getOccupation() { return occupation; }
     
     public int getStrength() { return strength; }
-    public void setStrength(int strength) { this.strength = strength; }
+    public void setStrength(int strength) { this.strength = strength; recalculateSkills(); }
     
     public int getPower() { return power; }
-    public void setPower(int power) { this.power = power; }
+    public void setPower(int power) { this.power = power; recalculateSkills(); }
     
     public int getEducation() { return education; }
-    public void setEducation(int education) { this.education = education; }
+    public void setEducation(int education) { this.education = education; recalculateSkills(); }
     
     public int getConstitution() { return constitution; }
-    public void setConstitution(int constitution) { this.constitution = constitution; }
+    public void setConstitution(int constitution) { this.constitution = constitution; recalculateSkills(); }
     
     public int getIntelligence() { return intelligence; }
-    public void setIntelligence(int intelligence) { this.intelligence = intelligence; }
+    public void setIntelligence(int intelligence) { this.intelligence = intelligence; recalculateSkills(); }
     
     public int getAppearance() { return appearance; }
-    public void setAppearance(int appearance) { this.appearance = appearance; }
+    public void setAppearance(int appearance) { this.appearance = appearance; recalculateSkills(); }
     
     public int getLuck() { return luck; }
-    public void setLuck(int luck) { this.luck = luck; }
+    public void setLuck(int luck) { this.luck = luck; recalculateSkills(); }
     
     public int getSize() { return size; }
-    public void setSize(int size) { this.size = size; }
+    public void setSize(int size) { this.size = size; recalculateSkills(); }
 
     public int getDexterity() { return dexterity; }
-    public void setDexterity(int dexterity) { this.dexterity = dexterity; }
+    public void setDexterity(int dexterity) { this.dexterity = dexterity; recalculateSkills(); }
     
     public int getCurrentStoryIndex() { return currentStoryIndex; }
     public void setCurrentStoryIndex(int currentStoryIndex) { this.currentStoryIndex = currentStoryIndex; }

@@ -88,7 +88,9 @@ public class SaveManager {
         try (FileInputStream fis = new FileInputStream(filePath.toFile());
              ObjectInputStream ois = new ObjectInputStream(fis)) {
             
-            return (Character) ois.readObject();
+            Character character = (Character) ois.readObject();
+            character.recalculateSkills();
+            return character;
             
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Failed to load character from slot " + slot + ": " + e.getMessage());

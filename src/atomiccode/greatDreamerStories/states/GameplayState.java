@@ -169,7 +169,7 @@ public class GameplayState implements State {
     private void drawCharacterInfoPanel(Graphics2D g2d, int centerX, int centerY) {
         // Character info panel
         int panelWidth = 400;
-        int panelHeight = 120;
+        int panelHeight = 145;
         int panelX = centerX - panelWidth / 2;
         int panelY = centerY - 100;
         
@@ -209,6 +209,11 @@ public class GameplayState implements State {
                 selectedCharacter.getDexterity());
         int statsX = panelX + (panelWidth - textMetrics.stringWidth(stats)) / 2;
         g2d.drawString(stats, statsX, panelY + 70);
+
+        String skills = selectedCharacter.getKeySkillSummary();
+        int skillsX = panelX + (panelWidth - textMetrics.stringWidth(skills)) / 2;
+        g2d.setColor(new Color(180, 220, 255));
+        g2d.drawString(skills, skillsX, panelY + 95);
         
         // Story progress
         int completedStories = 0;
@@ -219,7 +224,7 @@ public class GameplayState implements State {
         String progress = String.format("Stories completed: %d/%d", completedStories, Character.MAX_STORIES);
         int progressX = panelX + (panelWidth - textMetrics.stringWidth(progress)) / 2;
         g2d.setColor(new Color(150, 255, 150));
-        g2d.drawString(progress, progressX, panelY + 95);
+        g2d.drawString(progress, progressX, panelY + 120);
     }
     
     private void drawStoryPlaceholder(Graphics2D g2d, int centerX, int centerY) {

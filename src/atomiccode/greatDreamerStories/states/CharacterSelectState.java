@@ -29,9 +29,6 @@ public class CharacterSelectState implements State {
     
     // Slot interaction
     private int hoveredSlot = -1;
-    private String tooltipText = "";
-    private long tooltipStartTime = 0;
-    private static final long TOOLTIP_DELAY = 1000; // 1 second delay before showing tooltip
     private boolean wasRightPressed = false;
     
     // Delete confirmation
@@ -220,7 +217,6 @@ public class CharacterSelectState implements State {
     }
     
     private void updateSlotHover(int mouseX, int mouseY) {
-        int oldHoveredSlot = hoveredSlot;
         hoveredSlot = -1;
         
         for (int i = 0; i < saveManager.getMaxSlots(); i++) {
@@ -233,28 +229,6 @@ public class CharacterSelectState implements State {
                 mouseY >= slotY && mouseY <= slotY + SLOT_HEIGHT) {
                 hoveredSlot = i;
                 break;
-            }
-        }
-        
-        // Reset tooltip if hover changed
-        if (hoveredSlot != oldHoveredSlot) {
-            tooltipStartTime = System.currentTimeMillis();
-            tooltipText = "";
-            if (hoveredSlot != -1) {
-                updateTooltipText(hoveredSlot);
-            }
-        }
-    }
-    
-    private void updateTooltipText(int slotIndex) {
-        Character character = saveManager.getCharacter(slotIndex);
-        if (character != null) {
-            tooltipText = character.getCharacterSummary();
-        } else {
-            if (slotIndex == saveManager.getFirstAvailableSlot()) {
-                tooltipText = "Click to create a new character";
-            } else {
-                tooltipText = "Empty slot\n(Complete previous characters first)";
             }
         }
     }
@@ -287,9 +261,6 @@ public class CharacterSelectState implements State {
     private void confirmDeleteSlot() {
         if (pendingDeleteSlot >= 0 && pendingDeleteSlot < saveManager.getMaxSlots()) {
             saveManager.deleteCharacter(pendingDeleteSlot);
-            if (hoveredSlot == pendingDeleteSlot) {
-                updateTooltipText(hoveredSlot);
-            }
         }
         
         cancelDeleteSlot();
@@ -354,12 +325,6 @@ public class CharacterSelectState implements State {
             int slotY = gridStartY + row * (SLOT_HEIGHT + SLOT_SPACING_Y);
 
             drawCharacterSlot(g2d, i, slotX, slotY, slotWidth, SLOT_HEIGHT);
-        }
-
-        // Draw tooltip if hovering and enough time has passed
-        if (hoveredSlot != -1 && !tooltipText.isEmpty() && 
-            System.currentTimeMillis() - tooltipStartTime > TOOLTIP_DELAY) {
-            drawTooltip(g2d);
         }
 
         g2d.setStroke(new BasicStroke(1f));
@@ -629,52 +594,4 @@ public class CharacterSelectState implements State {
         g2d.drawString(statusText, statusX, statusY);
     }
     
-    private void drawTooltip(Graphics2D g2d) {
-        if (tooltipText.isEmpty()) return;
-        
-        // Calculate tooltip size
-        g2d.setFont(tooltipFont);
-        FontMetrics tooltipMetrics = g2d.getFontMetrics();
-        String[] lines = tooltipText.split("\n");
-        
-        int maxWidth = 0;
-        for (String line : lines) {
-            maxWidth = Math.max(maxWidth, tooltipMetrics.stringWidth(line));
-        }
-        
-        int tooltipWidth = maxWidth + 20;
-        int tooltipHeight = lines.length * tooltipMetrics.getHeight() + 10;
-        
-        // Position tooltip near mouse
-        int mouseX = Engine.instance().mouse.getX();
-        int mouseY = Engine.instance().mouse.getY();
-        int tooltipX = mouseX + 15;
-        int tooltipY = mouseY - tooltipHeight - 5;
-        
-        // Keep tooltip on screen
-        int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
-        
-        if (tooltipX + tooltipWidth > windowWidth) {
-            tooltipX = mouseX - tooltipWidth - 15;
-        }
-        if (tooltipY < 0) {
-            tooltipY = mouseY + 20;
-        }
-        
-        // Draw tooltip background
-        g2d.setColor(new Color(11, 12, 15, 245));
-        g2d.fillRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight);
-        
-        g2d.setColor(borderColor);
-        g2d.setStroke(new BasicStroke(1f));
-        g2d.drawRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight);
-        
-        // Draw tooltip text
-        g2d.setColor(textColor);
-        int lineY = tooltipY + tooltipMetrics.getAscent() + 5;
-        for (String line : lines) {
-            g2d.drawString(line, tooltipX + 10, lineY);
-            lineY += tooltipMetrics.getHeight();
-        }
-    }
 }

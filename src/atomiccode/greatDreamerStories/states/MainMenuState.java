@@ -5,8 +5,13 @@ import atomiccode.cthulhuEngine.engineMain.engine.Engine;
 import atomiccode.cthulhuEngine.engineMain.engine.EngineFiles;
 import atomiccode.greatDreamerStories.Game;
 import atomiccode.cthulhuEngine.ui.Button;
+import atomiccode.cthulhuEngine.ui.layout.UiAlign;
+import atomiccode.cthulhuEngine.ui.layout.UiLayoutContext;
+import atomiccode.cthulhuEngine.ui.layout.UiRect;
+import atomiccode.cthulhuEngine.ui.layout.UiStackLayout;
 import atomiccode.greatDreamerStories.decorations.Snowflake;
 import atomiccode.greatDreamerStories.decorations.Mist;
+import atomiccode.greatDreamerStories.ui.GreatDreamerTheme;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -30,6 +35,9 @@ public class MainMenuState implements State {
     private boolean cocLogoLoaded = false;
     
     // Menu buttons
+    private static final int MENU_BUTTON_WIDTH = 200;
+    private static final int MENU_BUTTON_HEIGHT = 50;
+    private static final int MENU_BUTTON_GAP = 20;
     private Button startButton, settingsButton, exitButton;
     private int selectedIndex = 0;
     private Button[] menuButtons;
@@ -77,9 +85,9 @@ public class MainMenuState implements State {
         spawnInitialMist();
         
         // Initialize buttons (will be positioned in render method)
-        startButton = new Button(0, 0, 200, 50, "Start Game");
-        settingsButton = new Button(0, 0, 200, 50, "Settings");
-        exitButton = new Button(0, 0, 200, 50, "Exit");
+        startButton = new Button(0, 0, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "Start Game");
+        settingsButton = new Button(0, 0, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "Settings");
+        exitButton = new Button(0, 0, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "Exit");
         
         // Set button colors
         Color normalColor = new Color(50, 50, 50, 200);
@@ -92,7 +100,7 @@ public class MainMenuState implements State {
         exitButton.setColors(normalColor, hoverColor, pressedColor, textColor);
         
         // Set button fonts
-        Font buttonFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 18);
+        Font buttonFont = GreatDreamerTheme.archiveFont(18);
         startButton.setFont(buttonFont);
         settingsButton.setFont(buttonFont);
         exitButton.setFont(buttonFont);
@@ -307,6 +315,8 @@ public class MainMenuState implements State {
     
     @Override
     public void update() {
+        updateLayout();
+
         // Update button states
         int mouseX = Engine.instance().mouse.getX();
         int mouseY = Engine.instance().mouse.getY();
@@ -320,6 +330,32 @@ public class MainMenuState implements State {
         for (int i = 0; i < menuButtons.length; i++) {
             menuButtons[i].setSelected(i == selectedIndex);
         }
+    }
+
+    private void updateLayout() {
+        if (menuButtons == null) {
+            return;
+        }
+
+        UiLayoutContext context = new UiLayoutContext(Engine.instance().getWindow().getCanvas().getWidth(),
+                                                      Engine.instance().getWindow().getCanvas().getHeight());
+        int menuAnchorX = getMenuAnchorX(context.viewportWidth);
+        int menuCenterY = context.viewportHeight / 2;
+        int stackHeight = MENU_BUTTON_HEIGHT * menuButtons.length + MENU_BUTTON_GAP * (menuButtons.length - 1);
+        UiRect stackArea = new UiRect(menuAnchorX - MENU_BUTTON_WIDTH / 2, menuCenterY - 50,
+                                      MENU_BUTTON_WIDTH, stackHeight);
+        UiStackLayout buttonStack = new UiStackLayout(UiStackLayout.Direction.VERTICAL, MENU_BUTTON_GAP,
+                                                      UiAlign.STRETCH, UiAlign.START);
+        UiRect[] buttonRects = buttonStack.layout(stackArea, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, menuButtons.length);
+
+        for (int i = 0; i < menuButtons.length; i++) {
+            menuButtons[i].x = buttonRects[i].x;
+            menuButtons[i].y = buttonRects[i].y;
+        }
+    }
+
+    private int getMenuAnchorX(int windowWidth) {
+        return windowWidth / 5;
     }
     
     @Override
@@ -356,7 +392,7 @@ public class MainMenuState implements State {
         }
         
         // Calculate center position
-        int centerX = windowWidth / 5;
+        int centerX = getMenuAnchorX(windowWidth);
         int centerY = windowHeight / 2;
         
         // Draw main menu logo
@@ -414,24 +450,13 @@ public class MainMenuState implements State {
             g2d.drawImage(cocLogoImage, 20, windowHeight - scaledLogoHeight - 20, scaledLogoWidth, scaledLogoHeight, null);
         }
         
-        // Position and render buttons
-        int buttonSpacing = 70;
-        int buttonStartY = centerY - 50;
-        
-        startButton.x = centerX - 100;
-        startButton.y = buttonStartY;
+        // Render buttons positioned by the responsive stack layout.
         startButton.render(g);
-        
-        settingsButton.x = centerX - 100;
-        settingsButton.y = buttonStartY + buttonSpacing;
         settingsButton.render(g);
-        
-        exitButton.x = centerX - 100;
-        exitButton.y = buttonStartY + buttonSpacing * 2;
         exitButton.render(g);
 
         // Draw version
-        Font infoFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 14);
+        Font infoFont = GreatDreamerTheme.archiveFont(14);
         g2d.setColor(new Color(200, 200, 200));
         g2d.setFont(infoFont);
         String version = Game.getInstance().getVersion();

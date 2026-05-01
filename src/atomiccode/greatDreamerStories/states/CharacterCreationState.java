@@ -6,8 +6,12 @@ import atomiccode.cthulhuEngine.engineMain.engine.Engine;
 import atomiccode.cthulhuEngine.ui.Button;
 import atomiccode.cthulhuEngine.ui.TextInput;
 import atomiccode.cthulhuEngine.ui.Tooltip;
+import atomiccode.cthulhuEngine.ui.layout.UiRect;
 import atomiccode.greatDreamerStories.character.Character;
 import atomiccode.greatDreamerStories.character.SaveManager;
+import atomiccode.greatDreamerStories.ui.ArchiveRenderer;
+import atomiccode.greatDreamerStories.ui.ArchiveScreenLayout;
+import atomiccode.greatDreamerStories.ui.GreatDreamerTheme;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -31,8 +35,6 @@ public class CharacterCreationState implements State {
     private static final int GENDER_BUTTON_HEIGHT = 38;
     private static final int GENDER_BUTTON_GAP = 12;
     private static final long STAT_TOOLTIP_DELAY = 300;
-    private static final Color BUTTON_DISABLED_COLOR = new Color(13, 14, 17);
-    private static final Color BUTTON_DISABLED_TEXT_COLOR = new Color(65, 66, 70);
     private static final String[] STAT_NAMES = {"Strength", "Power", "Education", "Constitution", "Intelligence", "Appearance", "Luck", "Size", "Dexterity"};
     private static final String[] STAT_CODES = {"STR", "POW", "EDU", "CON", "INT", "APP", "LCK", "SIZ", "DEX"};
     private static final String[] STAT_DESCRIPTIONS = {
@@ -79,9 +81,7 @@ public class CharacterCreationState implements State {
     private TextInput nameInput;
     private Tooltip statTooltip;
     private Rectangle[] statLabelBounds = new Rectangle[STAT_COUNT];
-    private int layoutWidth;
-    private int layoutHeight;
-    private int layoutX;
+    private ArchiveScreenLayout layout;
     private int layoutY;
     private int leftWidth;
     private int rightX;
@@ -98,14 +98,12 @@ public class CharacterCreationState implements State {
     private int hoveredStatIndex = -1;
     
     // Colors and fonts
-    private final Color pageColor = new Color(8, 9, 11);
-    private final Color panelColor = new Color(11, 12, 15, 210);
-    private final Color borderColor = new Color(55, 58, 65);
-    private final Color mutedBorderColor = new Color(31, 34, 40);
-    private final Color textColor = new Color(235, 233, 225);
-    private final Color mutedTextColor = new Color(116, 116, 116);
-    private final Color selectedColor = new Color(245, 244, 238);
-    private final Color selectedTextColor = new Color(18, 18, 18);
+    private final Color panelColor = GreatDreamerTheme.PANEL;
+    private final Color borderColor = GreatDreamerTheme.BORDER;
+    private final Color textColor = GreatDreamerTheme.TEXT;
+    private final Color mutedTextColor = GreatDreamerTheme.MUTED_TEXT;
+    private final Color selectedColor = GreatDreamerTheme.SELECTED;
+    private final Color selectedTextColor = GreatDreamerTheme.SELECTED_TEXT;
     private Font buttonFont;
     private Font titleFont;
     private Font labelFont;
@@ -132,11 +130,11 @@ public class CharacterCreationState implements State {
     @Override
     public void onEnter() {
         // Initialize fonts
-        buttonFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 14);
-        titleFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 30);
-        labelFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 12);
-        smallFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 10);
-        tooltipFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 14);
+        buttonFont = GreatDreamerTheme.archiveFont(14);
+        titleFont = GreatDreamerTheme.archiveFont(30);
+        labelFont = GreatDreamerTheme.archiveFont(12);
+        smallFont = GreatDreamerTheme.archiveFont(10);
+        tooltipFont = GreatDreamerTheme.archiveFont(14);
         malePortrait = loadPortrait(MALE_PORTRAIT);
         femalePortrait = loadPortrait(FEMALE_PORTRAIT);
         
@@ -147,12 +145,10 @@ public class CharacterCreationState implements State {
 
     private void initializeInputs() {
         nameInput = new TextInput(0, 0, 0, 0, "SUBJECT NAME", DEFAULT_CHARACTER_NAME, MAX_NAME_LENGTH);
-        nameInput.setFonts(smallFont, buttonFont);
-        nameInput.setColors(panelColor, mutedBorderColor, selectedColor, textColor, mutedTextColor, borderColor);
+        GreatDreamerTheme.styleTextInput(nameInput, smallFont, buttonFont);
 
         statTooltip = new Tooltip(STAT_TOOLTIP_DELAY);
-        statTooltip.setFont(tooltipFont);
-        statTooltip.setColors(new Color(11, 12, 15, 245), borderColor, textColor, mutedTextColor);
+        GreatDreamerTheme.styleTooltip(statTooltip, tooltipFont);
     }
 
     private Image loadPortrait(String portraitPath) {
@@ -210,13 +206,11 @@ public class CharacterCreationState implements State {
         
         // Action buttons
         createButton = new Button(0, 0, CREATE_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT, "CREATE CHARACTER  >");
-        createButton.setColors(selectedColor, new Color(210, 208, 198), new Color(165, 163, 154), selectedTextColor);
-        createButton.setFont(buttonFont);
+        GreatDreamerTheme.stylePrimaryButton(createButton, buttonFont);
         createButton.setOnClick(this::createCharacter);
 
         backButton = new Button(0, 0, BACK_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT, "<  BACK");
-        backButton.setColors(new Color(12, 13, 16), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
-        backButton.setFont(buttonFont);
+        GreatDreamerTheme.styleArchiveButton(backButton, buttonFont);
         backButton.setOnClick(this::cancelCreation);
 
         // Setup menu buttons array for navigation
@@ -426,30 +420,28 @@ public class CharacterCreationState implements State {
         if (enabled) {
             button.setColors(new Color(18, 20, 24), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
         } else {
-            button.setColors(BUTTON_DISABLED_COLOR, BUTTON_DISABLED_COLOR, BUTTON_DISABLED_COLOR, BUTTON_DISABLED_TEXT_COLOR);
+            button.setColors(GreatDreamerTheme.BUTTON_DISABLED, GreatDreamerTheme.BUTTON_DISABLED, GreatDreamerTheme.BUTTON_DISABLED, GreatDreamerTheme.BUTTON_DISABLED_TEXT);
         }
     }
 
     private void updateCreateButtonColor() {
         if (getRemainingPoints() == 0) {
-            createButton.setColors(selectedColor, new Color(210, 208, 198), new Color(165, 163, 154), selectedTextColor);
+            GreatDreamerTheme.stylePrimaryButton(createButton, buttonFont);
         } else {
-            createButton.setColors(BUTTON_DISABLED_COLOR, BUTTON_DISABLED_COLOR, BUTTON_DISABLED_COLOR, BUTTON_DISABLED_TEXT_COLOR);
+            createButton.setColors(GreatDreamerTheme.BUTTON_DISABLED, GreatDreamerTheme.BUTTON_DISABLED, GreatDreamerTheme.BUTTON_DISABLED, GreatDreamerTheme.BUTTON_DISABLED_TEXT);
         }
     }
 
     private void updateLayout() {
         int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
         int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
-        layoutWidth = Math.min(windowWidth - 120, 1060);
-        layoutHeight = Math.min(windowHeight - 90, 620);
-        layoutX = (windowWidth - layoutWidth) / 2;
-        layoutY = (windowHeight - layoutHeight) / 2;
+        layout = ArchiveScreenLayout.fromViewport(windowWidth, windowHeight);
+        layoutY = layout.content.y;
 
-        int leftX = layoutX;
-        leftWidth = Math.max(360, layoutWidth * 44 / 100);
-        int leftContentWidth = leftWidth - 30;
-        int leftContentCenterX = leftX + leftContentWidth / 2;
+        int leftX = layout.leftColumn.x;
+        leftWidth = layout.leftRawWidth;
+        int leftContentWidth = layout.leftColumn.width;
+        int leftContentCenterX = layout.leftColumn.centerX();
         int genderButtonGroupWidth = GENDER_BUTTON_WIDTH * 2 + GENDER_BUTTON_GAP;
         portraitSize = Math.min(260, leftWidth - 160);
         portraitX = leftContentCenterX - portraitSize / 2;
@@ -462,8 +454,8 @@ public class CharacterCreationState implements State {
 
         nameInput.setBounds(leftX, genderButtons[0].y + 82, leftContentWidth, 92);
 
-        rightX = layoutX + leftWidth + 40;
-        int rightWidth = layoutX + layoutWidth - rightX;
+        rightX = layout.rightColumn.x;
+        int rightWidth = layout.rightColumn.width;
         attrPanelX = rightX;
         attrPanelY = layoutY + ATTR_PANEL_TOP_OFFSET;
         attrPanelWidth = Math.max(330, rightWidth - 10);
@@ -482,10 +474,12 @@ public class CharacterCreationState implements State {
             statBigIncButtons[i].y = rowY - 4;
         }
 
-        createButton.x = attrPanelX + attrPanelWidth - CREATE_BUTTON_WIDTH;
-        createButton.y = layoutY + layoutHeight - 62;
-        backButton.x = createButton.x - ACTION_BUTTON_GAP - BACK_BUTTON_WIDTH;
-        backButton.y = createButton.y;
+        UiRect createRect = layout.rightAction(CREATE_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT);
+        createButton.x = createRect.x;
+        createButton.y = createRect.y;
+        UiRect backRect = layout.before(createRect, BACK_BUTTON_WIDTH, ACTION_BUTTON_GAP);
+        backButton.x = backRect.x;
+        backButton.y = backRect.y;
     }
 
     private int getStatRowY(int statIndex) {
@@ -501,35 +495,13 @@ public class CharacterCreationState implements State {
         int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
         int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
 
-        g2d.setColor(pageColor);
-        g2d.fillRect(0, 0, windowWidth, windowHeight);
-
-        drawSubtleBackground(g2d, windowWidth, windowHeight);
-
-        g2d.setColor(textColor);
-        g2d.setFont(titleFont);
-        g2d.drawString("NEW INVESTIGATOR", layoutX, layoutY + 38);
-        g2d.setFont(smallFont);
-        g2d.setColor(mutedTextColor);
-        g2d.drawString("STOKSJÖ POLICE ARCHIVE // CLASSIFIED", layoutX + 2, layoutY + 62);
-        g2d.setColor(mutedBorderColor);
-        g2d.drawLine(layoutX, layoutY + 80, layoutX + leftWidth - 30, layoutY + 80);
-
-        g2d.setColor(textColor);
-        g2d.setFont(labelFont);
-        g2d.drawString("SUBJECT'S PROFILE", rightX, layoutY + 38);
-        g2d.setFont(smallFont);
-        g2d.setColor(mutedTextColor);
-        g2d.drawString("ATTRIBUTES", rightX, layoutY + 62);
-
-        g2d.setFont(titleFont);
-        g2d.setColor(textColor);
-        String remaining = String.valueOf(getRemainingPoints());
-        FontMetrics remainingMetrics = g2d.getFontMetrics();
-        g2d.drawString(remaining, layoutX + layoutWidth - remainingMetrics.stringWidth(remaining) - 20, layoutY + 45);
-        g2d.setFont(smallFont);
-        g2d.setColor(mutedTextColor);
-        g2d.drawString("PTS REMAINING", layoutX + layoutWidth - 94, layoutY + 62);
+        ArchiveRenderer.drawPage(g2d, windowWidth, windowHeight);
+        ArchiveRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
+        ArchiveRenderer.drawHeader(g2d, layout.content, layout.leftColumn.right(), "NEW INVESTIGATOR",
+                                   "STOKSJÖ POLICE ARCHIVE // CLASSIFIED", titleFont, smallFont);
+        ArchiveRenderer.drawSectionHeader(g2d, rightX, layoutY, "SUBJECT'S PROFILE", "ATTRIBUTES", labelFont, smallFont);
+        ArchiveRenderer.drawRightMetric(g2d, layout.content, String.valueOf(getRemainingPoints()),
+                                        "PTS REMAINING", 20, 94, titleFont, smallFont);
 
         drawPortrait(g2d, portraitX, portraitY, portraitSize);
         genderButtons[0].render(g2d);
@@ -559,13 +531,6 @@ public class CharacterCreationState implements State {
         FontMetrics metrics = g2d.getFontMetrics();
         int statusX = createButton.x + (CREATE_BUTTON_WIDTH - metrics.stringWidth(status)) / 2;
         g2d.drawString(status, statusX, createButton.y - 12);
-    }
-
-    private void drawSubtleBackground(Graphics2D g2d, int windowWidth, int windowHeight) {
-        g2d.setColor(new Color(255, 255, 255, 8));
-        for (int y = 0; y < windowHeight; y += 4) {
-            g2d.drawLine(0, y, windowWidth, y);
-        }
     }
 
     private void drawPortrait(Graphics2D g2d, int x, int y, int size) {

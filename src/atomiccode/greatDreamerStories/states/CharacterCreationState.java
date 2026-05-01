@@ -4,6 +4,8 @@ import atomiccode.cthulhuEngine.engineMain.engine.Resources;
 import atomiccode.cthulhuEngine.inputsOutputs.stateControl.State;
 import atomiccode.cthulhuEngine.engineMain.engine.Engine;
 import atomiccode.cthulhuEngine.ui.Button;
+import atomiccode.cthulhuEngine.ui.TextInput;
+import atomiccode.cthulhuEngine.ui.Tooltip;
 import atomiccode.greatDreamerStories.character.Character;
 import atomiccode.greatDreamerStories.character.SaveManager;
 
@@ -29,10 +31,6 @@ public class CharacterCreationState implements State {
     private static final int GENDER_BUTTON_HEIGHT = 38;
     private static final int GENDER_BUTTON_GAP = 12;
     private static final long STAT_TOOLTIP_DELAY = 300;
-    private static final long BACKSPACE_REPEAT_INITIAL_DELAY = 350;
-    private static final long BACKSPACE_REPEAT_INTERVAL = 45;
-    private static final long CARET_MOVE_REPEAT_INITIAL_DELAY = 350;
-    private static final long CARET_MOVE_REPEAT_INTERVAL = 45;
     private static final Color BUTTON_DISABLED_COLOR = new Color(13, 14, 17);
     private static final Color BUTTON_DISABLED_TEXT_COLOR = new Color(65, 66, 70);
     private static final String[] STAT_NAMES = {"Strength", "Power", "Education", "Constitution", "Intelligence", "Appearance", "Luck", "Size", "Dexterity"};
@@ -78,7 +76,8 @@ public class CharacterCreationState implements State {
     private Button createButton;
     private Button backButton;
     private Button[] menuButtons;
-    private Rectangle nameBoxBounds = new Rectangle();
+    private TextInput nameInput;
+    private Tooltip statTooltip;
     private Rectangle[] statLabelBounds = new Rectangle[STAT_COUNT];
     private int layoutWidth;
     private int layoutHeight;
@@ -95,15 +94,8 @@ public class CharacterCreationState implements State {
     private int attrPanelHeight;
     
     // Input handling
-    private boolean isTypingName = false;
     private int selectedIndex = 0;
-    private boolean wasMousePressed = false;
-    private int nameCaretIndex = 0;
-    private long nextBackspaceRepeatTime = 0;
-    private long nextLeftCaretRepeatTime = 0;
-    private long nextRightCaretRepeatTime = 0;
     private int hoveredStatIndex = -1;
-    private long statTooltipStartTime = 0;
     
     // Colors and fonts
     private final Color pageColor = new Color(8, 9, 11);
@@ -148,8 +140,19 @@ public class CharacterCreationState implements State {
         malePortrait = loadPortrait(MALE_PORTRAIT);
         femalePortrait = loadPortrait(FEMALE_PORTRAIT);
         
+        initializeInputs();
         initializeButtons();
         resetCharacterData();
+    }
+
+    private void initializeInputs() {
+        nameInput = new TextInput(0, 0, 0, 0, "SUBJECT NAME", DEFAULT_CHARACTER_NAME, MAX_NAME_LENGTH);
+        nameInput.setFonts(smallFont, buttonFont);
+        nameInput.setColors(panelColor, mutedBorderColor, selectedColor, textColor, mutedTextColor, borderColor);
+
+        statTooltip = new Tooltip(STAT_TOOLTIP_DELAY);
+        statTooltip.setFont(tooltipFont);
+        statTooltip.setColors(new Color(11, 12, 15, 245), borderColor, textColor, mutedTextColor);
     }
 
     private Image loadPortrait(String portraitPath) {
@@ -236,7 +239,7 @@ public class CharacterCreationState implements State {
     
     private void resetCharacterData() {
         characterName = DEFAULT_CHARACTER_NAME;
-        nameCaretIndex = characterName.length();
+        nameInput.setText(characterName);
         selectedGender = Character.Gender.MALE;
         strength = Character.INITIAL_STAT_VALUE;
         power = Character.INITIAL_STAT_VALUE;
@@ -297,8 +300,10 @@ public class CharacterCreationState implements State {
     }
     
     private void createCharacter() {
+        characterName = nameInput.getText();
         if (characterName.trim().isEmpty()) {
             characterName = DEFAULT_CHARACTER_NAME; // Default name
+            nameInput.setText(characterName);
         }
         
         if (getRemainingPoints() != 0) {
@@ -330,11 +335,11 @@ public class CharacterCreationState implements State {
     
     @Override
     public void tick() {
-        // Handle keyboard input for name typing
-        if (isTypingName) {
-            handleNameInput();
-        } else {
-            // Handle navigation
+        boolean wasTypingName = nameInput.isActive();
+        nameInput.tick();
+
+        // Handle navigation when text input does not own the keyboard.
+        if (!wasTypingName && !nameInput.isActive()) {
             if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_ENTER)) {
                 if (selectedIndex < menuButtons.length) {
                     menuButtons[selectedIndex].click();
@@ -347,117 +352,6 @@ public class CharacterCreationState implements State {
         }
     }
     
-    private void handleNameInput() {
-        nameCaretIndex = clampNameCaretIndex(nameCaretIndex);
-
-        if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_ENTER)) {
-            isTypingName = false;
-            return;
-        }
-        
-        if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_ESCAPE)) {
-            isTypingName = false;
-            return;
-        }
-
-        if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_HOME)) {
-            nameCaretIndex = 0;
-            return;
-        }
-        if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_END)) {
-            nameCaretIndex = characterName.length();
-            return;
-        }
-        if (handleCaretMoveInput()) {
-            return;
-        }
-
-        if (handleBackspaceInput()) {
-            return;
-        }
-
-        java.lang.Character typedCharacter = getTypedCharacter();
-        if (typedCharacter != null && characterName.length() < MAX_NAME_LENGTH) {
-            characterName = characterName.substring(0, nameCaretIndex) + typedCharacter + characterName.substring(nameCaretIndex);
-            nameCaretIndex++;
-        }
-    }
-
-    private boolean handleCaretMoveInput() {
-        long now = System.currentTimeMillis();
-        boolean handled = false;
-
-        if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_LEFT)) {
-            moveNameCaret(-1);
-            nextLeftCaretRepeatTime = now + CARET_MOVE_REPEAT_INITIAL_DELAY;
-            handled = true;
-        } else if (Engine.instance().keyboard.keyPressed(KeyEvent.VK_LEFT)) {
-            if (nextLeftCaretRepeatTime > 0 && now >= nextLeftCaretRepeatTime) {
-                moveNameCaret(-1);
-                nextLeftCaretRepeatTime = now + CARET_MOVE_REPEAT_INTERVAL;
-            }
-            handled = true;
-        } else {
-            nextLeftCaretRepeatTime = 0;
-        }
-
-        if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_RIGHT)) {
-            moveNameCaret(1);
-            nextRightCaretRepeatTime = now + CARET_MOVE_REPEAT_INITIAL_DELAY;
-            handled = true;
-        } else if (Engine.instance().keyboard.keyPressed(KeyEvent.VK_RIGHT)) {
-            if (nextRightCaretRepeatTime > 0 && now >= nextRightCaretRepeatTime) {
-                moveNameCaret(1);
-                nextRightCaretRepeatTime = now + CARET_MOVE_REPEAT_INTERVAL;
-            }
-            handled = true;
-        } else {
-            nextRightCaretRepeatTime = 0;
-        }
-
-        return handled;
-    }
-
-    private void moveNameCaret(int direction) {
-        nameCaretIndex = clampNameCaretIndex(nameCaretIndex + direction);
-    }
-
-    private boolean handleBackspaceInput() {
-        long now = System.currentTimeMillis();
-
-        if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_BACK_SPACE)) {
-            deleteCharacterBeforeCaret();
-            nextBackspaceRepeatTime = now + BACKSPACE_REPEAT_INITIAL_DELAY;
-            return true;
-        }
-
-        if (!Engine.instance().keyboard.keyPressed(KeyEvent.VK_BACK_SPACE)) {
-            nextBackspaceRepeatTime = 0;
-            return false;
-        }
-
-        if (nextBackspaceRepeatTime > 0 && now >= nextBackspaceRepeatTime) {
-            deleteCharacterBeforeCaret();
-            nextBackspaceRepeatTime = now + BACKSPACE_REPEAT_INTERVAL;
-            return true;
-        }
-
-        return true;
-    }
-
-    private void deleteCharacterBeforeCaret() {
-        if (nameCaretIndex <= 0 || characterName.isEmpty()) {
-            return;
-        }
-
-        characterName = characterName.substring(0, nameCaretIndex - 1) + characterName.substring(nameCaretIndex);
-        nameCaretIndex--;
-    }
-
-    private int clampNameCaretIndex(int caretIndex) {
-        return Math.max(0, Math.min(caretIndex, characterName.length()));
-    }
-    
     @Override
     public void update() {
         updateLayout();
@@ -467,13 +361,7 @@ public class CharacterCreationState implements State {
         int mouseY = Engine.instance().mouse.getY();
         boolean mousePressed = Engine.instance().mouse.isLeftPressed();
 
-        if (mousePressed && !wasMousePressed) {
-            isTypingName = nameBoxBounds.contains(mouseX, mouseY);
-            if (isTypingName) {
-                updateNameCaretFromMouse(mouseX);
-            }
-        }
-        wasMousePressed = mousePressed;
+        nameInput.update(mouseX, mouseY, mousePressed);
         updateStatTooltip(mouseX, mouseY);
         
         for (Button button : menuButtons) {
@@ -485,7 +373,7 @@ public class CharacterCreationState implements State {
         // Update selection highlighting
         for (int i = 0; i < menuButtons.length; i++) {
             if (menuButtons[i] != null) {
-                menuButtons[i].setSelected(!isTypingName && i == selectedIndex);
+                menuButtons[i].setSelected(!nameInput.isActive() && i == selectedIndex);
             }
         }
         
@@ -498,7 +386,6 @@ public class CharacterCreationState implements State {
     }
 
     private void updateStatTooltip(int mouseX, int mouseY) {
-        int oldHoveredStatIndex = hoveredStatIndex;
         hoveredStatIndex = -1;
 
         for (int i = 0; i < STAT_COUNT; i++) {
@@ -508,26 +395,10 @@ public class CharacterCreationState implements State {
             }
         }
 
-        if (hoveredStatIndex != oldHoveredStatIndex) {
-            statTooltipStartTime = System.currentTimeMillis();
-        }
-    }
-
-    private void updateNameCaretFromMouse(int mouseX) {
-        FontMetrics metrics = Engine.instance().getWindow().getCanvas().getFontMetrics(buttonFont);
-        int textStartX = nameBoxBounds.x + 18;
-        int relativeX = Math.max(0, mouseX - textStartX);
-
-        nameCaretIndex = characterName.length();
-        for (int i = 0; i <= characterName.length(); i++) {
-            int leftWidth = metrics.stringWidth(characterName.substring(0, i));
-            int rightWidth = i < characterName.length() ? metrics.stringWidth(characterName.substring(0, i + 1)) : leftWidth;
-            int midpoint = leftWidth + (rightWidth - leftWidth) / 2;
-            if (relativeX <= midpoint) {
-                nameCaretIndex = i;
-                return;
-            }
-        }
+        String tooltipText = hoveredStatIndex >= 0 && hoveredStatIndex < STAT_DESCRIPTIONS.length
+                ? STAT_NAMES[hoveredStatIndex].toUpperCase() + "\n" + STAT_DESCRIPTIONS[hoveredStatIndex]
+                : "";
+        statTooltip.update(hoveredStatIndex >= 0, tooltipText);
     }
 
     private void updateGenderButtonColors() {
@@ -589,7 +460,7 @@ public class CharacterCreationState implements State {
         genderButtons[1].x = genderButtons[0].x + GENDER_BUTTON_WIDTH + GENDER_BUTTON_GAP;
         genderButtons[1].y = genderButtons[0].y;
 
-        nameBoxBounds.setBounds(leftX, genderButtons[0].y + 82, leftContentWidth, 92);
+        nameInput.setBounds(leftX, genderButtons[0].y + 82, leftContentWidth, 92);
 
         rightX = layoutX + leftWidth + 40;
         int rightWidth = layoutX + layoutWidth - rightX;
@@ -664,68 +535,17 @@ public class CharacterCreationState implements State {
         genderButtons[0].render(g2d);
         genderButtons[1].render(g2d);
 
-        drawNameBox(g2d);
+        nameInput.render(g2d);
         drawAttributesPanel(g2d);
         drawCreateStatus(g2d);
-        drawStatTooltip(g2d);
+        drawStatTooltip(g2d, windowWidth, windowHeight);
 
         backButton.render(g2d);
         createButton.render(g2d);
     }
 
-    private void drawStatTooltip(Graphics2D g2d) {
-        if (hoveredStatIndex < 0 || hoveredStatIndex >= STAT_DESCRIPTIONS.length) {
-            return;
-        }
-        if (System.currentTimeMillis() - statTooltipStartTime < STAT_TOOLTIP_DELAY) {
-            return;
-        }
-
-        drawTooltip(g2d, STAT_NAMES[hoveredStatIndex].toUpperCase() + "\n" + STAT_DESCRIPTIONS[hoveredStatIndex]);
-    }
-
-    private void drawTooltip(Graphics2D g2d, String tooltipText) {
-        if (tooltipText.isEmpty()) {
-            return;
-        }
-
-        g2d.setFont(tooltipFont);
-        FontMetrics tooltipMetrics = g2d.getFontMetrics();
-        String[] lines = tooltipText.split("\n");
-
-        int maxWidth = 0;
-        for (String line : lines) {
-            maxWidth = Math.max(maxWidth, tooltipMetrics.stringWidth(line));
-        }
-
-        int tooltipWidth = maxWidth + 20;
-        int tooltipHeight = lines.length * tooltipMetrics.getHeight() + 25;
-        int mouseX = Engine.instance().mouse.getX();
-        int mouseY = Engine.instance().mouse.getY();
-        int tooltipX = mouseX + 15;
-        int tooltipY = mouseY - tooltipHeight - 5;
-        int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
-
-        if (tooltipX + tooltipWidth > windowWidth) {
-            tooltipX = mouseX - tooltipWidth - 15;
-        }
-        if (tooltipY < 0) {
-            tooltipY = mouseY + 20;
-        }
-
-        g2d.setColor(new Color(11, 12, 15, 245));
-        g2d.fillRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight);
-
-        g2d.setColor(borderColor);
-        g2d.setStroke(new BasicStroke(1f));
-        g2d.drawRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight);
-
-        int lineY = tooltipY + tooltipMetrics.getAscent() + 10;
-        for (int i = 0; i < lines.length; i++) {
-            g2d.setColor(i == 0 ? textColor : mutedTextColor);
-            g2d.drawString(lines[i], tooltipX + 10, lineY);
-            lineY += tooltipMetrics.getHeight() + 5;
-        }
+    private void drawStatTooltip(Graphics2D g2d, int windowWidth, int windowHeight) {
+        statTooltip.render(g2d, Engine.instance().mouse.getX(), Engine.instance().mouse.getY(), windowWidth, windowHeight);
     }
 
     private void drawCreateStatus(Graphics2D g2d) {
@@ -735,7 +555,7 @@ public class CharacterCreationState implements State {
 
         g2d.setColor(mutedTextColor);
         g2d.setFont(smallFont);
-        String status = "USE ALL REMAINING POINTS TO CREATE";
+        String status = "USE ALL REMAINING POINTS TO CONTINUE";
         FontMetrics metrics = g2d.getFontMetrics();
         int statusX = createButton.x + (CREATE_BUTTON_WIDTH - metrics.stringWidth(status)) / 2;
         g2d.drawString(status, statusX, createButton.y - 12);
@@ -758,32 +578,6 @@ public class CharacterCreationState implements State {
         if (portrait != null) {
             g2d.drawImage(portrait, x + 1, y + 1, size - 2, size - 2, null);
         }
-    }
-
-    private void drawNameBox(Graphics2D g2d) {
-        g2d.setColor(panelColor);
-        g2d.fillRect(nameBoxBounds.x, nameBoxBounds.y, nameBoxBounds.width, nameBoxBounds.height);
-        g2d.setColor(isTypingName ? selectedColor : mutedBorderColor);
-        g2d.drawRect(nameBoxBounds.x, nameBoxBounds.y, nameBoxBounds.width, nameBoxBounds.height);
-
-        g2d.setColor(mutedTextColor);
-        g2d.setFont(smallFont);
-        g2d.drawString("SUBJECT NAME", nameBoxBounds.x + 18, nameBoxBounds.y + 24);
-
-        g2d.setColor(textColor);
-        g2d.setFont(buttonFont);
-        int textX = nameBoxBounds.x + 18;
-        int textY = nameBoxBounds.y + 58;
-        g2d.drawString(characterName, textX, textY);
-
-        if (isTypingName && System.currentTimeMillis() % 1000 < 500) {
-            int caretX = textX + g2d.getFontMetrics().stringWidth(characterName.substring(0, clampNameCaretIndex(nameCaretIndex)));
-            g2d.drawLine(caretX, textY - 15, caretX, textY + 3);
-        }
-
-        g2d.setColor(borderColor);
-        g2d.drawLine(nameBoxBounds.x + 18, nameBoxBounds.y + 72,
-                     nameBoxBounds.x + nameBoxBounds.width - 18, nameBoxBounds.y + 72);
     }
 
     private void drawAttributesPanel(Graphics2D g2d) {
@@ -840,35 +634,4 @@ public class CharacterCreationState implements State {
         g2d.drawString(valueText, attrPanelX + attrPanelWidth - 20 - valueMetrics.stringWidth(valueText), rowY + 12);
     }
 
-    private java.lang.Character getTypedCharacter() {
-        boolean shift = Engine.instance().keyboard.keyPressed(KeyEvent.VK_SHIFT);
-
-        for (int key = KeyEvent.VK_A; key <= KeyEvent.VK_Z; key++) {
-            if (Engine.instance().keyboard.keyJustPressed(key)) {
-                char typed = (char) ('a' + key - KeyEvent.VK_A);
-                return shift ? java.lang.Character.toUpperCase(typed) : typed;
-            }
-        }
-
-        for (int key = KeyEvent.VK_0; key <= KeyEvent.VK_9; key++) {
-            if (Engine.instance().keyboard.keyJustPressed(key)) {
-                return (char) ('0' + key - KeyEvent.VK_0);
-            }
-        }
-
-        if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_SPACE)) {
-            return ' ';
-        }
-        if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_MINUS)) {
-            return '-';
-        }
-        if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_QUOTE)) {
-            return '\"';
-        }
-        if (Engine.instance().keyboard.keyJustPressed(KeyEvent.VK_PERIOD)) {
-            return '.';
-        }
-
-        return null;
-    }
 }

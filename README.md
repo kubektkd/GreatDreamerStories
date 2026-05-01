@@ -4,7 +4,7 @@
 
 Great Dreamer Stories is a Visual Novel game project enriched with a turn-based combat system and classic RPG mechanics inspired by Call of Cthulhu. Set in a Nordic Noir atmosphere, the story begins in modern times in a small Scandinavian town, where you play as the chief of the local police station. As you investigate mysterious events and unravel dark secrets, you'll navigate both the psychological and supernatural, blending narrative-driven choices with strategic combat and RPG progression.
 
-<img width="1910" height="1044" alt="image" src="https://github.com/user-attachments/assets/d015154e-feae-4636-b880-401894e6f79f" />
+<img width="1261" height="673" alt="image" src="https://github.com/user-attachments/assets/1fa0aad0-7938-4e18-9bd6-d1d99500b679" />
 
 ## 🎮 Overview
 

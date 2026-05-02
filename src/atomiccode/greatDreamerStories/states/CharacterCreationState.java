@@ -34,6 +34,8 @@ public class CharacterCreationState implements State {
     private static final int GENDER_BUTTON_WIDTH = 130;
     private static final int GENDER_BUTTON_HEIGHT = 38;
     private static final int GENDER_BUTTON_GAP = 12;
+    /** Space from gender button bottom to name-panel top (~chip bleed above panel top + margin). */
+    private static final int NAME_INPUT_CLEAR_BELOW_GENDER = 22;
     private static final long STAT_TOOLTIP_DELAY = 300;
     private static final String[] STAT_NAMES = {"Strength", "Power", "Education", "Constitution", "Intelligence", "Appearance", "Luck", "Size", "Dexterity"};
     private static final String[] STAT_CODES = {"STR", "POW", "EDU", "CON", "INT", "APP", "LCK", "SIZ", "DEX"};
@@ -452,7 +454,9 @@ public class CharacterCreationState implements State {
         genderButtons[1].x = genderButtons[0].x + GENDER_BUTTON_WIDTH + GENDER_BUTTON_GAP;
         genderButtons[1].y = genderButtons[0].y;
 
-        nameInput.setBounds(leftX, genderButtons[0].y + 82, leftContentWidth, 92);
+        int namePanelY = genderButtons[0].y + GENDER_BUTTON_HEIGHT + NAME_INPUT_CLEAR_BELOW_GENDER;
+        int namePanelH = TextInput.preferredArchiveOuterHeight(buttonFont);
+        nameInput.setBounds(leftX, namePanelY, leftContentWidth, namePanelH);
 
         rightX = layout.rightColumn.x;
         int rightWidth = layout.rightColumn.width;
@@ -498,7 +502,7 @@ public class CharacterCreationState implements State {
         GeneralMenuRenderer.drawPage(g2d, windowWidth, windowHeight);
         GeneralMenuRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
         GeneralMenuRenderer.drawHeader(g2d, layout.content, layout.leftColumn.right(), "NEW INVESTIGATOR",
-                                   "STOKSJÖ POLICE ARCHIVE // CLASSIFIED", titleFont, smallFont);
+                                   "STOKSJÖ POLICE ARCHIVE // PERSONAL RECORD", titleFont, smallFont);
         GeneralMenuRenderer.drawSectionHeader(g2d, rightX, layoutY, "SUBJECT'S PROFILE", "ATTRIBUTES", labelFont, smallFont);
         GeneralMenuRenderer.drawRightMetric(g2d, layout.content, String.valueOf(getRemainingPoints()),
                                         "PTS REMAINING", 20, 94, titleFont, smallFont);
@@ -530,7 +534,7 @@ public class CharacterCreationState implements State {
         String status = "USE ALL REMAINING POINTS TO CONTINUE";
         FontMetrics metrics = g2d.getFontMetrics();
         int statusX = createButton.x + (CREATE_BUTTON_WIDTH - metrics.stringWidth(status)) / 2;
-        g2d.drawString(status, statusX, createButton.y - 12);
+        g2d.drawString(status, statusX, createButton.y + ACTION_BUTTON_HEIGHT + 18);
     }
 
     private void drawPortrait(Graphics2D g2d, int x, int y, int size) {

@@ -56,9 +56,10 @@ public class GreatDreamerTheme {
         button.setFont(font);
     }
 
+    /** Archive dossier styling; chip label follows {@link GeneralMenuRenderer#drawPanelTitle}. */
     public static void styleTextInput(TextInput input, Font labelFont, Font textFont) {
         input.setFonts(labelFont, textFont);
-        input.setColors(PANEL, LINE, SELECTED, TEXT, MUTED_TEXT, BORDER);
+        input.setColors(PANEL, BORDER, SELECTED, TEXT, MUTED_TEXT, LINE);
     }
 
     public static void styleTooltip(Tooltip tooltip, Font font) {

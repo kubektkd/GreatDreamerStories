@@ -2,7 +2,12 @@ package atomiccode.cthulhuEngine.ui;
 
 import atomiccode.cthulhuEngine.engineMain.engine.Engine;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.awt.event.KeyEvent;
 
 public class TextInput {
@@ -26,11 +31,25 @@ public class TextInput {
     private Font labelFont = new Font("Arial", Font.PLAIN, 12);
     private Font textFont = new Font("Arial", Font.PLAIN, 16);
     private Color backgroundColor = new Color(11, 12, 15, 210);
-    private Color borderColor = new Color(31, 34, 40);
+    private Color borderColor = new Color(55, 58, 65);
     private Color activeBorderColor = Color.WHITE;
     private Color textColor = Color.WHITE;
     private Color labelColor = new Color(116, 116, 116);
-    private Color underlineColor = new Color(55, 58, 65);
+    private Color underlineColor = new Color(31, 34, 40);
+
+    /**
+     * Label uses {@link ArchivePanelTitleChip}; chip fill follows {@link #backgroundColor}.
+     * Layout tracks dossier panels ({@code x + 15}, baseline {@code panelTop + 5}).
+     */
+    private static final int LABEL_LEFT = 15;
+    private static final int LABEL_BASELINE_FROM_TOP = 5;
+    private static final int TEXT_BASELINE_FROM_TOP = 30;
+    /** Gap from text descent to underline (pixels). */
+    private static final int UNDERLINE_GAP_BELOW_DESCENT = 3;
+    private static final int BOTTOM_PADDING_BELOW_UNDERLINE = 9;
+
+    /** Typed line inset (dossier body ~18 px). */
+    private static final int TEXT_LEFT_INSET = 18;
 
     public TextInput(int x, int y, int width, int height, String label, String text, int maxLength) {
         this.x = x;
@@ -41,6 +60,25 @@ public class TextInput {
         this.text = text;
         this.maxLength = maxLength;
         this.caretIndex = text.length();
+    }
+
+    /**
+     * Minimum outer height ({@link #LABEL_BASELINE_FROM_TOP}/{@link #TEXT_BASELINE_FROM_TOP} archive layout).
+     */
+    public static int preferredArchiveOuterHeight(Font textFont) {
+        FontMetrics tm = scratchFontMetrics(textFont);
+        return TEXT_BASELINE_FROM_TOP + tm.getDescent() + UNDERLINE_GAP_BELOW_DESCENT + 1
+                + BOTTOM_PADDING_BELOW_UNDERLINE;
+    }
+
+    private static FontMetrics scratchFontMetrics(Font font) {
+        BufferedImage im = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = im.createGraphics();
+        try {
+            return g.getFontMetrics(font);
+        } finally {
+            g.dispose();
+        }
     }
 
     public void setBounds(int x, int y, int width, int height) {
@@ -135,23 +173,27 @@ public class TextInput {
         g2d.setColor(active ? activeBorderColor : borderColor);
         g2d.drawRect(x, y, width, height);
 
-        g2d.setColor(labelColor);
-        g2d.setFont(labelFont);
-        g2d.drawString(label, x + 18, y + 24);
+        int labelBaseline = y + LABEL_BASELINE_FROM_TOP;
+        ArchivePanelTitleChip.paint(g2d, label, x + LABEL_LEFT, labelBaseline, labelFont,
+                backgroundColor, labelColor);
+
+        int textBaseline = y + TEXT_BASELINE_FROM_TOP;
 
         g2d.setColor(textColor);
         g2d.setFont(textFont);
-        int textX = x + 18;
-        int textY = y + 58;
-        g2d.drawString(text, textX, textY);
+        FontMetrics textFm = g2d.getFontMetrics();
+        int underlineY = textBaseline + textFm.getDescent() + UNDERLINE_GAP_BELOW_DESCENT;
+
+        int textX = x + TEXT_LEFT_INSET;
+        g2d.drawString(text, textX, textBaseline);
 
         if (active && System.currentTimeMillis() % 1000 < 500) {
             int caretX = textX + g2d.getFontMetrics().stringWidth(text.substring(0, clampCaretIndex(caretIndex)));
-            g2d.drawLine(caretX, textY - 15, caretX, textY + 3);
+            g2d.drawLine(caretX, textBaseline - 15, caretX, textBaseline + 3);
         }
 
         g2d.setColor(underlineColor);
-        g2d.drawLine(x + 18, y + 72, x + width - 18, y + 72);
+        g2d.drawLine(x + TEXT_LEFT_INSET, underlineY, x + width - TEXT_LEFT_INSET, underlineY);
     }
 
     public boolean contains(int mouseX, int mouseY) {
@@ -219,7 +261,7 @@ public class TextInput {
 
     private void updateCaretFromMouse(int mouseX) {
         FontMetrics metrics = new java.awt.Canvas().getFontMetrics(textFont);
-        int textStartX = x + 18;
+        int textStartX = x + TEXT_LEFT_INSET;
         int relativeX = Math.max(0, mouseX - textStartX);
 
         caretIndex = text.length();

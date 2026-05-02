@@ -1,11 +1,13 @@
 package atomiccode.greatDreamerStories.ui;
 
+import atomiccode.cthulhuEngine.ui.ArchivePanelTitleChip;
 import atomiccode.cthulhuEngine.ui.layout.UiRect;
 
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+
 
 /** Shared dossier-style drawing for screens that use {@link GeneralMenuLayout}. */
 public class GeneralMenuRenderer {
@@ -63,6 +65,13 @@ public class GeneralMenuRenderer {
         g2d.fillRect(rect.x, rect.y, rect.width, rect.height);
         g2d.setColor(GreatDreamerTheme.BORDER);
         g2d.drawRect(rect.x, rect.y, rect.width, rect.height);
+    }
+
+    /**
+     * Small title strip on a filled panel: {@code (x, y)} is the text baseline (matches {@link Graphics2D#drawString}).
+     */
+    public static void drawPanelTitle(Graphics2D g2d, String title, int x, int y, Font titleFont) {
+        ArchivePanelTitleChip.paint(g2d, title, x, y, titleFont, GreatDreamerTheme.PANEL, GreatDreamerTheme.MUTED_TEXT);
     }
 
     public static void drawCenteredString(Graphics2D g2d, String text, int x, int y, int width) {

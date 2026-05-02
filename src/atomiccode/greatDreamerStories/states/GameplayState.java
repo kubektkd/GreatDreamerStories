@@ -167,7 +167,7 @@ public class GameplayState implements State {
     private void drawCharacterInfoPanel(Graphics2D g2d) {
         GeneralMenuRenderer.drawPanel(g2d, dossierPanel);
 
-        drawPanelTitle(g2d, "INVESTIGATOR DOSSIER", dossierPanel.x + 15, dossierPanel.y + 5);
+        GeneralMenuRenderer.drawPanelTitle(g2d, "INVESTIGATOR DOSSIER", dossierPanel.x + 15, dossierPanel.y + 5, smallFont);
 
         g2d.setColor(GreatDreamerTheme.TEXT);
         g2d.setFont(textFont);
@@ -199,7 +199,7 @@ public class GameplayState implements State {
     
     private void drawStoryPlaceholder(Graphics2D g2d) {
         GeneralMenuRenderer.drawPanel(g2d, storyPanel);
-        drawPanelTitle(g2d, "CASE BOARD", storyPanel.x + 15, storyPanel.y + 5);
+        GeneralMenuRenderer.drawPanelTitle(g2d, "CASE BOARD", storyPanel.x + 15, storyPanel.y + 5, smallFont);
 
         g2d.setColor(GreatDreamerTheme.TEXT);
         g2d.setFont(textFont);
@@ -221,29 +221,11 @@ public class GameplayState implements State {
 
     private void drawNotesPanel(Graphics2D g2d) {
         GeneralMenuRenderer.drawPanel(g2d, notesPanel);
-        drawPanelTitle(g2d, "FIELD NOTES", notesPanel.x + 15, notesPanel.y + 5);
+        GeneralMenuRenderer.drawPanelTitle(g2d, "FIELD NOTES", notesPanel.x + 15, notesPanel.y + 5, smallFont);
         g2d.setColor(GreatDreamerTheme.TEXT);
         g2d.drawString("Press ESC or use the case files button to return to investigator selection.", notesPanel.x + 18, notesPanel.y + 28);
         g2d.setColor(GreatDreamerTheme.MUTED_TEXT);
         g2d.drawString("This panel will later hold active clues, leads, and inventory reminders.", notesPanel.x + 18, notesPanel.y + 52);
-    }
-
-    private void drawPanelTitle(Graphics2D g2d, String title, int x, int y) {
-        int paddingX = 5;
-        int paddingY = 2;
-
-        g2d.setFont(smallFont);
-        FontMetrics fm = g2d.getFontMetrics();
-
-        int rectX = x - paddingX;
-        int rectY = y - fm.getAscent() - paddingY;
-        int rectWidth = fm.stringWidth(title) + paddingX * 2;
-        int rectHeight = fm.getAscent() + fm.getDescent() + paddingY * 2;
-
-        g2d.setColor(GreatDreamerTheme.PANEL);
-        g2d.fillRect(rectX, rectY, rectWidth, rectHeight);
-        g2d.setColor(GreatDreamerTheme.MUTED_TEXT);
-        g2d.drawString(title, x, y);
     }
 
     private void drawLines(Graphics2D g2d, String[] lines, int x, int startY, int lineHeight) {

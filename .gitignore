@@ -4,24 +4,9 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 
-### Eclipse ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
+### Gradle ###
+/.gradle/
+/build/
 
 ### VS Code ###
 .vscode/
@@ -35,11 +20,16 @@ bin/
 ### Mac OS ###
 .DS_Store
 
+### Windows ###
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
 ### External Libraries ###
 lib/
 
-### Resources ###
-audio/
-sound/
-video/
+### Saves / local data ###
 saves/*
+
+### Packaged installers / jpackage output ###
+dist/

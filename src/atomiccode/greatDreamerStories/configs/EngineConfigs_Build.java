@@ -16,7 +16,5 @@ public class EngineConfigs_Build extends EngineConfigs {
         language = "PL";
         defaultState = new MainMenuState();
         initialState = new SplashState();
-        // resources.colours.addPalette(loadColourPalette());
-        // debugger = new DebuggerConfigs();
     }
 }

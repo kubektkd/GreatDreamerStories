@@ -1,65 +1,82 @@
 package atomiccode.cthulhuEngine.inputsOutputs.userInputs;
 
+import com.badlogic.gdx.Input;
+
+import atomiccode.cthulhuEngine.engineMain.engine.InputService;
+
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 
-public class Keyboard implements KeyListener {
+public class Keyboard {
 
-    private boolean[] keys, justPressed, cantPress;
+    private final InputService input;
     public boolean up, down, left, right;
 
-    public Keyboard() {
-        keys = new boolean[KeyEvent.KEY_LAST+1];
-        justPressed = new boolean[keys.length];
-        cantPress = new boolean[keys.length];
+    public Keyboard(InputService input) {
+        this.input = input;
     }
 
     public void update() {
-        for (int i = 0; i < keys.length; i++) {
-            if (cantPress[i] && !keys[i])
-                cantPress[i] = false;
-            else if (justPressed[i]) {
-                cantPress[i] = true;
-                justPressed[i] = false;
-            }
-            if (!cantPress[i] && keys[i])
-                justPressed[i] = true;
-        }
-
-        up = keys[KeyEvent.VK_W];
-        down = keys[KeyEvent.VK_S];
-        left = keys[KeyEvent.VK_A];
-        right = keys[KeyEvent.VK_D];
+        up = input.keyPressed(Input.Keys.W) || input.keyPressed(Input.Keys.UP);
+        down = input.keyPressed(Input.Keys.S) || input.keyPressed(Input.Keys.DOWN);
+        left = input.keyPressed(Input.Keys.A) || input.keyPressed(Input.Keys.LEFT);
+        right = input.keyPressed(Input.Keys.D) || input.keyPressed(Input.Keys.RIGHT);
     }
 
     public boolean keyJustPressed(int keyCode) {
-        if (keyCode < 0 || keyCode >= keys.length)
-            return false;
-        return justPressed[keyCode];
+        int mappedKey = mapKeyCode(keyCode);
+        if (mappedKey == Input.Keys.SHIFT_LEFT) {
+            return input.keyJustPressed(Input.Keys.SHIFT_LEFT) || input.keyJustPressed(Input.Keys.SHIFT_RIGHT);
+        }
+        return input.keyJustPressed(mappedKey);
     }
 
     public boolean keyPressed(int keyCode) {
-        if (keyCode < 0 || keyCode >= keys.length)
-            return false;
-        return keys[keyCode];
+        int mappedKey = mapKeyCode(keyCode);
+        if (mappedKey == Input.Keys.SHIFT_LEFT) {
+            return input.keyPressed(Input.Keys.SHIFT_LEFT) || input.keyPressed(Input.Keys.SHIFT_RIGHT);
+        }
+        return input.keyPressed(mappedKey);
     }
 
-    @Override
-    public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() < 0 || e.getKeyCode() >= keys.length)
-            return;
-        keys[e.getKeyCode()] = true;
-    }
+    private int mapKeyCode(int keyCode) {
+        if (keyCode >= KeyEvent.VK_A && keyCode <= KeyEvent.VK_Z) {
+            return Input.Keys.A + (keyCode - KeyEvent.VK_A);
+        }
+        if (keyCode >= KeyEvent.VK_0 && keyCode <= KeyEvent.VK_9) {
+            return Input.Keys.NUM_0 + (keyCode - KeyEvent.VK_0);
+        }
 
-    @Override
-    public void keyReleased(KeyEvent e) {
-        if (e.getKeyCode() < 0 || e.getKeyCode() >= keys.length)
-            return;
-        keys[e.getKeyCode()] = false;
-    }
-
-    @Override
-    public void keyTyped(KeyEvent e) {
-
+        switch (keyCode) {
+            case KeyEvent.VK_UP:
+                return Input.Keys.UP;
+            case KeyEvent.VK_DOWN:
+                return Input.Keys.DOWN;
+            case KeyEvent.VK_LEFT:
+                return Input.Keys.LEFT;
+            case KeyEvent.VK_RIGHT:
+                return Input.Keys.RIGHT;
+            case KeyEvent.VK_ENTER:
+                return Input.Keys.ENTER;
+            case KeyEvent.VK_ESCAPE:
+                return Input.Keys.ESCAPE;
+            case KeyEvent.VK_BACK_SPACE:
+                return Input.Keys.BACKSPACE;
+            case KeyEvent.VK_HOME:
+                return Input.Keys.HOME;
+            case KeyEvent.VK_END:
+                return Input.Keys.END;
+            case KeyEvent.VK_SPACE:
+                return Input.Keys.SPACE;
+            case KeyEvent.VK_MINUS:
+                return Input.Keys.MINUS;
+            case KeyEvent.VK_QUOTE:
+                return Input.Keys.APOSTROPHE;
+            case KeyEvent.VK_PERIOD:
+                return Input.Keys.PERIOD;
+            case KeyEvent.VK_SHIFT:
+                return Input.Keys.SHIFT_LEFT;
+            default:
+                return keyCode;
+        }
     }
 }

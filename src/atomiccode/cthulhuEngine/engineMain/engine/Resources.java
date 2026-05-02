@@ -1,5 +1,10 @@
 package atomiccode.cthulhuEngine.engineMain.engine;
 
+import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
+
 import javax.imageio.*;
 import java.awt.Image;
 import java.awt.Font;
@@ -13,8 +18,20 @@ import java.util.Map;
 import java.util.HashMap;
 
 public class Resources {
+    private final AssetManager assetManager = new AssetManager();
     private final Map<String, Image> images = new HashMap<>();
-//    public final ColourRepository colours = new ColourRepository();
+
+    public Texture getTexture(String path) {
+        if (!assetManager.isLoaded(path, Texture.class)) {
+            assetManager.load(path, Texture.class);
+            assetManager.finishLoadingAsset(path);
+        }
+        return assetManager.get(path, Texture.class);
+    }
+
+    public FileHandle internal(String path) {
+        return Gdx.files.internal(path);
+    }
 
     public Image getImage(String path) {
         return images.computeIfAbsent(path, p -> loadImage(p));
@@ -45,12 +62,29 @@ public class Resources {
         }
     }
     
-    public static void enableAntialiasing(Graphics2D g2d) {
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    /**
+     * Applies high-quality defaults for legacy Java2D screens. Important for scaled
+     * {@code drawImage} (backgrounds, logos): without interpolation/render-quality hints,
+     * scaling stays effectively nearest-neighbour and looks harsher than typical Swing output.
+     */
+    public static void configureJava2DPipeline(Graphics2D g2d) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_ENABLE);
     }
 
-    // TODO: implement a caching and lazy load mechanisms
+    public static void enableAntialiasing(Graphics2D g2d) {
+        configureJava2DPipeline(g2d);
+    }
+
+    public void dispose() {
+        assetManager.dispose();
+        images.clear();
+    }
 
 }

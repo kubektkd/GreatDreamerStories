@@ -1,7 +1,12 @@
 package atomiccode.cthulhuEngine.inputsOutputs.stateControl;
 
 import atomiccode.cthulhuEngine.engineMain.engine.Engine;
-import java.awt.*;
+import atomiccode.cthulhuEngine.engineMain.engine.EngineRenderContext;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 public class FadeState implements State {
     
@@ -73,7 +78,7 @@ public class FadeState implements State {
     }
     
     @Override
-    public void render(Graphics g) {
+    public void render(EngineRenderContext context) {
         if (isComplete && fadeType == FadeType.FADE_OUT) {
             return; // Don't render anything when fade out is complete
         }
@@ -87,22 +92,13 @@ public class FadeState implements State {
         } else {
             alpha = 1.0f - progress; // 1 to 0
         }
-        
-        
-        // Create color with alpha
-        Color fadeColorWithAlpha = new Color(
-            fadeColor.getRed(),
-            fadeColor.getGreen(),
-            fadeColor.getBlue(),
-            (int)(alpha * 255)
-        );
-        
-        g.setColor(fadeColorWithAlpha);
-        
-        // Get window dimensions from Engine instead of relying on clip bounds
-        int width = Engine.instance().getWindow().getCanvas().getWidth();
-        int height = Engine.instance().getWindow().getCanvas().getHeight();
-        g.fillRect(0, 0, width, height);
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        context.shapes.begin(ShapeRenderer.ShapeType.Filled);
+        context.shapes.setColor(fadeColor.r, fadeColor.g, fadeColor.b, alpha);
+        context.shapes.rect(0, 0, context.getWidth(), context.getHeight());
+        context.shapes.end();
+        Gdx.gl.glDisable(GL20.GL_BLEND);
     }
     
     public boolean isComplete() {

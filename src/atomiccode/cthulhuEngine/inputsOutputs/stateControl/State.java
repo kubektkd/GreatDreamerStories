@@ -1,5 +1,7 @@
 package atomiccode.cthulhuEngine.inputsOutputs.stateControl;
 
+import atomiccode.cthulhuEngine.engineMain.engine.EngineRenderContext;
+
 import java.awt.Graphics;
 
 public interface State {
@@ -18,5 +20,13 @@ public interface State {
     // Frame-based updates (e.g., animations, transitions)
     void update();
 
-    void render(Graphics g);
+    default void render(EngineRenderContext context) {
+        context.renderJava2D(this::render);
+    }
+
+    default void render(Graphics g) {}
+
+    default void resize(int width, int height) {}
+
+    default void dispose() {}
 }

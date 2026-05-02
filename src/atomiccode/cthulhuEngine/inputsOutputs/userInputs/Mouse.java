@@ -1,49 +1,21 @@
 package atomiccode.cthulhuEngine.inputsOutputs.userInputs;
 
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+import atomiccode.cthulhuEngine.engineMain.engine.InputService;
 
-public class Mouse implements MouseListener, MouseMotionListener {
+public class Mouse {
 
-    private int mouseX, mouseY;
-    private boolean leftPressed, rightPressed;
+    private final InputService input;
 
-    @Override
-    public void mousePressed(MouseEvent e) {
-        if (e.getButton() == MouseEvent.BUTTON1) leftPressed = true;
-        if (e.getButton() == MouseEvent.BUTTON3) rightPressed = true;
+    public Mouse(InputService input) {
+        this.input = input;
     }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-        if (e.getButton() == MouseEvent.BUTTON1) leftPressed = false;
-        if (e.getButton() == MouseEvent.BUTTON3) rightPressed = false;
-    }
-
-    @Override
-    public void mouseDragged(MouseEvent e) {
-        mouseX = e.getX();
-        mouseY = e.getY();
-    }
-
-    @Override
-    public void mouseMoved(MouseEvent e) {
-        mouseX = e.getX();
-        mouseY = e.getY();
-    }
-
-    public void mouseClicked(MouseEvent e) {}
-    public void mouseEntered(MouseEvent e) {}
-    public void mouseExited(MouseEvent e) {}
 
     public void update() {
-        // Mouse update logic can be added here if needed
-        // Currently just tracking position and button states
+        // LibGDX keeps mouse state updated globally.
     }
-    
-    public int getX() { return mouseX; }
-    public int getY() { return mouseY; }
-    public boolean isLeftPressed() { return leftPressed; }
-    public boolean isRightPressed() { return rightPressed; }
+
+    public int getX() { return input.getMouseX(); }
+    public int getY() { return input.getMouseY(); }
+    public boolean isLeftPressed() { return input.isLeftPressed(); }
+    public boolean isRightPressed() { return input.isRightPressed(); }
 }

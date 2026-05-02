@@ -2,6 +2,7 @@ package atomiccode.greatDreamerStories.character;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Represents a player character with stats, skills, and story progress.
@@ -170,6 +171,16 @@ public class Character implements Serializable {
     public String getKeySkillSummary() {
         ensureSkills();
         return skills.formatSkills(CharacterSkill.LAW, CharacterSkill.SPOT_HIDDEN, CharacterSkill.PSYCHOLOGY, CharacterSkill.FIREARMS_HANDGUN);
+    }
+
+    public String getAllSkillsSummary() {
+        ensureSkills();
+        return skills.formatSkills(8, CharacterSkill.values());
+    }
+
+    public List<String> getAllSkillsSummaryLines(int skillsPerLine) {
+        ensureSkills();
+        return skills.formatSkillLines(skillsPerLine, CharacterSkill.values());
     }
 
     private void ensureSkills() {

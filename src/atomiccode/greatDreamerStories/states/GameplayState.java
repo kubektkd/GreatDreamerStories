@@ -2,12 +2,18 @@ package atomiccode.greatDreamerStories.states;
 
 import atomiccode.cthulhuEngine.inputsOutputs.stateControl.State;
 import atomiccode.cthulhuEngine.engineMain.engine.Engine;
+import atomiccode.cthulhuEngine.engineMain.engine.Resources;
 import atomiccode.cthulhuEngine.ui.Button;
+import atomiccode.cthulhuEngine.ui.layout.UiRect;
 import atomiccode.greatDreamerStories.character.Character;
 import atomiccode.greatDreamerStories.character.SaveManager;
+import atomiccode.greatDreamerStories.ui.ArchiveRenderer;
+import atomiccode.greatDreamerStories.ui.ArchiveScreenLayout;
+import atomiccode.greatDreamerStories.ui.GreatDreamerTheme;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
 /**
  * Main gameplay state where the story unfolds.
@@ -21,10 +27,15 @@ public class GameplayState implements State {
     private Button backButton;
     private Button[] menuButtons;
     private int selectedIndex = 0;
+    private ArchiveScreenLayout layout;
+    private UiRect dossierPanel;
+    private UiRect storyPanel;
+    private UiRect notesPanel;
     
     // Display info
     private Font titleFont;
     private Font textFont;
+    private Font smallFont;
     private Font buttonFont;
     
     public GameplayState(Character character, int characterSlot) {
@@ -40,21 +51,14 @@ public class GameplayState implements State {
     @Override
     public void onEnter() {
         // Initialize fonts
-        titleFont = Engine.instance().resources.getFont("Milonga/Milonga-Regular.ttf", 36);
-        textFont = Engine.instance().resources.getFont("Special_Elite/SpecialElite-Regular.ttf", 16);
-        buttonFont = Engine.instance().resources.getFont("Milonga/Milonga-Regular.ttf", 18);
+        titleFont = GreatDreamerTheme.archiveFont(30);
+        textFont = GreatDreamerTheme.archiveFont(14);
+        smallFont = GreatDreamerTheme.archiveFont(12);
+        buttonFont = GreatDreamerTheme.archiveFont(14);
         
         // Initialize buttons
-        backButton = new Button(0, 0, 200, 50, "Return to Characters");
-        
-        // Set button colors
-        Color normalColor = new Color(50, 50, 50, 200);
-        Color hoverColor = new Color(70, 70, 70, 200);
-        Color pressedColor = new Color(30, 30, 30, 200);
-        Color textColor = Color.WHITE;
-        
-        backButton.setColors(normalColor, hoverColor, pressedColor, textColor);
-        backButton.setFont(buttonFont);
+        backButton = new Button(0, 0, 210, 48, "<  CASE FILES");
+        GreatDreamerTheme.styleArchiveButton(backButton, buttonFont);
         
         // Set button action
         backButton.setOnClick(() -> {
@@ -97,6 +101,8 @@ public class GameplayState implements State {
     
     @Override
     public void update() {
+        updateLayout();
+
         // Update button states
         int mouseX = Engine.instance().mouse.getX();
         int mouseY = Engine.instance().mouse.getY();
@@ -111,163 +117,158 @@ public class GameplayState implements State {
             menuButtons[i].setSelected(i == selectedIndex);
         }
     }
+
+    private void updateLayout() {
+        int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
+        int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
+        layout = ArchiveScreenLayout.fromViewport(windowWidth, windowHeight);
+
+        int bodyBottom = layout.content.bottom() - 78;
+        int bodyHeight = Math.max(260, bodyBottom - layout.body.y);
+        UiRect body = new UiRect(layout.body.x, layout.body.y, layout.body.width, bodyHeight);
+        int leftWidth = Math.max(330, body.width * 38 / 100);
+        dossierPanel = new UiRect(body.x, body.y, leftWidth, body.height);
+
+        int storyX = dossierPanel.right() + ArchiveScreenLayout.COLUMN_GAP;
+        int storyWidth = Math.max(360, body.right() - storyX);
+        int notesHeight = 90;
+        int storyHeight = Math.max(190, body.height - notesHeight - 20);
+        storyPanel = new UiRect(storyX, body.y, storyWidth, storyHeight);
+        notesPanel = new UiRect(storyX, storyPanel.bottom() + 20, storyWidth, notesHeight);
+
+        UiRect backRect = layout.rightAction(210, 48);
+        backButton.x = backRect.x;
+        backButton.y = backRect.y;
+    }
     
     @Override
     public void render(Graphics g) {
         // Get window dimensions
         int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
         int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
-        
-        // Set background color - dark, atmospheric
-        g.setColor(new Color(15, 15, 25)); // Very dark blue-black
-        g.fillRect(0, 0, windowWidth, windowHeight);
-        
         Graphics2D g2d = (Graphics2D) g;
-        
-        // Calculate center position
-        int centerX = windowWidth / 2;
-        int centerY = windowHeight / 2;
-        
-        // Draw main title
-        g2d.setColor(Color.WHITE);
-        g2d.setFont(titleFont);
-        FontMetrics titleMetrics = g2d.getFontMetrics();
-        String title = "Great Dreamer Stories";
-        int titleX = centerX - titleMetrics.stringWidth(title) / 2;
-        int titleY = centerY - 200;
-        g2d.drawString(title, titleX, titleY);
-        
-        // Draw subtitle
-        g2d.setFont(textFont);
-        g2d.setColor(new Color(200, 200, 200));
-        FontMetrics subtitleMetrics = g2d.getFontMetrics();
-        String subtitle = "The Nordic Noir Mystery Begins...";
-        int subtitleX = centerX - subtitleMetrics.stringWidth(subtitle) / 2;
-        int subtitleY = titleY + 50;
-        g2d.drawString(subtitle, subtitleX, subtitleY);
-        
-        // Draw character info panel
-        drawCharacterInfoPanel(g2d, centerX, centerY);
-        
-        // Draw placeholder story content
-        drawStoryPlaceholder(g2d, centerX, centerY + 100);
-        
-        // Position and render buttons
-        backButton.x = centerX - 100;
-        backButton.y = windowHeight - 150;
+        Resources.enableAntialiasing(g2d);
+        updateLayout();
+
+        ArchiveRenderer.drawPage(g2d, windowWidth, windowHeight);
+        ArchiveRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
+        ArchiveRenderer.drawHeader(g2d, layout.content, layout.content.right(), "ACTIVE INVESTIGATION",
+                                   "STOKSJÖ POLICE ARCHIVE // INCIDENT ROOM", titleFont, smallFont);
+        ArchiveRenderer.drawRightMetric(g2d, layout.content, String.valueOf(getCompletedStoryCount()),
+                                        "CASES CLOSED", 12, 96, titleFont, smallFont);
+
+        drawCharacterInfoPanel(g2d);
+        drawStoryPlaceholder(g2d);
+        drawNotesPanel(g2d);
+
         backButton.render(g);
-        
-        // Draw instructions
-        g2d.setColor(Color.LIGHT_GRAY);
-        g2d.setFont(textFont);
-        String instructions = "This is a placeholder for the main gameplay. Press ESC or click the button to return.";
-        FontMetrics instrMetrics = g2d.getFontMetrics();
-        int instrX = centerX - instrMetrics.stringWidth(instructions) / 2;
-        g2d.drawString(instructions, instrX, windowHeight - 40);
     }
     
-    private void drawCharacterInfoPanel(Graphics2D g2d, int centerX, int centerY) {
-        // Character info panel
-        int panelWidth = 400;
-        int panelHeight = 145;
-        int panelX = centerX - panelWidth / 2;
-        int panelY = centerY - 100;
-        
-        // Panel background
-        g2d.setColor(new Color(40, 40, 60, 200));
-        g2d.fillRoundRect(panelX, panelY, panelWidth, panelHeight, 15, 15);
-        
-        g2d.setColor(new Color(100, 100, 120));
-        g2d.setStroke(new BasicStroke(2f));
-        g2d.drawRoundRect(panelX, panelY, panelWidth, panelHeight, 15, 15);
-        
-        // Character name and title
-        g2d.setColor(Color.WHITE);
-        g2d.setFont(textFont);
-        FontMetrics textMetrics = g2d.getFontMetrics();
-        
-        String characterInfo = selectedCharacter.getName() + " (" + selectedCharacter.getGender().getDisplayName() + ")";
-        int charInfoX = panelX + (panelWidth - textMetrics.stringWidth(characterInfo)) / 2;
-        g2d.drawString(characterInfo, charInfoX, panelY + 25);
-        
-        String occupation = selectedCharacter.getOccupation();
-        int occupationX = panelX + (panelWidth - textMetrics.stringWidth(occupation)) / 2;
-        g2d.setColor(new Color(180, 180, 255));
-        g2d.drawString(occupation, occupationX, panelY + 45);
-        
-        // Stats display
-        g2d.setColor(Color.WHITE);
-        String stats = String.format("STR:%d  POW:%d  EDU:%d  CON:%d  INT:%d  APP:%d  LCK:%d  SIZ:%d  DEX:%d", 
-                selectedCharacter.getStrength(),
-                selectedCharacter.getPower(),
-                selectedCharacter.getEducation(),
-                selectedCharacter.getConstitution(),
-                selectedCharacter.getIntelligence(),
-                selectedCharacter.getAppearance(),
-                selectedCharacter.getLuck(),
-                selectedCharacter.getSize(),
-                selectedCharacter.getDexterity());
-        int statsX = panelX + (panelWidth - textMetrics.stringWidth(stats)) / 2;
-        g2d.drawString(stats, statsX, panelY + 70);
+    private void drawCharacterInfoPanel(Graphics2D g2d) {
+        ArchiveRenderer.drawPanel(g2d, dossierPanel);
 
-        String skills = selectedCharacter.getKeySkillSummary();
-        int skillsX = panelX + (panelWidth - textMetrics.stringWidth(skills)) / 2;
-        g2d.setColor(new Color(180, 220, 255));
-        g2d.drawString(skills, skillsX, panelY + 95);
-        
-        // Story progress
+        drawPanelTitle(g2d, "INVESTIGATOR DOSSIER", dossierPanel.x + 15, dossierPanel.y + 5);
+
+        g2d.setColor(GreatDreamerTheme.TEXT);
+        g2d.setFont(textFont);
+        String characterInfo = selectedCharacter.getName() + " (" + selectedCharacter.getGender().getDisplayName() + ")";
+        g2d.drawString(characterInfo, dossierPanel.x + 18, dossierPanel.y + 28);
+
+        g2d.setColor(GreatDreamerTheme.SELECTED);
+        g2d.drawString(selectedCharacter.getOccupation(), dossierPanel.x + 18, dossierPanel.y + 52);
+
+        g2d.setColor(GreatDreamerTheme.LINE);
+        g2d.drawLine(dossierPanel.x + 18, dossierPanel.y + 74, dossierPanel.right() - 18, dossierPanel.y + 74);
+
+        g2d.setColor(GreatDreamerTheme.TEXT);
+        g2d.setFont(smallFont);
+        List<String> skillLines = selectedCharacter.getAllSkillsSummaryLines(8);
+        String[] dossierLines = new String[skillLines.size() + 6];
+        dossierLines[0] = String.format("STR:%d  POW:%d  EDU:%d CON:%d", selectedCharacter.getStrength(), selectedCharacter.getPower(), selectedCharacter.getEducation(), selectedCharacter.getConstitution());
+        dossierLines[1] = String.format("INT:%d  APP:%d  LCK:%d  SIZ:%d  DEX:%d", selectedCharacter.getIntelligence(), selectedCharacter.getAppearance(), selectedCharacter.getLuck(), selectedCharacter.getSize(), selectedCharacter.getDexterity());
+        dossierLines[2] = "";
+        dossierLines[3] = "SKILLS:";
+        for (int i = 0; i < skillLines.size(); i++) {
+            dossierLines[i + 4] = skillLines.get(i);
+        }
+        dossierLines[dossierLines.length - 2] = "";
+        dossierLines[dossierLines.length - 1] = "Stories completed: " + getCompletedStoryCount() + "/" + Character.MAX_STORIES;
+
+        drawLines(g2d, dossierLines, dossierPanel.x + 18, dossierPanel.y + 102, 20);
+    }
+    
+    private void drawStoryPlaceholder(Graphics2D g2d) {
+        ArchiveRenderer.drawPanel(g2d, storyPanel);
+        drawPanelTitle(g2d, "CASE BOARD", storyPanel.x + 15, storyPanel.y + 5);
+
+        g2d.setColor(GreatDreamerTheme.TEXT);
+        g2d.setFont(textFont);
+        String[] storyLines = {
+            "The fog rolls in from the fjord as the station phone keeps ringing.",
+            "A strange case waits in Stoksjö, buried under snow, old records,",
+            "and the stories locals only tell after dark.",
+            "",
+            "Current objective:",
+            "Review the first reports, question witnesses, and start building",
+            "a timeline before the town closes ranks around the truth.",
+            "",
+            "Future implementation:",
+            "Dialogue choices, clues, map exploration, inventory, and",
+            "turn-based encounters will unfold from this state."
+        };
+        drawLines(g2d, storyLines, storyPanel.x + 18, storyPanel.y + 28, 22);
+    }
+
+    private void drawNotesPanel(Graphics2D g2d) {
+        ArchiveRenderer.drawPanel(g2d, notesPanel);
+        drawPanelTitle(g2d, "FIELD NOTES", notesPanel.x + 15, notesPanel.y + 5);
+        g2d.setColor(GreatDreamerTheme.TEXT);
+        g2d.drawString("Press ESC or use the case files button to return to investigator selection.", notesPanel.x + 18, notesPanel.y + 28);
+        g2d.setColor(GreatDreamerTheme.MUTED_TEXT);
+        g2d.drawString("This panel will later hold active clues, leads, and inventory reminders.", notesPanel.x + 18, notesPanel.y + 52);
+    }
+
+    private void drawPanelTitle(Graphics2D g2d, String title, int x, int y) {
+        int paddingX = 5;
+        int paddingY = 2;
+
+        g2d.setFont(smallFont);
+        FontMetrics fm = g2d.getFontMetrics();
+
+        int rectX = x - paddingX;
+        int rectY = y - fm.getAscent() - paddingY;
+        int rectWidth = fm.stringWidth(title) + paddingX * 2;
+        int rectHeight = fm.getAscent() + fm.getDescent() + paddingY * 2;
+
+        g2d.setColor(GreatDreamerTheme.PANEL);
+        g2d.fillRect(rectX, rectY, rectWidth, rectHeight);
+        g2d.setColor(GreatDreamerTheme.MUTED_TEXT);
+        g2d.drawString(title, x, y);
+    }
+
+    private void drawLines(Graphics2D g2d, String[] lines, int x, int startY, int lineHeight) {
+        int lineY = startY;
+        for (String line : lines) {
+            if (!line.isEmpty()) {
+                g2d.setColor(isLineHeading(line) ? GreatDreamerTheme.SELECTED : GreatDreamerTheme.TEXT);
+                g2d.drawString(line, x, lineY);
+            }
+            lineY += lineHeight;
+        }
+    }
+
+    private boolean isLineHeading(String line) {
+        return line.endsWith(":") || line.equals(line.toUpperCase());
+    }
+
+    private int getCompletedStoryCount() {
         int completedStories = 0;
         for (boolean completed : selectedCharacter.getCompletedStories()) {
-            if (completed) completedStories++;
-        }
-        
-        String progress = String.format("Stories completed: %d/%d", completedStories, Character.MAX_STORIES);
-        int progressX = panelX + (panelWidth - textMetrics.stringWidth(progress)) / 2;
-        g2d.setColor(new Color(150, 255, 150));
-        g2d.drawString(progress, progressX, panelY + 120);
-    }
-    
-    private void drawStoryPlaceholder(Graphics2D g2d, int centerX, int centerY) {
-        // Story content placeholder
-        int contentWidth = 600;
-        int contentHeight = 200;
-        int contentX = centerX - contentWidth / 2;
-        int contentY = centerY;
-        
-        // Content background
-        g2d.setColor(new Color(25, 25, 35, 180));
-        g2d.fillRoundRect(contentX, contentY, contentWidth, contentHeight, 10, 10);
-        
-        g2d.setColor(new Color(80, 80, 100));
-        g2d.setStroke(new BasicStroke(1f));
-        g2d.drawRoundRect(contentX, contentY, contentWidth, contentHeight, 10, 10);
-        
-        // Placeholder story text
-        g2d.setColor(Color.WHITE);
-        g2d.setFont(textFont);
-        
-        String[] storyLines = {
-            "The fog rolls in from the fjord as you arrive at the station.",
-            "Your first day as Chief of Police in this small Nordic town",
-            "begins with reports of strange disappearances...",
-            "",
-            "The mysteries of the Great Dreamer await your investigation.",
-            "",
-            " Future implementation: Visual novel storytelling,",
-            " dialogue choices, investigation mechanics, and",
-            " turn-based combat encounters will appear here"
-        };
-        
-        int lineY = contentY + 25;
-        for (String line : storyLines) {
-            if (line.startsWith(" ")) {
-                g2d.setColor(new Color(150, 150, 150));
-            } else {
-                g2d.setColor(Color.WHITE);
+            if (completed) {
+                completedStories++;
             }
-            g2d.drawString(line, contentX + 20, lineY);
-            lineY += 20;
         }
+        return completedStories;
     }
 }
 

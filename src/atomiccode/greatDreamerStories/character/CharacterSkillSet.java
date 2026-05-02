@@ -2,6 +2,8 @@ package atomiccode.greatDreamerStories.character;
 
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class CharacterSkillSet {
@@ -23,15 +25,31 @@ public class CharacterSkillSet {
     }
 
     public String formatSkills(CharacterSkill... skills) {
+        return formatSkills(0, skills);
+    }
+
+    public String formatSkills(int skillsPerLine, CharacterSkill... skills) {
+        return String.join("\n", formatSkillLines(skillsPerLine, skills));
+    }
+
+    public List<String> formatSkillLines(int skillsPerLine, CharacterSkill... skills) {
+        List<String> lines = new ArrayList<>();
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < skills.length; i++) {
-            if (i > 0) {
+            if (skillsPerLine > 0 && i > 0 && i % skillsPerLine == 0) {
+                lines.add(builder.toString());
+                builder = new StringBuilder();
+            } else if (builder.length() > 0) {
                 builder.append("  ");
             }
+
             CharacterSkill skill = skills[i];
             builder.append(skill.getCode()).append(":").append(getValue(skill));
         }
-        return builder.toString();
+        if (builder.length() > 0) {
+            lines.add(builder.toString());
+        }
+        return lines;
     }
 
     private int clamp(int value, CharacterSkill skill) {

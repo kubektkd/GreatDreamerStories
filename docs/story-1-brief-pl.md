@@ -33,7 +33,7 @@
 *   **Yngvar Madsen:** Ojciec Branji, wrak człowieka mieszkający w wagonie kolejowym; przeczuwa, że podmieniona przed laty córka jest "inna", ale nie ma wystarczających na to dowodów.
 
 ## 4. Główne Etapy Fabuły (Questy/Eventy)
-0.  **Scena Inicjująca**: Gracz wraca nocą autem z odległego o kilkadziesiąt kilometrów większego miasta (miał tam do załatwienia sprawy zawodowe) i nagle natrafia, na zasypanej świeżym śniegiem drodze, ubraną jedynie w długą halkę (piżamę), przerażoną dziewczynę (Prawdziwą Branję).
+0.  **Scena Inicjująca**: Gracz wraca nocą autem z odległego o kilkadziesiąt kilometrów większego miasta (miał tam do załatwienia sprawy służbowe) i nagle natrafia, na zasypanej świeżym śniegiem drodze, ubraną jedynie w długą halkę (piżamę), przerażoną dziewczynę (Prawdziwą Branję).
 1.  **Spotkanie na drodze:** Gracz znajduje zmarzniętą dziewczynę na brzegu lasu podczas śnieżycy. Próbuje się z nią porozumieć, ale dziewczyna mówi w dziwnym języku (w rzeczywistości jest to język gracza, ale wspak).
 2.  **Śledztwo techniczne:** Analiza odcisków palców (nielogiczny wynik: odciski znalezionej dziewczyny pasują do 2-latki (Branji) z bazy danych), badania medyczne (wynik: wysoki poziom limfocytów oraz ślady starych złamań), przeszukiwanie policyjnego archiwum, wizyta w miejskiej bibliotece.
 3.  **Rekonstrukcja wydarzeń:** Rozmowy z Ingrid, Yngvarem i emerytowanym policjantem Stembergiem (poprzednim komendantem, za czasów którego mała Branja została podmieniona) na temat zaginięcia sprzed 15 lat.

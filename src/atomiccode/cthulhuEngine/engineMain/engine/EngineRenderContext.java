@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Matrix4;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -23,6 +24,10 @@ public class EngineRenderContext {
     private Pixmap java2dPixmap;
     private Texture java2dTexture;
 
+    /** Refreshed each frame: SpriteBatch keeps its first projection unless we update (breaks after resize / maximize). */
+    private final Matrix4 screenProjection = new Matrix4();
+    private final Matrix4 identityTransform = new Matrix4();
+
     EngineRenderContext(SpriteBatch batch, ShapeRenderer shapes, Resources resources) {
         this.batch = batch;
         this.shapes = shapes;
@@ -33,6 +38,14 @@ public class EngineRenderContext {
         this.deltaSeconds = deltaSeconds;
         this.width = width;
         this.height = height;
+
+        // Match LibGDX SpriteBatch default: top-left origin, y increasing downward (same as Java2D / Gdx.input coords).
+        screenProjection.setToOrtho2D(0, 0, width, height);
+        identityTransform.idt();
+        batch.setProjectionMatrix(screenProjection);
+        batch.setTransformMatrix(identityTransform);
+        shapes.setProjectionMatrix(screenProjection);
+        shapes.setTransformMatrix(identityTransform);
     }
 
     public float getDeltaSeconds() {

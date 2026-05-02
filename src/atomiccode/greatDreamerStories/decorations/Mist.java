@@ -1,5 +1,6 @@
 package atomiccode.greatDreamerStories.decorations;
 
+import atomiccode.cthulhuEngine.engineMain.engine.Engine;
 import atomiccode.cthulhuEngine.engineMain.engine.EngineFiles;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -92,8 +93,8 @@ public class Mist {
         // Organic size pulsing (calculated in render method)
         // Organic alpha pulsing (calculated in render method)
         
-        // Start fade-out if moved too far off screen (handle both directions)
-        if ((x < -size * 2 || x > 1920 + size * 2) && currentState != MistState.FADING_OUT) {
+        int viewportW = Engine.instance().getWidth();
+        if ((x < -size * 2 || x > viewportW + size * 2) && currentState != MistState.FADING_OUT) {
             startFadeOut();
         }
     }

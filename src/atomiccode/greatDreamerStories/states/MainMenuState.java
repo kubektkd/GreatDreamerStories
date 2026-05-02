@@ -38,7 +38,7 @@ public class MainMenuState implements State {
     private BufferedImage cocLogoImage;
     private boolean cocLogoLoaded = false;
     
-    // Menu buttons
+    // Menu buttons (fixed pixels — Java2D screen space; resize only moves them via layout anchors)
     private static final int MENU_BUTTON_WIDTH = 200;
     private static final int MENU_BUTTON_HEIGHT = 50;
     private static final int MENU_BUTTON_GAP = 20;
@@ -66,7 +66,11 @@ public class MainMenuState implements State {
     private float mistSpawnTimer = 0.0f;
     private final float MIST_SPAWN_INTERVAL = 2.0f; // Spawn mist every 2 seconds
     private final int MAX_MIST_PARTICLES = 25; // Maximum number of mist particles on screen
-    
+
+    /** Last size we laid out mist/snow for — avoids duplicate respawn when LibGDX repeats identical resize events. */
+    private int atmosphereLastViewportW = -1;
+    private int atmosphereLastViewportH = -1;
+
     @Override
     public int getPriority() {
         return 1; // Lower priority than splash screen
@@ -130,6 +134,41 @@ public class MainMenuState implements State {
         for (int i = 0; i < menuButtons.length; i++) {
             menuButtons[i].setSelected(i == selectedIndex);
         }
+
+        syncAtmosphereViewportCache();
+    }
+
+    @Override
+    public void resize(int width, int height) {
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+        if (width == atmosphereLastViewportW && height == atmosphereLastViewportH) {
+            return;
+        }
+        rematerializeAtmosphericDecorAfterViewportChange();
+        syncAtmosphereViewportCache();
+    }
+
+    /**
+     * Mist and snow use absolute pixels; after a resize they would stay at stale Y positions.
+     * Clear and re-seed from the bottom / top edges for the new {@link Engine} dimensions.
+     */
+    private void rematerializeAtmosphericDecorAfterViewportChange() {
+        if (mistParticles != null) {
+            mistParticles.clear();
+            mistSpawnTimer = 0f;
+            spawnInitialMist();
+        }
+        if (snowflakes != null) {
+            snowflakes.clear();
+            snowflakeSpawnTimer = 0f;
+        }
+    }
+
+    private void syncAtmosphereViewportCache() {
+        atmosphereLastViewportW = Engine.instance().getWidth();
+        atmosphereLastViewportH = Engine.instance().getHeight();
     }
     
     private void loadBackgroundImage() {
@@ -366,10 +405,10 @@ public class MainMenuState implements State {
 
         UiLayoutContext context = new UiLayoutContext(Engine.instance().getWindow().getCanvas().getWidth(),
                                                       Engine.instance().getWindow().getCanvas().getHeight());
-        int menuAnchorX = getMenuAnchorX(context.viewportWidth);
-        int menuCenterY = context.viewportHeight / 2;
+        int menuAnchorX = MainMenuLayout.horizontalAnchorPx(context.viewportWidth);
         int stackHeight = MENU_BUTTON_HEIGHT * menuButtons.length + MENU_BUTTON_GAP * (menuButtons.length - 1);
-        UiRect stackArea = new UiRect(menuAnchorX - MENU_BUTTON_WIDTH / 2, menuCenterY - 50,
+        int stackOriginY = MainMenuLayout.stackAreaOriginY(context.viewportHeight);
+        UiRect stackArea = new UiRect(menuAnchorX - MENU_BUTTON_WIDTH / 2, stackOriginY,
                                       MENU_BUTTON_WIDTH, stackHeight);
         UiStackLayout buttonStack = new UiStackLayout(UiStackLayout.Direction.VERTICAL, MENU_BUTTON_GAP,
                                                       UiAlign.STRETCH, UiAlign.START);
@@ -381,9 +420,6 @@ public class MainMenuState implements State {
         }
     }
 
-    private int getMenuAnchorX(int windowWidth) {
-        return windowWidth / 5;
-    }
     
     @Override
     public void render(Graphics g) {
@@ -418,50 +454,36 @@ public class MainMenuState implements State {
             g.fillRect(0, 0, windowWidth, windowHeight);
         }
         
-        // Calculate center position
-        int centerX = getMenuAnchorX(windowWidth);
-        int centerY = windowHeight / 2;
-        
-        // Draw main menu logo
+        int anchorX = MainMenuLayout.horizontalAnchorPx(windowWidth);
+
         Graphics2D g2d = (Graphics2D) g;
-        
-        // Draw logo if loaded, otherwise fallback to text
+
+        int gapAboveStack = MainMenuLayout.gapBetweenLogoBottomAndStackTop(windowHeight);
+        int stackTopForLogo = menuButtons != null ? startButton.y : MainMenuLayout.fallbackStackTopY(windowHeight);
+        int menuColumnCenter = menuButtons != null ? startButton.x + MENU_BUTTON_WIDTH / 2 : anchorX;
+
         if (logoLoaded && logoImage != null) {
-            // Calculate logo size based on window size
-            int maxLogoWidth = windowWidth / 3;
-            int maxLogoHeight = windowHeight / 4;
-            
-            // Calculate scaling to fit within bounds while maintaining aspect ratio
-            int logoWidth = logoImage.getWidth();
-            int logoHeight = logoImage.getHeight();
-            
-            float scaleX = (float) maxLogoWidth / logoWidth;
-            float scaleY = (float) maxLogoHeight / logoHeight;
-            float scale = Math.min(scaleX, scaleY);
-            
-            int scaledLogoWidth = (int) (logoWidth * scale);
-            int scaledLogoHeight = (int) (logoHeight * scale);
-            
-            // Position logo with floating animation (both X and Y movement)
-            int baseLogoX = centerX - scaledLogoWidth / 2;
-            int baseLogoY = centerY / 4;
-            // Use pre-calculated smooth floating offsets for both X and Y
-            int logoX = baseLogoX + Math.round(logoAnimationOffsetX);
-            int logoY = baseLogoY + Math.round(logoAnimationOffsetY);
-            
-            g2d.drawImage(logoImage, logoX, logoY, scaledLogoWidth, scaledLogoHeight, null);
+            Dimension logoDraw = MainMenuLayout.scaledLogoDrawSize(windowWidth, windowHeight, logoImage, MENU_BUTTON_WIDTH);
+            int scaledLogoWidth = logoDraw.width;
+            int scaledLogoHeight = logoDraw.height;
+
+            int logoX = menuColumnCenter - scaledLogoWidth / 2 + Math.round(logoAnimationOffsetX);
+            int logoTop = stackTopForLogo - gapAboveStack - scaledLogoHeight + Math.round(logoAnimationOffsetY);
+            logoTop = Math.max(MainMenuLayout.LOGO_TOP_MIN_MARGIN_PX, logoTop);
+
+            g2d.drawImage(logoImage, logoX, logoTop, scaledLogoWidth, scaledLogoHeight, null);
         } else {
-            // Fallback to text title if logo fails to load
             Font titleFont = Engine.instance().resources.getFont("Milonga/Milonga-Regular.ttf", 48);
             g2d.setColor(Color.WHITE);
             g2d.setFont(titleFont);
+            FontMetrics titleFm = g2d.getFontMetrics();
             String title = "Great Dreamer Stories";
-            int baseTitleX = 50;
-            int baseTitleY = centerY / 4;
-            // Use pre-calculated smooth floating offsets for both X and Y (text fallback)
-            int titleX = baseTitleX + Math.round(logoAnimationOffsetX);
-            int titleY = baseTitleY + Math.round(logoAnimationOffsetY);
-            g2d.drawString(title, titleX, titleY);
+            int titleBlockHeight = titleFm.getHeight();
+            int textTop = stackTopForLogo - gapAboveStack - titleBlockHeight + Math.round(logoAnimationOffsetY);
+            textTop = Math.max(MainMenuLayout.LOGO_TOP_MIN_MARGIN_PX, textTop);
+            int titleBaseline = textTop + titleFm.getAscent();
+            int titleX = menuColumnCenter - titleFm.stringWidth(title) / 2 + Math.round(logoAnimationOffsetX);
+            g2d.drawString(title, titleX, titleBaseline);
         }
 
         // Draw CoC logo

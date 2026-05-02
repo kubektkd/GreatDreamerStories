@@ -1,6 +1,6 @@
 ## Main game vision
 
-There is no full vision for all of the game's elements at this point, but the rough idea is to go in the direction of 2.5D isometric retro RPG style games (like firsts Dragon Quest or Final Fantasy games) with cold, desaturated colors that will capture the Nordic-Noire vibe well.
+There is no full vision for all of the game's elements at this point, but the rough idea is to go in the direction of isometric retro RPG style games, like classic Fallout 1 game, but with diamond-shaped tiled map instead of hexagonal tiles, with cold, desaturated colors that will capture the winter Nordic-Noire vibe well.
 Setting will mostly be at the winter conditions - snowy, short daytime, windy and cold.
 
 Note for AI: If you ever be unsure about direction in which you should go, ask user for clarification.

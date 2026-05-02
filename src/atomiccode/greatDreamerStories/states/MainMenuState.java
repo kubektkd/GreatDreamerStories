@@ -4,6 +4,7 @@ import atomiccode.cthulhuEngine.inputsOutputs.stateControl.State;
 import atomiccode.cthulhuEngine.engineMain.engine.Engine;
 import atomiccode.cthulhuEngine.engineMain.engine.EngineFiles;
 import atomiccode.greatDreamerStories.Game;
+import atomiccode.greatDreamerStories.GamePreferences;
 import atomiccode.cthulhuEngine.ui.Button;
 import atomiccode.cthulhuEngine.ui.layout.UiAlign;
 import atomiccode.cthulhuEngine.ui.layout.UiLayoutContext;
@@ -120,7 +121,7 @@ public class MainMenuState implements State {
         });
         
         settingsButton.setOnClick(() -> {
-            // TODO: Implement settings state
+            Engine.instance().stateProcessor.setState(new SettingsState());
         });
         
         exitButton.setOnClick(() -> {
@@ -236,7 +237,8 @@ public class MainMenuState implements State {
             File audioFile = EngineFiles.getResourceFile("sound/Barghest_Fell.ogg");
             if (audioFile.exists()) {
                 Engine.instance().audioManager.loadAudio("background_music", audioFile.getAbsolutePath());
-                Engine.instance().audioManager.playMusicWithFade("background_music", 0.3f); // Set volume to 30% with fade
+                float menuVol = GamePreferences.getMenuMusicVolume();
+                Engine.instance().audioManager.playMusicWithFade("background_music", menuVol);
             } else {
                 System.err.println("Background music file not found: " + audioFile.getAbsolutePath());
             }

@@ -61,6 +61,9 @@ public class EngineRenderContext {
     }
 
     public void renderJava2D(Consumer<Graphics2D> renderer) {
+        if (width <= 0 || height <= 0) {
+            return;
+        }
         ensureJava2DTarget();
 
         Graphics2D graphics = java2dImage.createGraphics();
@@ -89,6 +92,9 @@ public class EngineRenderContext {
     }
 
     private void ensureJava2DTarget() {
+        if (width <= 0 || height <= 0) {
+            return;
+        }
         if (java2dImage != null && java2dImage.getWidth() == width && java2dImage.getHeight() == height) {
             return;
         }

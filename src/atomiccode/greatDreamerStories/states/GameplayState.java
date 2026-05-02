@@ -7,8 +7,8 @@ import atomiccode.cthulhuEngine.ui.Button;
 import atomiccode.cthulhuEngine.ui.layout.UiRect;
 import atomiccode.greatDreamerStories.character.Character;
 import atomiccode.greatDreamerStories.character.SaveManager;
-import atomiccode.greatDreamerStories.ui.ArchiveRenderer;
-import atomiccode.greatDreamerStories.ui.ArchiveScreenLayout;
+import atomiccode.greatDreamerStories.ui.GeneralMenuRenderer;
+import atomiccode.greatDreamerStories.ui.GeneralMenuLayout;
 import atomiccode.greatDreamerStories.ui.GreatDreamerTheme;
 
 import java.awt.*;
@@ -27,7 +27,7 @@ public class GameplayState implements State {
     private Button backButton;
     private Button[] menuButtons;
     private int selectedIndex = 0;
-    private ArchiveScreenLayout layout;
+    private GeneralMenuLayout layout;
     private UiRect dossierPanel;
     private UiRect storyPanel;
     private UiRect notesPanel;
@@ -121,7 +121,7 @@ public class GameplayState implements State {
     private void updateLayout() {
         int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
         int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
-        layout = ArchiveScreenLayout.fromViewport(windowWidth, windowHeight);
+        layout = GeneralMenuLayout.fromViewport(windowWidth, windowHeight);
 
         int bodyBottom = layout.content.bottom() - 78;
         int bodyHeight = Math.max(260, bodyBottom - layout.body.y);
@@ -129,7 +129,7 @@ public class GameplayState implements State {
         int leftWidth = Math.max(330, body.width * 38 / 100);
         dossierPanel = new UiRect(body.x, body.y, leftWidth, body.height);
 
-        int storyX = dossierPanel.right() + ArchiveScreenLayout.COLUMN_GAP;
+        int storyX = dossierPanel.right() + GeneralMenuLayout.COLUMN_GAP;
         int storyWidth = Math.max(360, body.right() - storyX);
         int notesHeight = 90;
         int storyHeight = Math.max(190, body.height - notesHeight - 20);
@@ -150,11 +150,11 @@ public class GameplayState implements State {
         Resources.enableAntialiasing(g2d);
         updateLayout();
 
-        ArchiveRenderer.drawPage(g2d, windowWidth, windowHeight);
-        ArchiveRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
-        ArchiveRenderer.drawHeader(g2d, layout.content, layout.content.right(), "ACTIVE INVESTIGATION",
+        GeneralMenuRenderer.drawPage(g2d, windowWidth, windowHeight);
+        GeneralMenuRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
+        GeneralMenuRenderer.drawHeader(g2d, layout.content, layout.content.right(), "ACTIVE INVESTIGATION",
                                    "STOKSJÖ POLICE ARCHIVE // INCIDENT ROOM", titleFont, smallFont);
-        ArchiveRenderer.drawRightMetric(g2d, layout.content, String.valueOf(getCompletedStoryCount()),
+        GeneralMenuRenderer.drawRightMetric(g2d, layout.content, String.valueOf(getCompletedStoryCount()),
                                         "CASES CLOSED", 12, 96, titleFont, smallFont);
 
         drawCharacterInfoPanel(g2d);
@@ -165,7 +165,7 @@ public class GameplayState implements State {
     }
     
     private void drawCharacterInfoPanel(Graphics2D g2d) {
-        ArchiveRenderer.drawPanel(g2d, dossierPanel);
+        GeneralMenuRenderer.drawPanel(g2d, dossierPanel);
 
         drawPanelTitle(g2d, "INVESTIGATOR DOSSIER", dossierPanel.x + 15, dossierPanel.y + 5);
 
@@ -198,7 +198,7 @@ public class GameplayState implements State {
     }
     
     private void drawStoryPlaceholder(Graphics2D g2d) {
-        ArchiveRenderer.drawPanel(g2d, storyPanel);
+        GeneralMenuRenderer.drawPanel(g2d, storyPanel);
         drawPanelTitle(g2d, "CASE BOARD", storyPanel.x + 15, storyPanel.y + 5);
 
         g2d.setColor(GreatDreamerTheme.TEXT);
@@ -220,7 +220,7 @@ public class GameplayState implements State {
     }
 
     private void drawNotesPanel(Graphics2D g2d) {
-        ArchiveRenderer.drawPanel(g2d, notesPanel);
+        GeneralMenuRenderer.drawPanel(g2d, notesPanel);
         drawPanelTitle(g2d, "FIELD NOTES", notesPanel.x + 15, notesPanel.y + 5);
         g2d.setColor(GreatDreamerTheme.TEXT);
         g2d.drawString("Press ESC or use the case files button to return to investigator selection.", notesPanel.x + 18, notesPanel.y + 28);

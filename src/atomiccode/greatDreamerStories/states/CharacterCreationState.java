@@ -9,8 +9,8 @@ import atomiccode.cthulhuEngine.ui.Tooltip;
 import atomiccode.cthulhuEngine.ui.layout.UiRect;
 import atomiccode.greatDreamerStories.character.Character;
 import atomiccode.greatDreamerStories.character.SaveManager;
-import atomiccode.greatDreamerStories.ui.ArchiveRenderer;
-import atomiccode.greatDreamerStories.ui.ArchiveScreenLayout;
+import atomiccode.greatDreamerStories.ui.GeneralMenuRenderer;
+import atomiccode.greatDreamerStories.ui.GeneralMenuLayout;
 import atomiccode.greatDreamerStories.ui.GreatDreamerTheme;
 
 import java.awt.*;
@@ -81,7 +81,7 @@ public class CharacterCreationState implements State {
     private TextInput nameInput;
     private Tooltip statTooltip;
     private Rectangle[] statLabelBounds = new Rectangle[STAT_COUNT];
-    private ArchiveScreenLayout layout;
+    private GeneralMenuLayout layout;
     private int layoutY;
     private int leftWidth;
     private int rightX;
@@ -435,7 +435,7 @@ public class CharacterCreationState implements State {
     private void updateLayout() {
         int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
         int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
-        layout = ArchiveScreenLayout.fromViewport(windowWidth, windowHeight);
+        layout = GeneralMenuLayout.fromViewport(windowWidth, windowHeight);
         layoutY = layout.content.y;
 
         int leftX = layout.leftColumn.x;
@@ -495,12 +495,12 @@ public class CharacterCreationState implements State {
         int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
         int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
 
-        ArchiveRenderer.drawPage(g2d, windowWidth, windowHeight);
-        ArchiveRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
-        ArchiveRenderer.drawHeader(g2d, layout.content, layout.leftColumn.right(), "NEW INVESTIGATOR",
+        GeneralMenuRenderer.drawPage(g2d, windowWidth, windowHeight);
+        GeneralMenuRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
+        GeneralMenuRenderer.drawHeader(g2d, layout.content, layout.leftColumn.right(), "NEW INVESTIGATOR",
                                    "STOKSJÖ POLICE ARCHIVE // CLASSIFIED", titleFont, smallFont);
-        ArchiveRenderer.drawSectionHeader(g2d, rightX, layoutY, "SUBJECT'S PROFILE", "ATTRIBUTES", labelFont, smallFont);
-        ArchiveRenderer.drawRightMetric(g2d, layout.content, String.valueOf(getRemainingPoints()),
+        GeneralMenuRenderer.drawSectionHeader(g2d, rightX, layoutY, "SUBJECT'S PROFILE", "ATTRIBUTES", labelFont, smallFont);
+        GeneralMenuRenderer.drawRightMetric(g2d, layout.content, String.valueOf(getRemainingPoints()),
                                         "PTS REMAINING", 20, 94, titleFont, smallFont);
 
         drawPortrait(g2d, portraitX, portraitY, portraitSize);

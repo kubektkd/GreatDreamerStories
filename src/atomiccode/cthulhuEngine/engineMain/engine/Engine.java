@@ -2,6 +2,7 @@ package atomiccode.cthulhuEngine.engineMain.engine;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.HdpiUtils;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.ScreenUtils;
 
@@ -63,10 +64,26 @@ public class Engine {
     }
 
     public void render() {
+        int w = getWidth();
+        int h = getHeight();
+        // Snipping Tool / overlays can transiently report a 0×0 framebuffer via GLFWFramebufferSizeCallback.
+        if (w <= 0 || h <= 0) {
+            return;
+        }
         ScreenUtils.clear(0f, 0f, 0f, 1f);
-        renderContext.beginFrame(getDeltaSeconds(), getWidth(), getHeight());
-        window.resize(getWidth(), getHeight());
+        // Maximize / fullscreen can leave a stale glViewport (initial window size); redraw must cover the full draw surface.
+        HdpiUtils.glViewport(0, 0, w, h);
+        renderContext.beginFrame(getDeltaSeconds(), w, h);
+        syncWindowCanvasToGraphics(w, h);
         stateProcessor.render(renderContext);
+    }
+
+    /** Keeps the legacy AWT canvas size aligned with LibGDX (skipped when framebuffer size is invalid). */
+    private void syncWindowCanvasToGraphics(int width, int height) {
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+        window.resize(width, height);
     }
 
     public float getDeltaSeconds() {
@@ -112,7 +129,7 @@ public class Engine {
     }
 
     public Window getWindow() {
-        window.resize(getWidth(), getHeight());
+        syncWindowCanvasToGraphics(getWidth(), getHeight());
         return window;
     }
 

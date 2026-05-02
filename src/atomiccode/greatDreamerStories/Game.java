@@ -1,8 +1,13 @@
 package atomiccode.greatDreamerStories;
 
 import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Graphics;
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Window;
+
+import org.lwjgl.glfw.GLFW;
 
 import atomiccode.cthulhuEngine.engineMain.engine.EngineConfigs;
 import atomiccode.cthulhuEngine.engineMain.engine.Engine;
@@ -45,9 +50,98 @@ public class Game extends ApplicationAdapter {
         return instance;
     }
 
+    /**
+     * Fullscreen vs window vs maximized for UI highlighting ( GLFW maximized attrib when applicable).
+     */
+    public static Window.Mode getDetectedWindowMode() {
+        if (Gdx.graphics.isFullscreen()) {
+            return Window.Mode.FULLSCREEN;
+        }
+        if (Gdx.graphics instanceof Lwjgl3Graphics lg) {
+            long handle = lg.getWindow().getWindowHandle();
+            boolean maximized = GLFW.glfwGetWindowAttrib(handle, GLFW.GLFW_MAXIMIZED) == GLFW.GLFW_TRUE;
+            if (maximized) {
+                return Window.Mode.MAXIMIZED;
+            }
+        }
+        return Window.Mode.WINDOWED;
+    }
+
+    /**
+     * Applies saved SFX multiplier and saved window mode after {@link Engine} exists (LibGDX graphics ready).
+     */
+    public static void applyPersistedDisplayAndAudio() {
+        Engine engine = Engine.instance();
+        engine.audioManager.setMasterSfxVolume(GamePreferences.getSfxVolume());
+        Window.Mode saved = GamePreferences.getWindowMode();
+        applyWindowModeToOs(saved, false);
+    }
+
+    /**
+     * Persists and applies window mode. LWJGL3 only for maximized; other backends get windowed/fullscreen.
+     */
+    public static void setPersistedWindowMode(Window.Mode mode) {
+        applyWindowModeToOs(mode, true);
+    }
+
+    private static void applyWindowModeToOs(Window.Mode mode, boolean persist) {
+        Engine engine = Engine.instance();
+        EngineConfigs c = engine.getConfigs();
+
+        switch (mode) {
+            case WINDOWED:
+                exitFullscreenPreserveWindow();
+                restoreLwjglMaximizedThenSize(c);
+                Gdx.graphics.setWindowedMode(c.resolution.getWidth(), c.resolution.getHeight());
+                break;
+            case MAXIMIZED:
+                exitFullscreenPreserveWindow();
+                if (Gdx.graphics instanceof Lwjgl3Graphics lg) {
+                    Lwjgl3Window w = lg.getWindow();
+                    w.restoreWindow();
+                    Gdx.graphics.setWindowedMode(c.resolution.getWidth(), c.resolution.getHeight());
+                    w.maximizeWindow();
+                }
+                break;
+            case FULLSCREEN:
+                restoreLwjglForModeChange();
+                Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
+                break;
+            default:
+                break;
+        }
+
+        c.windowMode = mode;
+        if (persist) {
+            GamePreferences.setWindowMode(mode);
+        }
+    }
+
+    private static void restoreLwjglForModeChange() {
+        if (Gdx.graphics instanceof Lwjgl3Graphics lg) {
+            lg.getWindow().restoreWindow();
+        }
+    }
+
+    private static void restoreLwjglMaximizedThenSize(EngineConfigs c) {
+        if (Gdx.graphics instanceof Lwjgl3Graphics lg) {
+            lg.getWindow().restoreWindow();
+            Gdx.graphics.setWindowedMode(c.resolution.getWidth(), c.resolution.getHeight());
+        }
+    }
+
+    private static void exitFullscreenPreserveWindow() {
+        if (!Gdx.graphics.isFullscreen()) {
+            return;
+        }
+        EngineConfigs c = Engine.instance().getConfigs();
+        Gdx.graphics.setWindowedMode(c.resolution.getWidth(), c.resolution.getHeight());
+    }
+
     @Override
     public void create() {
         engine = Engine.init(configs);
+        applyPersistedDisplayAndAudio();
     }
 
     @Override

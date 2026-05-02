@@ -9,8 +9,8 @@ import atomiccode.cthulhuEngine.ui.layout.UiGridLayout;
 import atomiccode.cthulhuEngine.ui.layout.UiRect;
 import atomiccode.greatDreamerStories.character.Character;
 import atomiccode.greatDreamerStories.character.SaveManager;
-import atomiccode.greatDreamerStories.ui.ArchiveRenderer;
-import atomiccode.greatDreamerStories.ui.ArchiveScreenLayout;
+import atomiccode.greatDreamerStories.ui.GeneralMenuRenderer;
+import atomiccode.greatDreamerStories.ui.GeneralMenuLayout;
 import atomiccode.greatDreamerStories.ui.GreatDreamerTheme;
 
 import java.awt.*;
@@ -45,7 +45,7 @@ public class CharacterSelectState implements State {
     private Font titleFont;
     private Font slotFont;
     private Font tooltipFont;
-    private ArchiveScreenLayout layout;
+    private GeneralMenuLayout layout;
     private UiRect[] slotRects = new UiRect[0];
 
     @Override
@@ -190,7 +190,7 @@ public class CharacterSelectState implements State {
     private void updateLayout() {
         int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
         int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
-        layout = ArchiveScreenLayout.fromViewport(windowWidth, windowHeight);
+        layout = GeneralMenuLayout.fromViewport(windowWidth, windowHeight);
         UiGridLayout grid = new UiGridLayout(SLOT_COLS, SLOT_SPACING_X, SLOT_SPACING_Y, SLOT_HEIGHT);
         slotRects = grid.layout(layout.body, saveManager.getMaxSlots());
 
@@ -272,13 +272,13 @@ public class CharacterSelectState implements State {
         Graphics2D g2d = (Graphics2D) g;
         Resources.enableAntialiasing(g2d);
         
-        ArchiveRenderer.drawPage(g2d, windowWidth, windowHeight);
-        ArchiveRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
+        GeneralMenuRenderer.drawPage(g2d, windowWidth, windowHeight);
+        GeneralMenuRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
         
-        ArchiveRenderer.drawHeader(g2d, layout.content, layout.content.right(), "CHOOSE INVESTIGATOR",
+        GeneralMenuRenderer.drawHeader(g2d, layout.content, layout.content.right(), "CHOOSE INVESTIGATOR",
                                    "STOKSJÖ POLICE ARCHIVE // CASE FILES", titleFont, tooltipFont);
         
-        ArchiveRenderer.drawRightMetric(g2d, layout.content, String.valueOf(getOccupiedSlotCount()),
+        GeneralMenuRenderer.drawRightMetric(g2d, layout.content, String.valueOf(getOccupiedSlotCount()),
                                         "ACTIVE CASES", 10, 90, titleFont, tooltipFont);
         
         for (int i = 0; i < slotRects.length; i++) {
@@ -325,12 +325,12 @@ public class CharacterSelectState implements State {
         
         g2d.setColor(GreatDreamerTheme.TEXT);
         g2d.setFont(buttonFont);
-        ArchiveRenderer.drawCenteredString(g2d, "DELETE CHARACTER?", popupX, popupY + 45, popupWidth);
+        GeneralMenuRenderer.drawCenteredString(g2d, "DELETE CHARACTER?", popupX, popupY + 45, popupWidth);
         
         g2d.setFont(tooltipFont);
         g2d.setColor(GreatDreamerTheme.MUTED_TEXT);
-        ArchiveRenderer.drawCenteredString(g2d, "This will permanently delete \"" + characterName + "\".", popupX, popupY + 85, popupWidth);
-        ArchiveRenderer.drawCenteredString(g2d, "Press Enter to delete or Esc to cancel.", popupX, popupY + 110, popupWidth);
+        GeneralMenuRenderer.drawCenteredString(g2d, "This will permanently delete \"" + characterName + "\".", popupX, popupY + 85, popupWidth);
+        GeneralMenuRenderer.drawCenteredString(g2d, "Press Enter to delete or Esc to cancel.", popupX, popupY + 110, popupWidth);
         
         updateDeleteConfirmationButtons();
         g2d.setStroke(new BasicStroke(1f));

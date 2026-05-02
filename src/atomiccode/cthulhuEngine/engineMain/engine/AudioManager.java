@@ -19,6 +19,10 @@ public class AudioManager {
 
     private Music currentMusic;
     private String currentMusicName;
+
+    /** Multiplier applied to every {@link #playSound(String, float)} call (linear 0–1). */
+    private float masterSfxVolume = 1f;
+
     private boolean isTransitioning;
     private float transitionProgress;
     private float transitionStartVolume;
@@ -119,11 +123,27 @@ public class AudioManager {
         }
     }
 
+    public float getMusicVolume(String name) {
+        Music music = musicTracks.get(name);
+        return music != null ? music.getVolume() : 0f;
+    }
+
+    /**
+     * @param volume Linear gain for this sound alone (combined with master SFX multiplier).
+     */
     public void playSound(String name, float volume) {
         Sound sound = sounds.get(name);
         if (sound != null) {
-            sound.play(volume);
+            sound.play(volume * masterSfxVolume);
         }
+    }
+
+    public void setMasterSfxVolume(float volume) {
+        masterSfxVolume = Math.min(1f, Math.max(0f, volume));
+    }
+
+    public float getMasterSfxVolume() {
+        return masterSfxVolume;
     }
 
     public void cleanup() {

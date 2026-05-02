@@ -10,6 +10,9 @@ import atomiccode.greatDreamerStories.character.SaveManager;
 import atomiccode.greatDreamerStories.ui.GeneralMenuRenderer;
 import atomiccode.greatDreamerStories.ui.GeneralMenuLayout;
 import atomiccode.greatDreamerStories.ui.GreatDreamerTheme;
+import atomiccode.greatDreamerStories.ui.menu.MenuActionStrip;
+import atomiccode.greatDreamerStories.ui.menu.MenuChipPanel;
+import atomiccode.greatDreamerStories.ui.menu.MenuScreenTitle;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -31,9 +34,11 @@ public class GameplayState implements State {
     private UiRect dossierPanel;
     private UiRect storyPanel;
     private UiRect notesPanel;
+    private MenuChipPanel dossierChipPanel;
+    private MenuChipPanel storyChipPanel;
+    private MenuChipPanel notesChipPanel;
     
     // Display info
-    private Font titleFont;
     private Font textFont;
     private Font smallFont;
     private Font buttonFont;
@@ -51,7 +56,6 @@ public class GameplayState implements State {
     @Override
     public void onEnter() {
         // Initialize fonts
-        titleFont = GreatDreamerTheme.archiveFont(30);
         textFont = GreatDreamerTheme.archiveFont(14);
         smallFont = GreatDreamerTheme.archiveFont(12);
         buttonFont = GreatDreamerTheme.archiveFont(14);
@@ -136,9 +140,11 @@ public class GameplayState implements State {
         storyPanel = new UiRect(storyX, body.y, storyWidth, storyHeight);
         notesPanel = new UiRect(storyX, storyPanel.bottom() + 20, storyWidth, notesHeight);
 
-        UiRect backRect = layout.rightAction(210, 48);
-        backButton.x = backRect.x;
-        backButton.y = backRect.y;
+        dossierChipPanel = new MenuChipPanel(dossierPanel, "INVESTIGATOR DOSSIER");
+        storyChipPanel = new MenuChipPanel(storyPanel, "CASE BOARD");
+        notesChipPanel = new MenuChipPanel(notesPanel, "FIELD NOTES");
+
+        MenuActionStrip.placePrimaryRight(layout, backButton, 210, 48);
     }
     
     @Override
@@ -152,10 +158,9 @@ public class GameplayState implements State {
 
         GeneralMenuRenderer.drawPage(g2d, windowWidth, windowHeight);
         GeneralMenuRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
-        GeneralMenuRenderer.drawHeader(g2d, layout.content, layout.content.right(), "ACTIVE INVESTIGATION",
-                                   "STOKSJÖ POLICE ARCHIVE // INCIDENT ROOM", titleFont, smallFont);
-        GeneralMenuRenderer.drawRightMetric(g2d, layout.content, String.valueOf(getCompletedStoryCount()),
-                                        "CASES CLOSED", 12, 96, titleFont, smallFont);
+        MenuScreenTitle.draw(g2d, layout.content, layout.content.right(), "ACTIVE INVESTIGATION",
+                "STOKSJÖ POLICE ARCHIVE // INCIDENT ROOM",
+                new MenuScreenTitle.RightMetric(String.valueOf(getCompletedStoryCount()), "CASES CLOSED", 12, 96));
 
         drawCharacterInfoPanel(g2d);
         drawStoryPlaceholder(g2d);
@@ -165,9 +170,7 @@ public class GameplayState implements State {
     }
     
     private void drawCharacterInfoPanel(Graphics2D g2d) {
-        GeneralMenuRenderer.drawPanel(g2d, dossierPanel);
-
-        GeneralMenuRenderer.drawPanelTitle(g2d, "INVESTIGATOR DOSSIER", dossierPanel.x + 15, dossierPanel.y + 5, smallFont);
+        dossierChipPanel.draw(g2d);
 
         g2d.setColor(GreatDreamerTheme.TEXT);
         g2d.setFont(textFont);
@@ -198,8 +201,7 @@ public class GameplayState implements State {
     }
     
     private void drawStoryPlaceholder(Graphics2D g2d) {
-        GeneralMenuRenderer.drawPanel(g2d, storyPanel);
-        GeneralMenuRenderer.drawPanelTitle(g2d, "CASE BOARD", storyPanel.x + 15, storyPanel.y + 5, smallFont);
+        storyChipPanel.draw(g2d);
 
         g2d.setColor(GreatDreamerTheme.TEXT);
         g2d.setFont(textFont);
@@ -220,8 +222,7 @@ public class GameplayState implements State {
     }
 
     private void drawNotesPanel(Graphics2D g2d) {
-        GeneralMenuRenderer.drawPanel(g2d, notesPanel);
-        GeneralMenuRenderer.drawPanelTitle(g2d, "FIELD NOTES", notesPanel.x + 15, notesPanel.y + 5, smallFont);
+        notesChipPanel.draw(g2d);
         g2d.setColor(GreatDreamerTheme.TEXT);
         g2d.drawString("Press ESC or use the case files button to return to investigator selection.", notesPanel.x + 18, notesPanel.y + 28);
         g2d.setColor(GreatDreamerTheme.MUTED_TEXT);

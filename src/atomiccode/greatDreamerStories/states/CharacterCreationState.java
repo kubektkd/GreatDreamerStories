@@ -9,9 +9,14 @@ import atomiccode.cthulhuEngine.ui.Tooltip;
 import atomiccode.cthulhuEngine.ui.layout.UiRect;
 import atomiccode.greatDreamerStories.character.Character;
 import atomiccode.greatDreamerStories.character.SaveManager;
-import atomiccode.greatDreamerStories.ui.GeneralMenuRenderer;
 import atomiccode.greatDreamerStories.ui.GeneralMenuLayout;
+import atomiccode.greatDreamerStories.ui.GeneralMenuRenderer;
 import atomiccode.greatDreamerStories.ui.GreatDreamerTheme;
+import atomiccode.greatDreamerStories.ui.menu.AttributeSliderRow;
+import atomiccode.greatDreamerStories.ui.menu.MenuActionStrip;
+import atomiccode.greatDreamerStories.ui.menu.MenuChipPanel;
+import atomiccode.greatDreamerStories.ui.menu.MenuPortrait;
+import atomiccode.greatDreamerStories.ui.menu.MenuScreenTitle;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -84,6 +89,7 @@ public class CharacterCreationState implements State {
     private Tooltip statTooltip;
     private Rectangle[] statLabelBounds = new Rectangle[STAT_COUNT];
     private GeneralMenuLayout layout;
+    private MenuChipPanel attributesPanel;
     private int layoutY;
     private int leftWidth;
     private int rightX;
@@ -98,19 +104,15 @@ public class CharacterCreationState implements State {
     // Input handling
     private int selectedIndex = 0;
     private int hoveredStatIndex = -1;
+    private int draggingStatIndex = -1;
     
     // Colors and fonts
-    private final Color panelColor = GreatDreamerTheme.PANEL;
-    private final Color borderColor = GreatDreamerTheme.BORDER;
     private final Color textColor = GreatDreamerTheme.TEXT;
     private final Color mutedTextColor = GreatDreamerTheme.MUTED_TEXT;
     private final Color selectedColor = GreatDreamerTheme.SELECTED;
     private final Color selectedTextColor = GreatDreamerTheme.SELECTED_TEXT;
     private Font buttonFont;
-    private Font titleFont;
-    private Font labelFont;
     private Font smallFont;
-    private Font sectionHeadingFont;
     private Font tooltipFont;
     private Image malePortrait;
     private Image femalePortrait;
@@ -134,10 +136,7 @@ public class CharacterCreationState implements State {
     public void onEnter() {
         // Initialize fonts
         buttonFont = GreatDreamerTheme.archiveFont(14);
-        titleFont = GreatDreamerTheme.archiveFont(30);
-        labelFont = GreatDreamerTheme.archiveFont(12);
         smallFont = GreatDreamerTheme.archiveFont(10);
-        sectionHeadingFont = GreatDreamerTheme.archiveFont(15);
         tooltipFont = GreatDreamerTheme.archiveFont(14);
         malePortrait = loadPortrait(MALE_PORTRAIT);
         femalePortrait = loadPortrait(FEMALE_PORTRAIT);
@@ -185,19 +184,19 @@ public class CharacterCreationState implements State {
         for (int i = 0; i < STAT_COUNT; i++) {
             statLabelBounds[i] = new Rectangle();
 
-            statBigIncButtons[i] = new Button(0, 0, 26, 22, "++");
+            statBigIncButtons[i] = new Button(0, 0, AttributeSliderRow.BIG_STEP_BUTTON_WIDTH, 22, "++");
             statBigIncButtons[i].setColors(new Color(18, 20, 24), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
             statBigIncButtons[i].setFont(smallFont);
             
-            statIncButtons[i] = new Button(0, 0, 22, 22, "+");
+            statIncButtons[i] = new Button(0, 0, AttributeSliderRow.STEP_BUTTON_WIDTH, 22, "+");
             statIncButtons[i].setColors(new Color(18, 20, 24), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
             statIncButtons[i].setFont(smallFont);
             
-            statBigDecButtons[i] = new Button(0, 0, 26, 22, "--");
+            statBigDecButtons[i] = new Button(0, 0, AttributeSliderRow.BIG_STEP_BUTTON_WIDTH, 22, "--");
             statBigDecButtons[i].setColors(new Color(18, 20, 24), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
             statBigDecButtons[i].setFont(smallFont);
             
-            statDecButtons[i] = new Button(0, 0, 22, 22, "-");
+            statDecButtons[i] = new Button(0, 0, AttributeSliderRow.STEP_BUTTON_WIDTH, 22, "-");
             statDecButtons[i].setColors(new Color(18, 20, 24), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
             statDecButtons[i].setFont(smallFont);
             
@@ -296,6 +295,49 @@ public class CharacterCreationState implements State {
             default: return Character.INITIAL_STAT_VALUE;
         }
     }
+
+    private void setStatTo(int statIndex, int newValue) {
+        int cur = getStatValue(statIndex);
+        int maxAllowed = Math.min(Character.MAX_STAT_VALUE, cur + getRemainingPoints());
+        int minAllowed = Character.MIN_STAT_VALUE;
+        int v = AttributeSliderRow.clampUserValue(newValue, minAllowed, maxAllowed);
+        switch (statIndex) {
+            case 0: strength = v; break;
+            case 1: power = v; break;
+            case 2: education = v; break;
+            case 3: constitution = v; break;
+            case 4: intelligence = v; break;
+            case 5: appearance = v; break;
+            case 6: luck = v; break;
+            case 7: size = v; break;
+            case 8: dexterity = v; break;
+            default: break;
+        }
+    }
+
+    private void applyStatFromSliderMouse(int statIndex, int mouseX) {
+        int raw = AttributeSliderRow.valueAtMouse(mouseX, attributesPanel.bounds(), getStatRowY(statIndex));
+        setStatTo(statIndex, raw);
+    }
+
+    private void updateAttributeSliderDrag(int mouseX, int mouseY, boolean mousePressed) {
+        UiRect b = attributesPanel.bounds();
+        if (!mousePressed) {
+            draggingStatIndex = -1;
+            return;
+        }
+        if (draggingStatIndex < 0) {
+            for (int i = 0; i < STAT_COUNT; i++) {
+                if (AttributeSliderRow.sliderContains(b, getStatRowY(i), mouseX, mouseY)) {
+                    draggingStatIndex = i;
+                    applyStatFromSliderMouse(i, mouseX);
+                    return;
+                }
+            }
+        } else {
+            applyStatFromSliderMouse(draggingStatIndex, mouseX);
+        }
+    }
     
     private void createCharacter() {
         characterName = nameInput.getText();
@@ -358,6 +400,12 @@ public class CharacterCreationState implements State {
         int mouseX = Engine.instance().mouse.getX();
         int mouseY = Engine.instance().mouse.getY();
         boolean mousePressed = Engine.instance().mouse.isLeftPressed();
+
+        if (!nameInput.isActive()) {
+            updateAttributeSliderDrag(mouseX, mouseY, mousePressed);
+        } else {
+            draggingStatIndex = -1;
+        }
 
         nameInput.update(mouseX, mouseY, mousePressed);
         updateStatTooltip(mouseX, mouseY);
@@ -468,25 +516,17 @@ public class CharacterCreationState implements State {
         attrPanelWidth = rightWidth;
         attrPanelHeight = ATTR_PANEL_HEIGHT;
 
+        attributesPanel = new MenuChipPanel(new UiRect(attrPanelX, attrPanelY, attrPanelWidth, attrPanelHeight), "ATTRIBUTES");
+        UiRect attrBounds = attributesPanel.bounds();
+
         for (int i = 0; i < STAT_COUNT; i++) {
             int rowY = getStatRowY(i);
-            statLabelBounds[i].setBounds(attrPanelX + 16, rowY - 12, 102, 34);
-            statBigDecButtons[i].x = attrPanelX + 118;
-            statBigDecButtons[i].y = rowY - 4;
-            statDecButtons[i].x = attrPanelX + 148;
-            statDecButtons[i].y = rowY - 4;
-            statIncButtons[i].x = attrPanelX + attrPanelWidth - 102;
-            statIncButtons[i].y = rowY - 4;
-            statBigIncButtons[i].x = attrPanelX + attrPanelWidth - 74;
-            statBigIncButtons[i].y = rowY - 4;
+            AttributeSliderRow.layout(attrBounds, rowY, statLabelBounds[i], statBigDecButtons[i], statDecButtons[i],
+                    statIncButtons[i], statBigIncButtons[i]);
         }
 
-        UiRect createRect = layout.rightAction(CREATE_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT);
-        createButton.x = createRect.x;
-        createButton.y = createRect.y;
-        UiRect backRect = layout.before(createRect, BACK_BUTTON_WIDTH, ACTION_BUTTON_GAP);
-        backButton.x = backRect.x;
-        backButton.y = backRect.y;
+        MenuActionStrip.placeSecondaryBeforePrimary(layout, createButton, CREATE_BUTTON_WIDTH, backButton,
+                BACK_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT, ACTION_BUTTON_GAP);
     }
 
     private int getStatRowY(int statIndex) {
@@ -504,20 +544,17 @@ public class CharacterCreationState implements State {
 
         GeneralMenuRenderer.drawPage(g2d, windowWidth, windowHeight);
         GeneralMenuRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
-        GeneralMenuRenderer.drawHeader(g2d, layout.content, layout.leftColumn.right(), "NEW INVESTIGATOR",
-                                   "STOKSJÖ POLICE ARCHIVE // PERSONAL RECORD", titleFont, smallFont);
-        GeneralMenuRenderer.drawRightMetric(g2d, layout.content, String.valueOf(getRemainingPoints()),
-                                        "PTS REMAINING", 20, 94, titleFont, smallFont);
-        GeneralMenuRenderer.drawTitleAlignedToRightMetricLabelBottom(g2d, layout.content, rightX + 15, "SUBJECT'S PROFILE",
-                sectionHeadingFont, smallFont);
+        MenuScreenTitle.draw(g2d, layout.content, layout.leftColumn.right(), "NEW INVESTIGATOR",
+                "STOKSJÖ POLICE ARCHIVE // PERSONAL RECORD",
+                new MenuScreenTitle.RightMetric(String.valueOf(getRemainingPoints()), "PTS REMAINING", 20, 94));
+        MenuScreenTitle.drawSecondaryHeadingAlignedToMetric(g2d, layout.content, rightX + 15, "SUBJECT'S PROFILE");
 
-        drawPortrait(g2d, portraitX, portraitY, portraitSize);
+        MenuPortrait.draw(g2d, portraitX, portraitY, portraitSize, selectedGender == Character.Gender.FEMALE ? femalePortrait : malePortrait);
         genderButtons[0].render(g2d);
         genderButtons[1].render(g2d);
 
         nameInput.render(g2d);
         drawAttributesPanel(g2d);
-        GeneralMenuRenderer.drawPanelTopArchiveChip(g2d, attrPanelX, attrPanelY, "ATTRIBUTES", smallFont);
         drawCreateStatus(g2d);
         drawStatTooltip(g2d, windowWidth, windowHeight);
 
@@ -542,70 +579,30 @@ public class CharacterCreationState implements State {
         g2d.drawString(status, statusX, createButton.y + ACTION_BUTTON_HEIGHT + 18);
     }
 
-    private void drawPortrait(Graphics2D g2d, int x, int y, int size) {
-        g2d.setColor(Color.BLACK);
-        g2d.fillRect(x, y, size, size);
-        g2d.setColor(borderColor);
-        g2d.drawRect(x, y, size, size);
-
-        Image portrait = selectedGender == Character.Gender.FEMALE ? femalePortrait : malePortrait;
-        if (portrait != null) {
-            g2d.drawImage(portrait, x + 1, y + 1, size - 2, size - 2, null);
-        }
-    }
-
     private void drawAttributesPanel(Graphics2D g2d) {
-        g2d.setColor(panelColor);
-        g2d.fillRect(attrPanelX, attrPanelY, attrPanelWidth, attrPanelHeight);
-        g2d.setColor(borderColor);
-        g2d.drawRect(attrPanelX, attrPanelY, attrPanelWidth, attrPanelHeight);
+        attributesPanel.drawPanelBody(g2d);
 
         for (int i = 0; i < STAT_COUNT; i++) {
             drawAttributeRow(g2d, i);
         }
+        attributesPanel.drawChip(g2d);
     }
 
     private void drawAttributeRow(Graphics2D g2d, int statIndex) {
         int statValue = getStatValue(statIndex);
         int rowY = getStatRowY(statIndex);
-        int sliderX = attrPanelX + 186;
-        int sliderWidth = attrPanelWidth - 306;
-        int sliderY = rowY + 7;
-        int min = 0;
-        int max = 99;
-        int knobX = sliderX + ((statValue - min) * sliderWidth) / (max - min);
-
-        g2d.setColor(textColor);
-        g2d.setFont(labelFont);
-        g2d.drawString(STAT_NAMES[statIndex].toUpperCase(), attrPanelX + 20, rowY + 4);
-        g2d.setFont(smallFont);
-        g2d.setColor(mutedTextColor);
-        g2d.drawString(STAT_CODES[statIndex], attrPanelX + 20, rowY + 18);
+        UiRect attrBounds = attributesPanel.bounds();
 
         statBigDecButtons[statIndex].render(g2d);
         statDecButtons[statIndex].render(g2d);
 
-        g2d.setColor(new Color(52, 54, 60));
-        g2d.drawLine(sliderX, sliderY, sliderX + sliderWidth, sliderY);
-        g2d.setColor(new Color(55, 55, 58));
-        int tickX = sliderX + sliderWidth / 2;
-        g2d.drawLine(tickX, sliderY - 5, tickX, sliderY + 5);
-        g2d.setFont(smallFont);
-        g2d.setColor(mutedTextColor);
-        g2d.drawString("0", sliderX - 3, sliderY + 16);
-        g2d.drawString("99", sliderX + sliderWidth - 8, sliderY + 16);
-        g2d.setColor(selectedColor);
-        g2d.drawLine(sliderX, sliderY, knobX, sliderY);
-        g2d.fillRect(knobX - 2, sliderY - 7, 4, 14);
+        AttributeSliderRow.renderLabelsAndSlider(g2d, attrBounds, rowY, STAT_NAMES[statIndex], STAT_CODES[statIndex],
+                statValue);
 
         statIncButtons[statIndex].render(g2d);
         statBigIncButtons[statIndex].render(g2d);
 
-        g2d.setColor(textColor);
-        g2d.setFont(buttonFont);
-        String valueText = String.valueOf(statValue);
-        FontMetrics valueMetrics = g2d.getFontMetrics();
-        g2d.drawString(valueText, attrPanelX + attrPanelWidth - 20 - valueMetrics.stringWidth(valueText), rowY + 12);
+        AttributeSliderRow.renderValue(g2d, attrBounds, rowY, statValue);
     }
 
 }

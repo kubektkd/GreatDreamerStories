@@ -61,6 +61,8 @@ public class Keyboard {
                 return Input.Keys.ESCAPE;
             case KeyEvent.VK_BACK_SPACE:
                 return Input.Keys.BACKSPACE;
+            case KeyEvent.VK_DELETE:
+                return Input.Keys.FORWARD_DEL;
             case KeyEvent.VK_HOME:
                 return Input.Keys.HOME;
             case KeyEvent.VK_END:

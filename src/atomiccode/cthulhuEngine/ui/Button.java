@@ -7,6 +7,7 @@ public class Button {
     private int width, height;
     private String text;
     private boolean hovered, pressed, selected;
+    private boolean keyboardFocusRing;
     private Color normalColor, hoverColor, pressedColor, textColor;
     private Font font;
     private Runnable onClick;
@@ -66,7 +67,12 @@ public class Button {
     public void setSelected(boolean selected) {
         this.selected = selected;
     }
-    
+
+    /** When true, draws an extra focus outline (keyboard navigation) without changing fill logic. */
+    public void setKeyboardFocusRing(boolean keyboardFocusRing) {
+        this.keyboardFocusRing = keyboardFocusRing;
+    }
+
     public boolean isSelected() {
         return selected;
     }
@@ -99,6 +105,18 @@ public class Button {
         int textX = x + (width - fm.stringWidth(text)) / 2;
         int textY = y + (height + fm.getAscent()) / 2;
         g2d.drawString(text, textX, textY);
+
+        if (keyboardFocusRing) {
+            Object oldAa = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setColor(new Color(245, 244, 238, 200));
+            g2d.setStroke(new BasicStroke(2f));
+            g2d.drawRect(x + 1, y + 1, width - 3, height - 3);
+            g2d.setStroke(new BasicStroke(1f));
+            if (oldAa != null) {
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAa);
+            }
+        }
     }
     
     public boolean contains(int mouseX, int mouseY) {

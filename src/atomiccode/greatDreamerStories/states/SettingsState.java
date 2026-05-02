@@ -13,10 +13,12 @@ import atomiccode.greatDreamerStories.GamePreferences;
 import atomiccode.greatDreamerStories.ui.GeneralMenuLayout;
 import atomiccode.greatDreamerStories.ui.GeneralMenuRenderer;
 import atomiccode.greatDreamerStories.ui.GreatDreamerTheme;
+import atomiccode.greatDreamerStories.ui.menu.MenuActionStrip;
+import atomiccode.greatDreamerStories.ui.menu.MenuScreenTitle;
+import atomiccode.greatDreamerStories.ui.menu.MenuSettingsSliderPanel;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
@@ -34,15 +36,7 @@ public class SettingsState implements State {
     private static final int DISPLAY_BUTTON_HEIGHT = 38;
     private static final int DISPLAY_BUTTON_GAP = 12;
 
-    private static final int LABEL_COLUMN_WIDTH = 168;
-    private static final int VALUE_COLUMN_WIDTH = 48;
-    private static final int LABEL_SLIDER_GAP = 16;
-    private static final int ROW_HEIGHT = 46;
-    private static final int ROW_GAP = 14;
-    private static final int PANEL_TOP_INNER = 22;
-    private static final int PANEL_BOTTOM_INNER = 18;
-    private static final int PANEL_SIDE_INSET = 22;
-    private static final int BODY_ACTION_RESERVE_PX = 78;
+    private static final int SETTINGS_ROW_COUNT = 3;
 
     private static final int FOCUS_MUSIC = 0;
     private static final int FOCUS_SFX = 1;
@@ -63,7 +57,6 @@ public class SettingsState implements State {
 
     private Font buttonFont;
     private Font rowLabelFont;
-    private Font titleFont;
     private Font subtitleFont;
     private GeneralMenuLayout layout;
     private UiRect audioPanelRect;
@@ -82,7 +75,6 @@ public class SettingsState implements State {
     public void onEnter() {
         buttonFont = GreatDreamerTheme.archiveFont(14);
         rowLabelFont = GreatDreamerTheme.archiveFont(14);
-        titleFont = GreatDreamerTheme.archiveFont(26);
         subtitleFont = GreatDreamerTheme.archiveFont(12);
 
         musicSlider = new HorizontalSlider(0, 0, 200);
@@ -210,11 +202,6 @@ public class SettingsState implements State {
         updateDisplayModeButtonColors();
 
         backButton.setSelected(selectedIndex == FOCUS_BACK);
-
-        Window.Mode mode = Game.getDetectedWindowMode();
-        windowedButton.setSelected(mode == Window.Mode.WINDOWED);
-        maximizedButton.setSelected(mode == Window.Mode.MAXIMIZED);
-        fullscreenButton.setSelected(mode == Window.Mode.FULLSCREEN);
     }
 
     private void updateDisplayModeButtonColors() {
@@ -226,6 +213,14 @@ public class SettingsState implements State {
         styleModeButton(windowedButton, mode == Window.Mode.WINDOWED, normal, hover, pressed);
         styleModeButton(maximizedButton, mode == Window.Mode.MAXIMIZED, normal, hover, pressed);
         styleModeButton(fullscreenButton, mode == Window.Mode.FULLSCREEN, normal, hover, pressed);
+
+        windowedButton.setSelected(mode == Window.Mode.WINDOWED);
+        maximizedButton.setSelected(mode == Window.Mode.MAXIMIZED);
+        fullscreenButton.setSelected(mode == Window.Mode.FULLSCREEN);
+
+        windowedButton.setKeyboardFocusRing(selectedIndex == FOCUS_WINDOWED);
+        maximizedButton.setKeyboardFocusRing(selectedIndex == FOCUS_MAXIMIZED);
+        fullscreenButton.setKeyboardFocusRing(selectedIndex == FOCUS_FULLSCREEN);
     }
 
     private void styleModeButton(Button button, boolean active, Color normal, Color hover, Color pressed) {
@@ -240,49 +235,11 @@ public class SettingsState implements State {
         int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
         layout = GeneralMenuLayout.fromViewport(windowWidth, windowHeight);
 
-        int bodyBottom = layout.content.bottom() - BODY_ACTION_RESERVE_PX;
-        int bodyHeight = Math.max(260, bodyBottom - layout.body.y);
-        UiRect constrainedBody = new UiRect(layout.body.x, layout.body.y, layout.body.width, bodyHeight);
+        audioPanelRect = MenuSettingsSliderPanel.layoutAudioPanelRect(layout, SETTINGS_ROW_COUNT);
+        MenuSettingsSliderPanel.layoutRows(audioPanelRect, DISPLAY_BUTTON_WIDTH, DISPLAY_BUTTON_HEIGHT, DISPLAY_BUTTON_GAP,
+                musicSlider, sfxSlider, windowedButton, maximizedButton, fullscreenButton);
 
-        int rowBlockHeight = ROW_HEIGHT * 3 + ROW_GAP * 2;
-        int idealPanelHeight = PANEL_TOP_INNER + rowBlockHeight + PANEL_BOTTOM_INNER;
-        int panelHeight = Math.min(idealPanelHeight, constrainedBody.height - 18);
-        audioPanelRect = new UiRect(
-                constrainedBody.x + PANEL_SIDE_INSET,
-                constrainedBody.y + 12,
-                Math.max(200, constrainedBody.width - PANEL_SIDE_INSET * 2),
-                Math.max(rowBlockHeight, panelHeight));
-
-        int innerLeft = audioPanelRect.x + 22;
-        int valueColumnRight = audioPanelRect.right() - 22;
-
-        int sliderX = innerLeft + LABEL_COLUMN_WIDTH + LABEL_SLIDER_GAP;
-        int sliderW = Math.max(HorizontalSlider.THUMB_WIDTH + 20,
-                valueColumnRight - VALUE_COLUMN_WIDTH - LABEL_SLIDER_GAP - sliderX);
-
-        for (int row = 0; row < 3; row++) {
-            int rowTop = audioPanelRect.y + PANEL_TOP_INNER + row * (ROW_HEIGHT + ROW_GAP);
-
-            if (row < 2) {
-                HorizontalSlider s = row == 0 ? musicSlider : sfxSlider;
-                s.x = sliderX;
-                s.y = rowTop + (ROW_HEIGHT - s.trackHeight) / 2;
-                s.trackWidth = sliderW;
-            } else {
-                int bx = sliderX;
-                int by = rowTop + (ROW_HEIGHT - DISPLAY_BUTTON_HEIGHT) / 2;
-                windowedButton.x = bx;
-                windowedButton.y = by;
-                maximizedButton.x = bx + DISPLAY_BUTTON_WIDTH + DISPLAY_BUTTON_GAP;
-                maximizedButton.y = by;
-                fullscreenButton.x = bx + 2 * (DISPLAY_BUTTON_WIDTH + DISPLAY_BUTTON_GAP);
-                fullscreenButton.y = by;
-            }
-        }
-
-        UiRect backRect = layout.rightAction(ACTION_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT);
-        backButton.x = backRect.x;
-        backButton.y = backRect.y;
+        MenuActionStrip.placePrimaryRight(layout, backButton, ACTION_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT);
     }
 
     @Override
@@ -297,50 +254,20 @@ public class SettingsState implements State {
         GeneralMenuRenderer.drawPage(g2d, windowWidth, windowHeight);
         GeneralMenuRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
 
-        GeneralMenuRenderer.drawHeader(g2d, layout.content, layout.content.right(), "SETTINGS",
-                "AUDIO // DISPLAY", titleFont, subtitleFont);
+        MenuScreenTitle.draw(g2d, layout.content, layout.content.right(), "SETTINGS",
+                "AUDIO // DISPLAY", null);
 
-        GeneralMenuRenderer.drawPanel(g2d, audioPanelRect);
+        MenuSettingsSliderPanel.drawPanel(g2d, audioPanelRect);
+        MenuSettingsSliderPanel.drawRowLabels(g2d, audioPanelRect, rowLabelFont, subtitleFont, textColor, mutedTextColor,
+                new String[]{"Game music", "Sound effects", "Display mode"},
+                new String[]{
+                        musicSlider.getValue() + "%",
+                        sfxSlider.getValue() + "%",
+                        null
+                });
 
-        FontMetrics rowFm = g2d.getFontMetrics(rowLabelFont);
-        int rowAscent = rowFm.getAscent();
-
-        int innerLeft = audioPanelRect.x + 22;
-        int valueRight = audioPanelRect.right() - 22;
-
-        for (int row = 0; row < 3; row++) {
-            int rowTop = audioPanelRect.y + PANEL_TOP_INNER + row * (ROW_HEIGHT + ROW_GAP);
-            int labelBaseline = rowTop + ROW_HEIGHT / 2 + rowAscent / 2;
-
-            String label;
-            String valueText;
-            if (row == 0) {
-                label = "Menu music";
-                valueText = musicSlider.getValue() + "%";
-            } else if (row == 1) {
-                label = "Sound effects";
-                valueText = sfxSlider.getValue() + "%";
-            } else {
-                label = "Window mode";
-                valueText = "";
-            }
-
-            g2d.setFont(rowLabelFont);
-            g2d.setColor(textColor);
-            g2d.drawString(label, innerLeft, labelBaseline);
-
-            if (!valueText.isEmpty()) {
-                g2d.setFont(subtitleFont);
-                g2d.setColor(mutedTextColor);
-                int vw = g2d.getFontMetrics().stringWidth(valueText);
-                g2d.drawString(valueText, valueRight - vw, labelBaseline);
-            }
-        }
-
-        musicSlider.render(g2d, GreatDreamerTheme.LINE, GreatDreamerTheme.BORDER,
-                GreatDreamerTheme.MUTED_TEXT, GreatDreamerTheme.TEXT, selectedIndex == FOCUS_MUSIC);
-        sfxSlider.render(g2d, GreatDreamerTheme.LINE, GreatDreamerTheme.BORDER,
-                GreatDreamerTheme.MUTED_TEXT, GreatDreamerTheme.TEXT, selectedIndex == FOCUS_SFX);
+        MenuSettingsSliderPanel.renderSlider(g2d, musicSlider, selectedIndex == FOCUS_MUSIC);
+        MenuSettingsSliderPanel.renderSlider(g2d, sfxSlider, selectedIndex == FOCUS_SFX);
 
         windowedButton.render(g);
         maximizedButton.render(g);

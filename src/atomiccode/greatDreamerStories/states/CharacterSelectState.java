@@ -4,14 +4,17 @@ import atomiccode.cthulhuEngine.engineMain.engine.Resources;
 import atomiccode.cthulhuEngine.inputsOutputs.stateControl.State;
 import atomiccode.cthulhuEngine.engineMain.engine.Engine;
 import atomiccode.cthulhuEngine.ui.Button;
-import atomiccode.cthulhuEngine.ui.layout.UiAlign;
 import atomiccode.cthulhuEngine.ui.layout.UiGridLayout;
 import atomiccode.cthulhuEngine.ui.layout.UiRect;
 import atomiccode.greatDreamerStories.character.Character;
 import atomiccode.greatDreamerStories.character.SaveManager;
-import atomiccode.greatDreamerStories.ui.GeneralMenuRenderer;
 import atomiccode.greatDreamerStories.ui.GeneralMenuLayout;
+import atomiccode.greatDreamerStories.ui.GeneralMenuRenderer;
 import atomiccode.greatDreamerStories.ui.GreatDreamerTheme;
+import atomiccode.greatDreamerStories.ui.menu.CharacterSlotFolder;
+import atomiccode.greatDreamerStories.ui.menu.MenuActionStrip;
+import atomiccode.greatDreamerStories.ui.menu.MenuConfirmationModal;
+import atomiccode.greatDreamerStories.ui.menu.MenuScreenTitle;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -42,7 +45,6 @@ public class CharacterSelectState implements State {
     private int pendingDeleteSlot = -1;
     
     private Font buttonFont;
-    private Font titleFont;
     private Font slotFont;
     private Font tooltipFont;
     private GeneralMenuLayout layout;
@@ -60,7 +62,6 @@ public class CharacterSelectState implements State {
         
         // Initialize fonts
         buttonFont = GreatDreamerTheme.archiveFont(14);
-        titleFont = GreatDreamerTheme.archiveFont(30);
         slotFont = GreatDreamerTheme.archiveFont(22);
         tooltipFont = GreatDreamerTheme.archiveFont(12);
 
@@ -194,9 +195,7 @@ public class CharacterSelectState implements State {
         UiGridLayout grid = new UiGridLayout(SLOT_COLS, SLOT_SPACING_X, SLOT_SPACING_Y, SLOT_HEIGHT);
         slotRects = grid.layout(layout.body, saveManager.getMaxSlots());
 
-        UiRect backRect = layout.rightAction(ACTION_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT);
-        backButton.x = backRect.x;
-        backButton.y = backRect.y;
+        MenuActionStrip.placePrimaryRight(layout, backButton, ACTION_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT);
     }
     
     private void updateSlotHover(int mouseX, int mouseY) {
@@ -251,15 +250,8 @@ public class CharacterSelectState implements State {
     private void updateDeleteConfirmationButtons() {
         int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
         int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
-        int spacing = 20;
-        int totalButtonWidth = DELETE_CONFIRM_BUTTON_WIDTH * 2 + spacing;
-        UiRect buttonRow = new UiRect(0, windowHeight / 2 + 50, windowWidth, DELETE_CONFIRM_BUTTON_HEIGHT)
-                .align(totalButtonWidth, DELETE_CONFIRM_BUTTON_HEIGHT, UiAlign.CENTER, UiAlign.START);
-        
-        confirmDeleteButton.x = buttonRow.x;
-        confirmDeleteButton.y = buttonRow.y;
-        cancelDeleteButton.x = buttonRow.x + DELETE_CONFIRM_BUTTON_WIDTH + spacing;
-        cancelDeleteButton.y = buttonRow.y;
+        MenuConfirmationModal.layoutButtonRow(windowWidth, windowHeight, DELETE_CONFIRM_BUTTON_WIDTH,
+                DELETE_CONFIRM_BUTTON_HEIGHT, 20, new Button[]{confirmDeleteButton, cancelDeleteButton});
     }
 
     @Override
@@ -275,15 +267,16 @@ public class CharacterSelectState implements State {
         GeneralMenuRenderer.drawPage(g2d, windowWidth, windowHeight);
         GeneralMenuRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
         
-        GeneralMenuRenderer.drawHeader(g2d, layout.content, layout.content.right(), "CHOOSE INVESTIGATOR",
-                                   "STOKSJÖ POLICE ARCHIVE // CASE FILES", titleFont, tooltipFont);
-        
-        GeneralMenuRenderer.drawRightMetric(g2d, layout.content, String.valueOf(getOccupiedSlotCount()),
-                                        "ACTIVE CASES", 10, 90, titleFont, tooltipFont);
+        MenuScreenTitle.draw(g2d, layout.content, layout.content.right(), "CHOOSE INVESTIGATOR",
+                "STOKSJÖ POLICE ARCHIVE // CASE FILES",
+                new MenuScreenTitle.RightMetric(String.valueOf(getOccupiedSlotCount()), "ACTIVE CASES", 10, 90));
         
         for (int i = 0; i < slotRects.length; i++) {
             UiRect slotRect = slotRects[i];
-            drawCharacterSlot(g2d, i, slotRect.x, slotRect.y, slotRect.width, slotRect.height);
+            Character character = saveManager.getCharacter(i);
+            CharacterSlotFolder.draw(g2d, slotRect.x, slotRect.y, slotRect.width, slotRect.height,
+                    character, i, saveManager.getFirstAvailableSlot(),
+                    hoveredSlot == i, selectedIndex == i, slotFont, tooltipFont);
         }
 
         g2d.setStroke(new BasicStroke(1f));
@@ -307,237 +300,21 @@ public class CharacterSelectState implements State {
     private void drawDeleteConfirmation(Graphics2D g2d, int windowWidth, int windowHeight) {
         Character character = saveManager.getCharacter(pendingDeleteSlot);
         String characterName = character != null ? character.getName() : "this character";
-        
-        g2d.setColor(new Color(0, 0, 0, 175));
-        g2d.fillRect(0, 0, windowWidth, windowHeight);
-        
-        int popupWidth = 520;
-        int popupHeight = 220;
-        int popupX = (windowWidth - popupWidth) / 2;
-        int popupY = (windowHeight - popupHeight) / 2;
-        
-        g2d.setColor(GreatDreamerTheme.PANEL_SOLID);
-        g2d.fillRect(popupX, popupY, popupWidth, popupHeight);
-        
-        g2d.setColor(GreatDreamerTheme.DANGER_HOVER);
-        g2d.setStroke(new BasicStroke(2f));
-        g2d.drawRect(popupX, popupY, popupWidth, popupHeight);
-        
-        g2d.setColor(GreatDreamerTheme.TEXT);
-        g2d.setFont(buttonFont);
-        GeneralMenuRenderer.drawCenteredString(g2d, "DELETE CHARACTER?", popupX, popupY + 45, popupWidth);
-        
-        g2d.setFont(tooltipFont);
-        g2d.setColor(GreatDreamerTheme.MUTED_TEXT);
-        GeneralMenuRenderer.drawCenteredString(g2d, "This will permanently delete \"" + characterName + "\".", popupX, popupY + 85, popupWidth);
-        GeneralMenuRenderer.drawCenteredString(g2d, "Press Enter to delete or Esc to cancel.", popupX, popupY + 110, popupWidth);
-        
+
+        MenuConfirmationModal.drawScrim(g2d, windowWidth, windowHeight);
+        MenuConfirmationModal.Geometry geo = MenuConfirmationModal.centered(windowWidth, windowHeight,
+                MenuConfirmationModal.DEFAULT_WIDTH, MenuConfirmationModal.DEFAULT_HEIGHT);
+        MenuConfirmationModal.drawFrame(g2d, geo);
+        MenuConfirmationModal.drawText(g2d, geo, buttonFont, tooltipFont, "DELETE CHARACTER?",
+                new String[]{
+                        "This will permanently delete \"" + characterName + "\".",
+                        "Press Enter to delete or Esc to cancel."
+                });
+
         updateDeleteConfirmationButtons();
         g2d.setStroke(new BasicStroke(1f));
         confirmDeleteButton.render(g2d);
         cancelDeleteButton.render(g2d);
     }
-    
-    private void drawCharacterSlot(Graphics2D g2d, int slotIndex, int slotX, int slotY, int slotWidth, int slotHeight) {
-        Character character = saveManager.getCharacter(slotIndex);
-        boolean isOccupied = character != null;
-        boolean isAvailable = slotIndex == saveManager.getFirstAvailableSlot();
-        boolean isHovered = hoveredSlot == slotIndex;
-        boolean isSelected = selectedIndex == slotIndex;
 
-        Color folderColor;
-        Color folderAccentColor;
-        Color slotBorderColor;
-        Color textColor;
-        
-        if (isOccupied) {
-            folderColor = isHovered ? new Color(191, 151, 88) : new Color(174, 133, 72);
-            folderAccentColor = new Color(214, 182, 121);
-            slotBorderColor = isSelected ? GreatDreamerTheme.SELECTED : GreatDreamerTheme.BORDER;
-            textColor = new Color(38, 29, 18);
-        } else if (isAvailable) {
-            folderColor = isHovered ? new Color(181, 139, 76) : new Color(157, 116, 61);
-            folderAccentColor = new Color(201, 166, 105);
-            slotBorderColor = isSelected ? GreatDreamerTheme.SELECTED : new Color(86, 92, 84);
-            textColor = new Color(43, 31, 18);
-        } else {
-            folderColor = new Color(75, 61, 42);
-            folderAccentColor = new Color(97, 80, 55);
-            slotBorderColor = GreatDreamerTheme.MUTED_BORDER;
-            textColor = new Color(118, 103, 78);
-        }
-
-        if (isOccupied) {
-            drawFolderPapers(g2d, slotX, slotY, slotWidth, slotHeight);
-        }
-
-        drawFolderShape(g2d, slotX, slotY, slotWidth, slotHeight, folderColor, folderAccentColor, slotBorderColor, isSelected);
-
-        if (isOccupied) {
-            drawOccupiedSlot(g2d, character, slotX, slotY, slotWidth, slotHeight, textColor);
-        } else {
-            drawEmptySlot(g2d, slotX, slotY, slotWidth, slotHeight, textColor, isAvailable);
-        }
-    }
-
-    private void drawFolderPapers(Graphics2D g2d, int slotX, int slotY, int slotWidth, int slotHeight) {
-        int paperX = slotX + 18;
-        int paperY = slotY + 14;
-        int paperWidth = slotWidth - 34;
-        int paperHeight = slotHeight - 42;
-
-        g2d.setColor(new Color(224, 217, 194));
-        g2d.fillRect(paperX + 8, paperY + 4, paperWidth, paperHeight);
-        g2d.setColor(new Color(166, 153, 124));
-        g2d.drawRect(paperX + 8, paperY + 4, paperWidth, paperHeight);
-
-        g2d.setColor(new Color(236, 230, 206));
-        g2d.fillRect(paperX, paperY, paperWidth, paperHeight);
-        g2d.setColor(new Color(176, 162, 130));
-        g2d.drawRect(paperX, paperY, paperWidth, paperHeight);
-
-        g2d.setColor(new Color(125, 111, 84));
-        for (int line = 0; line < 4; line++) {
-            int y = paperY + 28 + line * 15;
-            g2d.drawLine(paperX + 16, y, paperX + paperWidth - 16, y);
-        }
-    }
-
-    private void drawFolderShape(Graphics2D g2d, int slotX, int slotY, int slotWidth, int slotHeight,
-                                 Color folderColor, Color folderAccentColor, Color borderColor, boolean isSelected) {
-        int tabHeight = 26;
-        int tabWidth = Math.max(72, slotWidth / 3);
-        int tabSlope = 16;
-        int bodyTop = slotY + tabHeight;
-
-        Polygon backTab = new Polygon();
-        backTab.addPoint(slotX + 10, bodyTop);
-        backTab.addPoint(slotX + 18, slotY + 7);
-        backTab.addPoint(slotX + tabWidth, slotY + 7);
-        backTab.addPoint(slotX + tabWidth + tabSlope, bodyTop);
-        backTab.addPoint(slotX + slotWidth - 8, bodyTop);
-        backTab.addPoint(slotX + slotWidth - 8, slotY + slotHeight - 8);
-        backTab.addPoint(slotX + 10, slotY + slotHeight - 8);
-
-        g2d.setColor(new Color(0, 0, 0, 70));
-        g2d.fillPolygon(translatePolygon(backTab, 4, 5));
-
-        g2d.setColor(folderAccentColor);
-        g2d.fillPolygon(backTab);
-
-        Polygon front = new Polygon();
-        front.addPoint(slotX, bodyTop + 8);
-        front.addPoint(slotX + slotWidth, bodyTop + 8);
-        front.addPoint(slotX + slotWidth - 8, slotY + slotHeight);
-        front.addPoint(slotX + 8, slotY + slotHeight);
-
-        g2d.setColor(folderColor);
-        g2d.fillPolygon(front);
-        g2d.setColor(isSelected ? borderColor : GreatDreamerTheme.LINE);
-        g2d.setStroke(new BasicStroke(isSelected ? 3f : 1f));
-        g2d.drawPolygon(createFolderOutline(slotX, slotY, slotWidth, slotHeight, bodyTop, tabWidth, tabSlope));
-        g2d.setStroke(new BasicStroke(1f));
-    }
-
-    private Polygon createFolderOutline(int slotX, int slotY, int slotWidth, int slotHeight,
-                                        int bodyTop, int tabWidth, int tabSlope) {
-        Polygon outline = new Polygon();
-        outline.addPoint(slotX, bodyTop + 8);
-        outline.addPoint(slotX + 10, bodyTop);
-        outline.addPoint(slotX + 18, slotY + 7);
-        outline.addPoint(slotX + tabWidth, slotY + 7);
-        outline.addPoint(slotX + tabWidth + tabSlope, bodyTop);
-        outline.addPoint(slotX + slotWidth - 8, bodyTop);
-        outline.addPoint(slotX + slotWidth, bodyTop + 8);
-        outline.addPoint(slotX + slotWidth - 8, slotY + slotHeight);
-        outline.addPoint(slotX + 8, slotY + slotHeight);
-        return outline;
-    }
-
-    private Polygon translatePolygon(Polygon polygon, int dx, int dy) {
-        Polygon translated = new Polygon();
-        for (int i = 0; i < polygon.npoints; i++) {
-            translated.addPoint(polygon.xpoints[i] + dx, polygon.ypoints[i] + dy);
-        }
-        return translated;
-    }
-    
-    private void drawOccupiedSlot(Graphics2D g2d, Character character, int slotX, int slotY, 
-                                 int slotWidth, int slotHeight, Color textColor) {
-        g2d.setColor(textColor);
-        
-        // Character name (truncated if too long)
-        g2d.setFont(slotFont);
-        FontMetrics nameMetrics = g2d.getFontMetrics();
-        String name = character.getName();
-        if (nameMetrics.stringWidth(name) > slotWidth - 18) {
-            // Truncate name if too long
-            while (nameMetrics.stringWidth(name + "...") > slotWidth - 18 && name.length() > 3) {
-                name = name.substring(0, name.length() - 1);
-            }
-            name += "...";
-        }
-        
-        int nameX = slotX + (slotWidth - nameMetrics.stringWidth(name)) / 2;
-        int nameY = slotY + 60;
-        g2d.drawString(name, nameX, nameY);
-        
-        // Character level/progress indicator
-        int completedStories = 0;
-        for (boolean completed : character.getCompletedStories()) {
-            if (completed) completedStories++;
-        }
-        
-        String progressText = "Lvl " + (completedStories + 1);
-        g2d.setFont(tooltipFont);
-        FontMetrics detailMetrics = g2d.getFontMetrics();
-        int progressX = slotX + (slotWidth - detailMetrics.stringWidth(progressText)) / 2;
-        int progressY = slotY + 85;
-        g2d.setColor(GreatDreamerTheme.SELECTED);
-        g2d.drawString(progressText, progressX, progressY);
-        
-        // Mini stats
-        g2d.setColor(textColor);
-        g2d.setFont(tooltipFont);
-        String stats = String.format("STR:%d POW:%d EDU:%d CON:%d", 
-                character.getStrength(), character.getPower(), character.getEducation(), character.getConstitution());
-        FontMetrics statsMetrics = g2d.getFontMetrics();
-        int statsX = slotX + (slotWidth - statsMetrics.stringWidth(stats)) / 2;
-        int statsY = slotY + 110;
-        g2d.drawString(stats, statsX, statsY);
-        
-        String stats2 = String.format("INT:%d APP:%d LCK:%d SIZ:%d DEX:%d", 
-                character.getIntelligence(), character.getAppearance(), character.getLuck(), character.getSize(), character.getDexterity());
-        int stats2X = slotX + (slotWidth - statsMetrics.stringWidth(stats2)) / 2;
-        int stats2Y = slotY + 125;
-        g2d.drawString(stats2, stats2X, stats2Y);
-        
-        // Last played info
-        g2d.setColor(GreatDreamerTheme.SELECTED);
-        String playtime = String.format("Playtime: %dh", character.getTotalPlaytime() / 60);
-        int playtimeX = slotX + (slotWidth - statsMetrics.stringWidth(playtime)) / 2;
-        int playtimeY = slotY + 155;
-        g2d.drawString(playtime, playtimeX, playtimeY);
-    }
-    
-    private void drawEmptySlot(Graphics2D g2d, int slotX, int slotY, int slotWidth, int slotHeight, 
-                              Color textColor, boolean isAvailable) {
-        // Draw plus sign
-        g2d.setColor(textColor);
-        g2d.setFont(slotFont);
-        FontMetrics plusMetrics = g2d.getFontMetrics();
-        String plusSign = isAvailable ? "+" : "X";
-        int plusX = slotX + (slotWidth - plusMetrics.stringWidth(plusSign)) / 2;
-        int plusY = slotY + slotHeight / 2 + plusMetrics.getAscent() / 2;
-        g2d.drawString(plusSign, plusX, plusY);
-        
-        // Draw status text
-        g2d.setFont(tooltipFont);
-        FontMetrics statusMetrics = g2d.getFontMetrics();
-        String statusText = isAvailable ? "NEW FILE" : "LOCKED";
-        int statusX = slotX + (slotWidth - statusMetrics.stringWidth(statusText)) / 2;
-        int statusY = slotY + slotHeight - 15;
-        g2d.drawString(statusText, statusX, statusY);
-    }
-    
 }

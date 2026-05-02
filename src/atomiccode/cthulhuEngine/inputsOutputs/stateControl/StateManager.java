@@ -36,7 +36,9 @@ public class StateManager {
         if (stateStack.isEmpty()) {
             return defaultState;
         }
-        return stateStack.pop();
+        State state = stateStack.pop();
+        state.onExit();
+        return state;
     }
 
     /**
@@ -44,7 +46,8 @@ public class StateManager {
      */
     public void setState(State state) {
         if (!stateStack.isEmpty()) {
-            stateStack.pop();
+            State current = stateStack.pop();
+            current.onExit();
         }
         if (state != null) {
             stateStack.push(state);
@@ -80,6 +83,9 @@ public class StateManager {
      * Clear all states
      */
     public void clear() {
+        while (!stateStack.isEmpty()) {
+            stateStack.pop().onExit();
+        }
         stateStack.clear();
     }
 }

@@ -23,6 +23,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class MainMenuState implements State {
+
+    private static BufferedImage cachedMenuBackground;
+    private static BufferedImage cachedGameLogo;
+    private static BufferedImage cachedCocLogo;
     
     // Background image
     private BufferedImage backgroundImage;
@@ -129,10 +133,16 @@ public class MainMenuState implements State {
     }
     
     private void loadBackgroundImage() {
+        if (cachedMenuBackground != null) {
+            backgroundImage = cachedMenuBackground;
+            imageLoaded = true;
+            return;
+        }
         try {
             File imageFile = EngineFiles.getResourceFile("backgrounds/menu/main-menu-bg.jpg");
             if (imageFile.exists()) {
-                backgroundImage = ImageIO.read(imageFile);
+                cachedMenuBackground = ImageIO.read(imageFile);
+                backgroundImage = cachedMenuBackground;
                 imageLoaded = true;
             } else {
                 System.err.println("Background image not found: " + imageFile.getAbsolutePath());
@@ -144,20 +154,37 @@ public class MainMenuState implements State {
     }
     
     private void loadLogoImages() {
+        if (cachedGameLogo != null) {
+            logoImage = cachedGameLogo;
+            logoLoaded = true;
+        }
+        if (cachedCocLogo != null) {
+            cocLogoImage = cachedCocLogo;
+            cocLogoLoaded = true;
+        }
+        if (logoLoaded && cocLogoLoaded) {
+            return;
+        }
         try {
-            File imageFile = EngineFiles.getResourceFile("logos/game-logo-white.png");
-            if (imageFile.exists()) {
-                logoImage = ImageIO.read(imageFile);
-                logoLoaded = true;
-            } else {
-                System.err.println("Logo image not found: " + imageFile.getAbsolutePath());
+            if (!logoLoaded) {
+                File imageFile = EngineFiles.getResourceFile("logos/game-logo-white.png");
+                if (imageFile.exists()) {
+                    cachedGameLogo = ImageIO.read(imageFile);
+                    logoImage = cachedGameLogo;
+                    logoLoaded = true;
+                } else {
+                    System.err.println("Logo image not found: " + imageFile.getAbsolutePath());
+                }
             }
-            imageFile = EngineFiles.getResourceFile("logos/coc-logo-white.png");
-            if (imageFile.exists()) {
-                cocLogoImage = ImageIO.read(imageFile);
-                cocLogoLoaded = true;
-            } else {
-                System.err.println("CoC logo image not found: " + imageFile.getAbsolutePath());
+            if (!cocLogoLoaded) {
+                File imageFile = EngineFiles.getResourceFile("logos/coc-logo-white.png");
+                if (imageFile.exists()) {
+                    cachedCocLogo = ImageIO.read(imageFile);
+                    cocLogoImage = cachedCocLogo;
+                    cocLogoLoaded = true;
+                } else {
+                    System.err.println("CoC logo image not found: " + imageFile.getAbsolutePath());
+                }
             }
         } catch (IOException e) {
             System.err.println("Error loading logo image: " + e.getMessage());

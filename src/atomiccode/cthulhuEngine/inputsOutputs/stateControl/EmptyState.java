@@ -1,6 +1,6 @@
 package atomiccode.cthulhuEngine.inputsOutputs.stateControl;
 
-import java.awt.*;
+import atomiccode.cthulhuEngine.engineMain.engine.EngineRenderContext;
 
 public class EmptyState implements State {
 
@@ -30,7 +30,7 @@ public class EmptyState implements State {
     }
 
     @Override
-    public void render(Graphics g) {
+    public void render(EngineRenderContext context) {
 
     }
 

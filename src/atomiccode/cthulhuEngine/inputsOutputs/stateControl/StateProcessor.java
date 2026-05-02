@@ -1,7 +1,8 @@
 package atomiccode.cthulhuEngine.inputsOutputs.stateControl;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
+import com.badlogic.gdx.graphics.Color;
+
+import atomiccode.cthulhuEngine.engineMain.engine.EngineRenderContext;
 
 /**
  * Handles all state processing: rendering, updates, and transitions
@@ -55,16 +56,16 @@ public class StateProcessor {
     /**
      * Render all states with fade overlay
      */
-    public void render(Graphics2D g) {
+    public void render(EngineRenderContext context) {
         // Render current state
         State currentState = stateManager.getCurrentState();
         if (currentState != null) {
-            currentState.render(g);
+            currentState.render(context);
         }
         
         // Render fade overlay if active
         if (currentFade != null) {
-            currentFade.render(g);
+            currentFade.render(context);
         }
     }
     
@@ -184,5 +185,19 @@ public class StateProcessor {
      */
     public State getCurrentState() {
         return stateManager.getCurrentState();
+    }
+
+    public void resize(int width, int height) {
+        State currentState = stateManager.getCurrentState();
+        if (currentState != null) {
+            currentState.resize(width, height);
+        }
+    }
+
+    public void dispose() {
+        State currentState = stateManager.getCurrentState();
+        if (currentState != null) {
+            currentState.dispose();
+        }
     }
 }

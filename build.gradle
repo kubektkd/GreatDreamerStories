@@ -1,0 +1,70 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'atomiccode'
+version = '0.0.1'
+
+ext {
+    gdxVersion = '1.14.0'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src']
+        }
+        resources {
+            srcDirs = ['res']
+        }
+    }
+}
+
+dependencies {
+    implementation "com.badlogicgames.gdx:gdx:${gdxVersion}"
+    implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:${gdxVersion}"
+    implementation "com.badlogicgames.gdx:gdx-freetype:${gdxVersion}"
+
+    runtimeOnly "com.badlogicgames.gdx:gdx-platform:${gdxVersion}:natives-desktop"
+    runtimeOnly "com.badlogicgames.gdx:gdx-freetype-platform:${gdxVersion}:natives-desktop"
+}
+
+application {
+    mainClass = 'atomiccode.greatDreamerStories.Launcher'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+jar {
+    archiveFileName = 'GreatDreamerStories.jar'
+    manifest {
+        attributes 'Main-Class': application.mainClass.get()
+    }
+}
+
+tasks.register('stageJpackage', Copy) {
+    dependsOn jar
+    into layout.buildDirectory.dir('jpackage-input')
+    from(tasks.jar)
+    from(configurations.runtimeClasspath)
+    from('res') {
+        into 'res'
+    }
+}
+
+tasks.register('cleanJpackageInput', Delete) {
+    delete layout.buildDirectory.dir('jpackage-input')
+}
+
+tasks.named('stageJpackage') {
+    dependsOn cleanJpackageInput
+}

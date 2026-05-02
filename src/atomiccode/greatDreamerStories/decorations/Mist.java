@@ -8,6 +8,10 @@ import java.io.File;
 import java.io.IOException;
 
 public class Mist {
+
+    /** Shared mist textures — loaded once. Each Mist instance used to call ImageIO 6× on construction. */
+    private static volatile BufferedImage[] SHARED_MIST_IMAGES;
+    private static volatile boolean SHARED_LOAD_ATTEMPTED;
     private float x, y;
     private float velocityX;
     private float size;
@@ -29,13 +33,6 @@ public class Mist {
     private static final float FADE_IN_DURATION = 2.0f;
     private static final float FADE_OUT_DURATION = 1.5f;
     
-    // Mist images
-    private BufferedImage mistImage1;
-    private BufferedImage mistImage2;
-    private BufferedImage mistImage3;
-    private BufferedImage mistImage4;
-    private BufferedImage mistImage5;
-    private BufferedImage mistImage6;
     private BufferedImage currentMistImage;
     private boolean imageLoaded = false;
     private boolean flipHorizontal = false;
@@ -54,8 +51,7 @@ public class Mist {
         this.x = x;
         this.y = y;
         
-        // Load mist images
-        loadMistImages();
+        ensureSharedMistImagesLoaded();
         
         // Randomize properties for organic variation
         this.velocityX = MIN_VELOCITY_X + (float) Math.random() * (MAX_VELOCITY_X - MIN_VELOCITY_X);
@@ -71,12 +67,10 @@ public class Mist {
         this.transitionAlpha = 0.0f;
         this.transitionTime = 0.0f;
         
-        // Choose random mist image from all available images
-        if (imageLoaded) {
-            selectRandomMistImage();
-            // Randomly determine if this mist should be flipped
-            this.flipHorizontal = Math.random() < 0.3; // 30% chance to flip horizontally
-            this.flipVertical = Math.random() < 0.2; // 20% chance to flip vertically
+        selectRandomMistImage();
+        if (currentMistImage != null) {
+            this.flipHorizontal = Math.random() < 0.3;
+            this.flipVertical = Math.random() < 0.2;
         }
     }
     
@@ -140,27 +134,32 @@ public class Mist {
         }
     }
     
-    private void loadMistImages() {
-        try {
-            // Load all mist images
-            mistImage1 = loadMistImage("misc/mist.png", "Mist image 1");
-            mistImage2 = loadMistImage("misc/mist2.png", "Mist image 2");
-            mistImage3 = loadMistImage("misc/mist3.png", "Mist image 3");
-            mistImage4 = loadMistImage("misc/mist4.png", "Mist image 4");
-            mistImage5 = loadMistImage("misc/mist5.png", "Mist image 5");
-            mistImage6 = loadMistImage("misc/mist6.png", "Mist image 6");
-            
-            // Check if at least some images loaded successfully
-            imageLoaded = (mistImage1 != null || mistImage2 != null || mistImage3 != null || 
-                          mistImage4 != null || mistImage5 != null || mistImage6 != null);
-            
-        } catch (Exception e) {
-            System.err.println("Error loading mist images: " + e.getMessage());
-            e.printStackTrace();
+    private static void ensureSharedMistImagesLoaded() {
+        if (SHARED_LOAD_ATTEMPTED) {
+            return;
+        }
+        synchronized (Mist.class) {
+            if (SHARED_LOAD_ATTEMPTED) {
+                return;
+            }
+            try {
+                SHARED_MIST_IMAGES = new BufferedImage[]{
+                    loadMistImage("misc/mist.png", "Mist image 1"),
+                    loadMistImage("misc/mist2.png", "Mist image 2"),
+                    loadMistImage("misc/mist3.png", "Mist image 3"),
+                    loadMistImage("misc/mist4.png", "Mist image 4"),
+                    loadMistImage("misc/mist5.png", "Mist image 5"),
+                    loadMistImage("misc/mist6.png", "Mist image 6"),
+                };
+            } catch (Exception e) {
+                System.err.println("Error loading mist images: " + e.getMessage());
+                e.printStackTrace();
+            }
+            SHARED_LOAD_ATTEMPTED = true;
         }
     }
     
-    private BufferedImage loadMistImage(String path, String name) {
+    private static BufferedImage loadMistImage(String path, String name) {
         try {
             File mistFile = EngineFiles.getResourceFile(path);
             if (mistFile.exists()) {
@@ -176,18 +175,19 @@ public class Mist {
     }
     
     private void selectRandomMistImage() {
-        // Create array of available mist images
-        BufferedImage[] availableImages = {mistImage1, mistImage2, mistImage3, mistImage4, mistImage5, mistImage6};
-        
-        // Find all non-null images
+        BufferedImage[] shared = SHARED_MIST_IMAGES;
+        if (shared == null) {
+            return;
+        }
+
         java.util.List<BufferedImage> validImages = new java.util.ArrayList<>();
-        for (BufferedImage img : availableImages) {
+        for (BufferedImage img : shared) {
             if (img != null) {
                 validImages.add(img);
             }
         }
-        
-        // Select random image from available ones
+
+        imageLoaded = !validImages.isEmpty();
         if (!validImages.isEmpty()) {
             int randomIndex = (int) (Math.random() * validImages.size());
             this.currentMistImage = validImages.get(randomIndex);

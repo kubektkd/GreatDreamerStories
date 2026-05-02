@@ -218,7 +218,7 @@ public class TextInput {
     }
 
     private void updateCaretFromMouse(int mouseX) {
-        FontMetrics metrics = Engine.instance().getWindow().getCanvas().getFontMetrics(textFont);
+        FontMetrics metrics = new java.awt.Canvas().getFontMetrics(textFont);
         int textStartX = x + 18;
         int relativeX = Math.max(0, mouseX - textStartX);
 

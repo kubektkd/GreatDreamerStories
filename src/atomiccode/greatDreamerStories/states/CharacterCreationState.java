@@ -110,6 +110,7 @@ public class CharacterCreationState implements State {
     private Font titleFont;
     private Font labelFont;
     private Font smallFont;
+    private Font sectionHeadingFont;
     private Font tooltipFont;
     private Image malePortrait;
     private Image femalePortrait;
@@ -136,6 +137,7 @@ public class CharacterCreationState implements State {
         titleFont = GreatDreamerTheme.archiveFont(30);
         labelFont = GreatDreamerTheme.archiveFont(12);
         smallFont = GreatDreamerTheme.archiveFont(10);
+        sectionHeadingFont = GreatDreamerTheme.archiveFont(15);
         tooltipFont = GreatDreamerTheme.archiveFont(14);
         malePortrait = loadPortrait(MALE_PORTRAIT);
         femalePortrait = loadPortrait(FEMALE_PORTRAIT);
@@ -462,7 +464,8 @@ public class CharacterCreationState implements State {
         int rightWidth = layout.rightColumn.width;
         attrPanelX = rightX;
         attrPanelY = layoutY + ATTR_PANEL_TOP_OFFSET;
-        attrPanelWidth = Math.max(330, rightWidth - 10);
+        // Match right edge to primary action bar (CREATE uses content.right() via rightAction).
+        attrPanelWidth = rightWidth;
         attrPanelHeight = ATTR_PANEL_HEIGHT;
 
         for (int i = 0; i < STAT_COUNT; i++) {
@@ -503,9 +506,10 @@ public class CharacterCreationState implements State {
         GeneralMenuRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
         GeneralMenuRenderer.drawHeader(g2d, layout.content, layout.leftColumn.right(), "NEW INVESTIGATOR",
                                    "STOKSJÖ POLICE ARCHIVE // PERSONAL RECORD", titleFont, smallFont);
-        GeneralMenuRenderer.drawSectionHeader(g2d, rightX, layoutY, "SUBJECT'S PROFILE", "ATTRIBUTES", labelFont, smallFont);
         GeneralMenuRenderer.drawRightMetric(g2d, layout.content, String.valueOf(getRemainingPoints()),
                                         "PTS REMAINING", 20, 94, titleFont, smallFont);
+        GeneralMenuRenderer.drawTitleAlignedToRightMetricLabelBottom(g2d, layout.content, rightX + 15, "SUBJECT'S PROFILE",
+                sectionHeadingFont, smallFont);
 
         drawPortrait(g2d, portraitX, portraitY, portraitSize);
         genderButtons[0].render(g2d);
@@ -513,6 +517,7 @@ public class CharacterCreationState implements State {
 
         nameInput.render(g2d);
         drawAttributesPanel(g2d);
+        GeneralMenuRenderer.drawPanelTopArchiveChip(g2d, attrPanelX, attrPanelY, "ATTRIBUTES", smallFont);
         drawCreateStatus(g2d);
         drawStatTooltip(g2d, windowWidth, windowHeight);
 

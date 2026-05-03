@@ -1,5 +1,7 @@
 package atomiccode.greatDreamerStories.character;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,6 +16,7 @@ public class Character implements Serializable {
     // Character identity
     private String name;
     private Gender gender;
+    private int age;
     private final String occupation = "Chief Police Officer"; // Fixed occupation
     
     // Character stats (total of 20 points to distribute)
@@ -26,6 +29,11 @@ public class Character implements Serializable {
     private int luck;          // Chance and good fortune
     private int size;          // Physical size and carrying capacity
     private int dexterity;     // Agility, reflexes, and precision
+
+    /** Current pools (maxima follow CoC 7e from stats). */
+    private int currentHitPoints;
+    private int currentMagicPoints;
+    private int currentSanity;
 
     // Character skills are derived from stats and fixed police occupation, not saved directly.
     private transient CharacterSkillSet skills;
@@ -45,6 +53,11 @@ public class Character implements Serializable {
     public static final int MIN_STAT_VALUE = 15;
     public static final int MAX_STAT_VALUE = 90;
     public static final int MAX_STORIES = 10; // Room for future story expansions
+
+    /** Investigator age in years (used for MOV modifiers in CoC 7e). */
+    public static final int MIN_INVESTIGATOR_AGE = 15;
+    public static final int MAX_INVESTIGATOR_AGE = 100;
+    public static final int DEFAULT_INVESTIGATOR_AGE = 35;
     
     public enum Gender {
         MALE("Male"),
@@ -65,7 +78,7 @@ public class Character implements Serializable {
      * Constructor for creating a new character
      */
     public Character(String name, Gender gender, int strength, int power, int education, int constitution,
-                    int intelligence, int appearance, int luck, int size, int dexterity) {
+                    int intelligence, int appearance, int luck, int size, int dexterity, int age) {
         this.name = name;
         this.gender = gender;
         this.strength = strength;
@@ -77,6 +90,10 @@ public class Character implements Serializable {
         this.luck = luck;
         this.size = size;
         this.dexterity = dexterity;
+        if (age < MIN_INVESTIGATOR_AGE || age > MAX_INVESTIGATOR_AGE) {
+            throw new IllegalArgumentException("Age must be between " + MIN_INVESTIGATOR_AGE + " and " + MAX_INVESTIGATOR_AGE);
+        }
+        this.age = age;
         
         this.currentStoryIndex = 0;
         this.completedStories = new boolean[MAX_STORIES];
@@ -89,7 +106,38 @@ public class Character implements Serializable {
             throw new IllegalArgumentException("Invalid stat distribution. Must total " + INITIAL_SKILL_POINTS + " points with each stat between " + MIN_STAT_VALUE + " and " + MAX_STAT_VALUE);
         }
 
+        refillResourcePoolsToMaximum();
         recalculateSkills();
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        normalizeAge();
+        if (currentHitPoints == 0 && currentMagicPoints == 0 && currentSanity == 0
+                && (getMaxHitPoints() > 0 || getMaxMagicPoints() > 0 || getMaxSanityPoints() > 0)) {
+            refillResourcePoolsToMaximum();
+        } else {
+            clampResourcePoolsToLegal();
+        }
+        recalculateSkills();
+    }
+
+    private void normalizeAge() {
+        if (age < MIN_INVESTIGATOR_AGE || age > MAX_INVESTIGATOR_AGE) {
+            age = DEFAULT_INVESTIGATOR_AGE;
+        }
+    }
+
+    private void refillResourcePoolsToMaximum() {
+        currentHitPoints = getMaxHitPoints();
+        currentMagicPoints = getMaxMagicPoints();
+        currentSanity = getMaxSanityPoints();
+    }
+
+    private void clampResourcePoolsToLegal() {
+        currentHitPoints = Math.min(Math.max(0, currentHitPoints), getMaxHitPoints());
+        currentMagicPoints = Math.min(Math.max(0, currentMagicPoints), getMaxMagicPoints());
+        currentSanity = Math.min(Math.max(0, currentSanity), getMaxSanityPoints());
     }
     
     /**
@@ -146,9 +194,13 @@ public class Character implements Serializable {
             if (completed) completedCount++;
         }
         
-        return String.format("%s (%s)\nSTR:%d POW:%d EDU:%d CON:%d INT:%d APP:%d LCK:%d SIZ:%d DEX:%d\n%s\nStories: %d/%d completed\nPlaytime: %dh %dm",
-            name, gender.getDisplayName(),
+        return String.format("%s (%s)  Age %d\nSTR:%d POW:%d EDU:%d CON:%d INT:%d APP:%d LCK:%d SIZ:%d DEX:%d\nHP:%d/%d MP:%d/%d SAN:%d/%d MOV:%d DB:%s Build:%d Dodge:%d%%\n%s\nStories: %d/%d completed\nPlaytime: %dh %dm",
+            name, gender.getDisplayName(), age,
             strength, power, education, constitution, intelligence, appearance, luck, size, dexterity,
+            currentHitPoints, getMaxHitPoints(),
+            currentMagicPoints, getMaxMagicPoints(),
+            currentSanity, getMaxSanityPoints(),
+            getMoveRate(), getDamageBonus(), getBuild(), getDodgeValue(),
             getKeySkillSummary(),
             completedCount, MAX_STORIES,
             totalPlaytime / 60, totalPlaytime % 60);
@@ -189,6 +241,36 @@ public class Character implements Serializable {
         }
     }
 
+    public int getMaxHitPoints() {
+        return CthulhuDerivedStats.maxHitPoints(this);
+    }
+
+    public int getMaxMagicPoints() {
+        return CthulhuDerivedStats.maxMagicPoints(this);
+    }
+
+    public int getMaxSanityPoints() {
+        return CthulhuDerivedStats.maxSanityPoints(this);
+    }
+
+    public int getMoveRate() {
+        return CthulhuDerivedStats.moveRate(this);
+    }
+
+    /** CoC 7e damage bonus from STR + SIZ (e.g. "-1", "0", "+1d4"). */
+    public String getDamageBonus() {
+        return CthulhuDerivedStats.damageBonus(this);
+    }
+
+    public int getBuild() {
+        return CthulhuDerivedStats.build(this);
+    }
+
+    /** Dodge skill rating (percent), including occupation and attribute modifiers. */
+    public int getDodgeValue() {
+        return getSkillValue(CharacterSkill.DODGE);
+    }
+
     // Getters and setters
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -198,17 +280,40 @@ public class Character implements Serializable {
     
     public String getOccupation() { return occupation; }
     
+    public int getAge() { return age; }
+    public void setAge(int age) {
+        if (age < MIN_INVESTIGATOR_AGE || age > MAX_INVESTIGATOR_AGE) {
+            throw new IllegalArgumentException("Age must be between " + MIN_INVESTIGATOR_AGE + " and " + MAX_INVESTIGATOR_AGE);
+        }
+        this.age = age;
+    }
+
+    public int getCurrentHitPoints() { return currentHitPoints; }
+    public void setCurrentHitPoints(int currentHitPoints) {
+        this.currentHitPoints = Math.min(Math.max(0, currentHitPoints), getMaxHitPoints());
+    }
+
+    public int getCurrentMagicPoints() { return currentMagicPoints; }
+    public void setCurrentMagicPoints(int currentMagicPoints) {
+        this.currentMagicPoints = Math.min(Math.max(0, currentMagicPoints), getMaxMagicPoints());
+    }
+
+    public int getCurrentSanity() { return currentSanity; }
+    public void setCurrentSanity(int currentSanity) {
+        this.currentSanity = Math.min(Math.max(0, currentSanity), getMaxSanityPoints());
+    }
+
     public int getStrength() { return strength; }
-    public void setStrength(int strength) { this.strength = strength; recalculateSkills(); }
+    public void setStrength(int strength) { this.strength = strength; clampResourcePoolsToLegal(); recalculateSkills(); }
     
     public int getPower() { return power; }
-    public void setPower(int power) { this.power = power; recalculateSkills(); }
+    public void setPower(int power) { this.power = power; clampResourcePoolsToLegal(); recalculateSkills(); }
     
     public int getEducation() { return education; }
     public void setEducation(int education) { this.education = education; recalculateSkills(); }
     
     public int getConstitution() { return constitution; }
-    public void setConstitution(int constitution) { this.constitution = constitution; recalculateSkills(); }
+    public void setConstitution(int constitution) { this.constitution = constitution; clampResourcePoolsToLegal(); recalculateSkills(); }
     
     public int getIntelligence() { return intelligence; }
     public void setIntelligence(int intelligence) { this.intelligence = intelligence; recalculateSkills(); }
@@ -220,7 +325,7 @@ public class Character implements Serializable {
     public void setLuck(int luck) { this.luck = luck; recalculateSkills(); }
     
     public int getSize() { return size; }
-    public void setSize(int size) { this.size = size; recalculateSkills(); }
+    public void setSize(int size) { this.size = size; clampResourcePoolsToLegal(); recalculateSkills(); }
 
     public int getDexterity() { return dexterity; }
     public void setDexterity(int dexterity) { this.dexterity = dexterity; recalculateSkills(); }
@@ -231,6 +336,14 @@ public class Character implements Serializable {
     public boolean[] getCompletedStories() { return completedStories.clone(); }
     public boolean isStoryCompleted(int storyIndex) { 
         return storyIndex >= 0 && storyIndex < MAX_STORIES && completedStories[storyIndex]; 
+    }
+
+    public int getCompletedStoryCount() {
+        int count = 0;
+        for (boolean completed : completedStories) {
+            if (completed) count++;
+        }
+        return count;
     }
     
     public int getTotalPlaytime() { return totalPlaytime; }

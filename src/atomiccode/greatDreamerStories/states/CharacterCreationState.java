@@ -41,6 +41,9 @@ public class CharacterCreationState implements State {
     private static final int GENDER_BUTTON_WIDTH = 130;
     private static final int GENDER_BUTTON_HEIGHT = 38;
     private static final int GENDER_BUTTON_GAP = 12;
+    private static final int AGE_BUTTON_WIDTH = 40;
+    private static final int AGE_BUTTON_HEIGHT = 26;
+    private static final int AGE_ROW_GAP_BELOW_NAME = 10;
     /** Space from gender button bottom to name-panel top (~chip bleed above panel top + margin). */
     private static final int NAME_INPUT_CLEAR_BELOW_GENDER = 22;
     private static final long STAT_TOOLTIP_DELAY = 300;
@@ -77,9 +80,12 @@ public class CharacterCreationState implements State {
     private int luck = Character.MIN_STAT_VALUE;
     private int size = Character.MIN_STAT_VALUE;
     private int dexterity = Character.MIN_STAT_VALUE;
+    private int age = Character.DEFAULT_INVESTIGATOR_AGE;
     
     // UI components
     private Button[] genderButtons;
+    private Button ageDecButton;
+    private Button ageIncButton;
     private Button[] statBigIncButtons;
     private Button[] statIncButtons;
     private Button[] statBigDecButtons;
@@ -176,6 +182,15 @@ public class CharacterCreationState implements State {
             final Character.Gender selectedGender = gender;
             genderButtons[i].setOnClick(() -> this.selectedGender = selectedGender);
         }
+
+        ageDecButton = new Button(0, 0, AGE_BUTTON_WIDTH, AGE_BUTTON_HEIGHT, "-");
+        ageDecButton.setColors(new Color(18, 20, 24), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
+        ageDecButton.setFont(smallFont);
+        ageDecButton.setOnClick(() -> adjustAge(-1));
+        ageIncButton = new Button(0, 0, AGE_BUTTON_WIDTH, AGE_BUTTON_HEIGHT, "+");
+        ageIncButton.setColors(new Color(18, 20, 24), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
+        ageIncButton.setFont(smallFont);
+        ageIncButton.setOnClick(() -> adjustAge(1));
         
         // Stat adjustment buttons
         statBigIncButtons = new Button[STAT_COUNT];
@@ -219,11 +234,13 @@ public class CharacterCreationState implements State {
         backButton.setOnClick(this::cancelCreation);
 
         // Setup menu buttons array for navigation
-        menuButtons = new Button[genderButtons.length + statBigIncButtons.length + statIncButtons.length +
+        menuButtons = new Button[genderButtons.length + 2 + statBigIncButtons.length + statIncButtons.length +
                                  statBigDecButtons.length + statDecButtons.length + 2];
         int index = 0;
         System.arraycopy(genderButtons, 0, menuButtons, index, genderButtons.length);
         index += genderButtons.length;
+        menuButtons[index++] = ageDecButton;
+        menuButtons[index++] = ageIncButton;
         System.arraycopy(statBigIncButtons, 0, menuButtons, index, statBigIncButtons.length);
         index += statBigIncButtons.length;
         System.arraycopy(statIncButtons, 0, menuButtons, index, statIncButtons.length);
@@ -249,6 +266,14 @@ public class CharacterCreationState implements State {
         luck = Character.INITIAL_STAT_VALUE;
         size = Character.INITIAL_STAT_VALUE;
         dexterity = Character.INITIAL_STAT_VALUE;
+        age = Character.DEFAULT_INVESTIGATOR_AGE;
+    }
+
+    private void adjustAge(int delta) {
+        int next = age + delta;
+        if (next >= Character.MIN_INVESTIGATOR_AGE && next <= Character.MAX_INVESTIGATOR_AGE) {
+            age = next;
+        }
     }
     
     private void adjustStat(int statIndex, int amount) {
@@ -354,7 +379,7 @@ public class CharacterCreationState implements State {
         
         try {
             Character newCharacter = new Character(characterName.trim(), selectedGender, 
-                                                 strength, power, education, constitution, intelligence, appearance, luck, size, dexterity);
+                                                 strength, power, education, constitution, intelligence, appearance, luck, size, dexterity, age);
             
             if (SaveManager.getInstance().saveCharacter(newCharacter, targetSlot)) {
                 // Character created successfully, return to character select
@@ -429,6 +454,7 @@ public class CharacterCreationState implements State {
         genderButtons[0].setSelected(selectedGender == Character.Gender.MALE);
         genderButtons[1].setSelected(selectedGender == Character.Gender.FEMALE);
         updateGenderButtonColors();
+        updateAgeButtonColors();
         updateStatButtonColors();
         updateCreateButtonColor();
     }
@@ -445,6 +471,9 @@ public class CharacterCreationState implements State {
             if (b.contains(mx, my)) {
                 return Cursor.SystemCursor.Hand;
             }
+        }
+        if (ageDecButton.contains(mx, my) || ageIncButton.contains(mx, my)) {
+            return Cursor.SystemCursor.Hand;
         }
         if (attributesPanel != null) {
             UiRect b = attributesPanel.bounds();
@@ -492,6 +521,11 @@ public class CharacterCreationState implements State {
             genderButtons[i].setColors(new Color(12, 13, 16), isSelected ? selectedColor : new Color(42, 43, 48), new Color(32, 32, 32),
                                        isSelected ? selectedTextColor : textColor);
         }
+    }
+
+    private void updateAgeButtonColors() {
+        setStatButtonEnabled(ageDecButton, age > Character.MIN_INVESTIGATOR_AGE);
+        setStatButtonEnabled(ageIncButton, age < Character.MAX_INVESTIGATOR_AGE);
     }
 
     private void updateStatButtonColors() {
@@ -546,6 +580,12 @@ public class CharacterCreationState implements State {
         int namePanelH = TextInput.preferredArchiveOuterHeight(buttonFont);
         nameInput.setBounds(leftX, namePanelY, leftContentWidth, namePanelH);
 
+        int ageRowY = namePanelY + namePanelH + AGE_ROW_GAP_BELOW_NAME;
+        ageDecButton.x = leftX + 18;
+        ageDecButton.y = ageRowY;
+        ageIncButton.x = ageDecButton.x + AGE_BUTTON_WIDTH + 72;
+        ageIncButton.y = ageRowY;
+
         rightX = layout.rightColumn.x;
         int rightWidth = layout.rightColumn.width;
         attrPanelX = rightX;
@@ -596,6 +636,7 @@ public class CharacterCreationState implements State {
         genderButtons[1].render(g2d);
 
         nameInput.render(g2d);
+        drawAgeRow(g2d);
         drawAttributesPanel(g2d);
         drawCreateStatus(g2d);
         drawStatTooltip(g2d, windowWidth, windowHeight);
@@ -619,6 +660,20 @@ public class CharacterCreationState implements State {
         FontMetrics metrics = g2d.getFontMetrics();
         int statusX = createButton.x + (CREATE_BUTTON_WIDTH - metrics.stringWidth(status)) / 2;
         g2d.drawString(status, statusX, createButton.y + ACTION_BUTTON_HEIGHT + 18);
+    }
+
+    private void drawAgeRow(Graphics2D g2d) {
+        g2d.setColor(mutedTextColor);
+        g2d.setFont(smallFont);
+        g2d.drawString("AGE", ageDecButton.x + AGE_BUTTON_WIDTH + 8, ageDecButton.y + AGE_BUTTON_HEIGHT / 2 + 4);
+        g2d.setColor(textColor);
+        g2d.setFont(buttonFont);
+        String value = String.valueOf(age);
+        FontMetrics fm = g2d.getFontMetrics(buttonFont);
+        int valueX = ageDecButton.x + AGE_BUTTON_WIDTH + 52 - fm.stringWidth(value) / 2;
+        g2d.drawString(value, valueX, ageDecButton.y + AGE_BUTTON_HEIGHT / 2 + 5);
+        ageDecButton.render(g2d);
+        ageIncButton.render(g2d);
     }
 
     private void drawAttributesPanel(Graphics2D g2d) {

@@ -176,19 +176,11 @@ public final class CharacterSlotFolder {
 
         g2d.setColor(textColor);
         g2d.setFont(detailFont);
-        String stats = String.format("STR:%d POW:%d EDU:%d CON:%d",
-                character.getStrength(), character.getPower(), character.getEducation(), character.getConstitution());
+        String stats = String.format("Closed Cases: %d", character.getCompletedStoryCount());
         FontMetrics statsMetrics = g2d.getFontMetrics();
         int statsX = slotX + (slotWidth - statsMetrics.stringWidth(stats)) / 2;
-        int statsY = slotY + 110;
+        int statsY = slotY + 118;
         g2d.drawString(stats, statsX, statsY);
-
-        String stats2 = String.format("INT:%d APP:%d LCK:%d SIZ:%d DEX:%d",
-                character.getIntelligence(), character.getAppearance(), character.getLuck(), character.getSize(),
-                character.getDexterity());
-        int stats2X = slotX + (slotWidth - statsMetrics.stringWidth(stats2)) / 2;
-        int stats2Y = slotY + 125;
-        g2d.drawString(stats2, stats2X, stats2Y);
 
         g2d.setColor(GreatDreamerTheme.SELECTED);
         String playtime = String.format("Playtime: %dh", character.getTotalPlaytime() / 60);

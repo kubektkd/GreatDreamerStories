@@ -140,7 +140,8 @@ public class GameplayState implements State {
     }
 
     private UiRect skillTableBounds() {
-        int tableTop = dossierPanel.y + 136;
+        // Below four stat summary lines (startY 96, lineHeight 18) plus small gap.
+        int tableTop = dossierPanel.y + 172;
         int footerBand = 28;
         int tableHeight = Math.max(48, dossierPanel.bottom() - 18 - footerBand - tableTop);
         return new UiRect(dossierPanel.x + 10, tableTop, dossierPanel.width - 20, tableHeight);
@@ -252,7 +253,7 @@ public class GameplayState implements State {
         GeneralMenuRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
         MenuScreenTitle.draw(g2d, layout.content, layout.content.right(), "ACTIVE INVESTIGATION",
                 "STOKSJÖ POLICE ARCHIVE // INCIDENT ROOM",
-                new MenuScreenTitle.RightMetric(String.valueOf(getCompletedStoryCount()), "CASES CLOSED", 12, 96));
+                new MenuScreenTitle.RightMetric(String.valueOf(selectedCharacter.getCompletedStoryCount()), "CASES CLOSED", 12, 96));
 
         drawCharacterInfoPanel(g2d);
         drawStoryPlaceholder(g2d);
@@ -266,7 +267,7 @@ public class GameplayState implements State {
 
         g2d.setColor(GreatDreamerTheme.TEXT);
         g2d.setFont(textFont);
-        String characterInfo = selectedCharacter.getName() + " (" + selectedCharacter.getGender().getDisplayName() + ")";
+        String characterInfo = selectedCharacter.getName() + " (" + selectedCharacter.getGender().getDisplayName() + ")  Age: " + selectedCharacter.getAge();
         g2d.drawString(characterInfo, dossierPanel.x + 18, dossierPanel.y + 28);
 
         g2d.setColor(GreatDreamerTheme.SELECTED);
@@ -278,11 +279,18 @@ public class GameplayState implements State {
         g2d.setColor(GreatDreamerTheme.TEXT);
         g2d.setFont(smallFont);
         String[] statLines = {
-                String.format("STR:%d  POW:%d  EDU:%d  CON:%d", selectedCharacter.getStrength(), selectedCharacter.getPower(),
+                String.format("STR %d  POW %d  EDU %d  CON %d", selectedCharacter.getStrength(), selectedCharacter.getPower(),
                         selectedCharacter.getEducation(), selectedCharacter.getConstitution()),
-                String.format("INT:%d  APP:%d  LCK:%d  SIZ:%d  DEX:%d", selectedCharacter.getIntelligence(),
+                String.format("INT %d  APP %d  LCK %d  SIZ %d  DEX %d", selectedCharacter.getIntelligence(),
                         selectedCharacter.getAppearance(), selectedCharacter.getLuck(), selectedCharacter.getSize(),
-                        selectedCharacter.getDexterity())
+                        selectedCharacter.getDexterity()),
+                String.format("HP %d/%d  MP %d/%d  SAN %d/%d  MOV %d",
+                        selectedCharacter.getCurrentHitPoints(), selectedCharacter.getMaxHitPoints(),
+                        selectedCharacter.getCurrentMagicPoints(), selectedCharacter.getMaxMagicPoints(),
+                        selectedCharacter.getCurrentSanity(), selectedCharacter.getMaxSanityPoints(),
+                        selectedCharacter.getMoveRate()),
+                String.format("DB %s  Build %d  Dodge %d%%",
+                        selectedCharacter.getDamageBonus(), selectedCharacter.getBuild(), selectedCharacter.getDodgeValue())
         };
         // Attribute summary (not part of MenuTable; the skill grid is drawn below).
         drawLines(g2d, statLines, dossierPanel.x + 18, dossierPanel.y + 96, 18);
@@ -292,7 +300,7 @@ public class GameplayState implements State {
 
         g2d.setColor(GreatDreamerTheme.MUTED_TEXT);
         g2d.setFont(smallFont);
-        String footer = "Stories completed: " + getCompletedStoryCount() + "/" + Character.MAX_STORIES;
+        String footer = "Stories completed: " + selectedCharacter.getCompletedStoryCount() + "/" + Character.MAX_STORIES;
         FontMetrics fm = g2d.getFontMetrics(smallFont);
         g2d.drawString(footer, dossierPanel.x + 18, dossierPanel.bottom() - 14 - Math.max(0, fm.getDescent() - 2));
 
@@ -344,16 +352,6 @@ public class GameplayState implements State {
 
     private boolean isLineHeading(String line) {
         return line.endsWith(":") || line.equals(line.toUpperCase());
-    }
-
-    private int getCompletedStoryCount() {
-        int completedStories = 0;
-        for (boolean completed : selectedCharacter.getCompletedStories()) {
-            if (completed) {
-                completedStories++;
-            }
-        }
-        return completedStories;
     }
 }
 

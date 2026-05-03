@@ -554,7 +554,12 @@ public class CharacterCreationState implements State {
         attrPanelWidth = rightWidth;
         attrPanelHeight = ATTR_PANEL_HEIGHT;
 
-        attributesPanel = new MenuChipPanel(new UiRect(attrPanelX, attrPanelY, attrPanelWidth, attrPanelHeight), "ATTRIBUTES");
+        UiRect attrRect = new UiRect(attrPanelX, attrPanelY, attrPanelWidth, attrPanelHeight);
+        if (attributesPanel == null) {
+            attributesPanel = new MenuChipPanel(attrRect, "ATTRIBUTES");
+        } else {
+            attributesPanel.setBounds(attrRect);
+        }
         UiRect attrBounds = attributesPanel.bounds();
 
         for (int i = 0; i < STAT_COUNT; i++) {

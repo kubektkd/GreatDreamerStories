@@ -19,12 +19,17 @@ public final class MenuChipPanel {
     private static final int INNER_SIDE_INSET = 15;
     private static final int INNER_BOTTOM_INSET = 15;
 
-    private final UiRect bounds;
+    private UiRect bounds;
     private final String chipLabel;
 
     public MenuChipPanel(UiRect bounds, String chipLabel) {
         this.bounds = bounds;
         this.chipLabel = chipLabel;
+    }
+
+    /** Updates panel geometry when the viewport changes; chip label is unchanged. */
+    public void setBounds(UiRect bounds) {
+        this.bounds = bounds;
     }
 
     public UiRect bounds() {

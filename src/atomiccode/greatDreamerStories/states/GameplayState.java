@@ -4,21 +4,23 @@ import atomiccode.cthulhuEngine.inputsOutputs.stateControl.State;
 import atomiccode.cthulhuEngine.engineMain.engine.Engine;
 import atomiccode.cthulhuEngine.engineMain.engine.Resources;
 import atomiccode.cthulhuEngine.ui.Button;
+import atomiccode.cthulhuEngine.ui.Tooltip;
 import atomiccode.cthulhuEngine.ui.layout.UiRect;
 import atomiccode.greatDreamerStories.character.Character;
 import atomiccode.greatDreamerStories.character.SaveManager;
 import atomiccode.greatDreamerStories.ui.GeneralMenuRenderer;
 import atomiccode.greatDreamerStories.ui.GeneralMenuLayout;
 import atomiccode.greatDreamerStories.ui.GreatDreamerTheme;
+import atomiccode.greatDreamerStories.character.CharacterSkill;
 import atomiccode.greatDreamerStories.ui.menu.MenuActionStrip;
 import atomiccode.greatDreamerStories.ui.menu.MenuChipPanel;
 import atomiccode.greatDreamerStories.ui.menu.MenuScreenTitle;
+import atomiccode.greatDreamerStories.ui.menu.MenuTable;
 
 import com.badlogic.gdx.graphics.Cursor;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.List;
 
 /**
  * Main gameplay state where the story unfolds.
@@ -44,6 +46,15 @@ public class GameplayState implements State {
     private Font textFont;
     private Font smallFont;
     private Font buttonFont;
+
+    private static final int SKILL_TABLE_COLS = 6;
+    private static final int SKILLS_PER_TABLE_ROW = 3;
+    private static final long SKILL_TABLE_TOOLTIP_DELAY_MS = 300;
+
+    private String[][] skillTableCells;
+    private String[][] skillTableTooltips;
+    private int skillTableRows;
+    private Tooltip skillTableTooltip;
     
     public GameplayState(Character character, int characterSlot) {
         this.selectedCharacter = character;
@@ -81,6 +92,58 @@ public class GameplayState implements State {
         
         // Update character's last played time
         selectedCharacter.setLastPlayedAt(java.time.LocalDateTime.now());
+
+        skillTableTooltip = new Tooltip(SKILL_TABLE_TOOLTIP_DELAY_MS);
+        GreatDreamerTheme.styleTooltip(skillTableTooltip, smallFont);
+
+        rebuildSkillTable();
+    }
+
+    private void rebuildSkillTable() {
+        CharacterSkill[] all = CharacterSkill.values();
+        int n = all.length;
+        int dataRows = (n + SKILLS_PER_TABLE_ROW - 1) / SKILLS_PER_TABLE_ROW;
+        skillTableRows = 1 + dataRows;
+        skillTableCells = new String[skillTableRows][SKILL_TABLE_COLS];
+        skillTableTooltips = new String[skillTableRows][SKILL_TABLE_COLS];
+        String[] header = skillTableCells[0];
+        header[0] = "SKILL";
+        header[1] = "%";
+        header[2] = "SKILL";
+        header[3] = "%";
+        header[4] = "SKILL";
+        header[5] = "%";
+        for (int r = 0; r < dataRows; r++) {
+            int outRow = r + 1;
+            for (int c = 0; c < SKILLS_PER_TABLE_ROW; c++) {
+                int i = r * SKILLS_PER_TABLE_ROW + c;
+                int col = c * 2;
+                if (i < n) {
+                    CharacterSkill s = all[i];
+                    skillTableCells[outRow][col] = s.getCode();
+                    skillTableCells[outRow][col + 1] = String.valueOf(selectedCharacter.getSkillValue(s));
+                    String tip = skillTooltipText(s, skillTableCells[outRow][col + 1]);
+                    skillTableTooltips[outRow][col] = tip;
+                    skillTableTooltips[outRow][col + 1] = tip;
+                } else {
+                    skillTableCells[outRow][col] = "";
+                    skillTableCells[outRow][col + 1] = "";
+                    skillTableTooltips[outRow][col] = null;
+                    skillTableTooltips[outRow][col + 1] = null;
+                }
+            }
+        }
+    }
+
+    private static String skillTooltipText(CharacterSkill skill, String valueCell) {
+        return skill.getDisplayName().toUpperCase() + "\nRating: " + valueCell + "%";
+    }
+
+    private UiRect skillTableBounds() {
+        int tableTop = dossierPanel.y + 136;
+        int footerBand = 28;
+        int tableHeight = Math.max(48, dossierPanel.bottom() - 18 - footerBand - tableTop);
+        return new UiRect(dossierPanel.x + 10, tableTop, dossierPanel.width - 20, tableHeight);
     }
     
     @Override
@@ -122,11 +185,25 @@ public class GameplayState implements State {
         for (int i = 0; i < menuButtons.length; i++) {
             menuButtons[i].setSelected(i == selectedIndex);
         }
+
+        updateSkillTableTooltip(mouseX, mouseY);
+    }
+
+    private void updateSkillTableTooltip(int mx, int my) {
+        if (skillTableTooltip == null || skillTableTooltips == null) {
+            return;
+        }
+        UiRect tb = skillTableBounds();
+        String tip = MenuTable.tooltipAt(tb, skillTableRows, SKILL_TABLE_COLS, skillTableTooltips, mx, my);
+        skillTableTooltip.update(tip != null, tip != null ? tip : "");
     }
 
     @Override
     public Cursor.SystemCursor getUiSystemCursor(int mx, int my) {
         if (backButton.contains(mx, my)) {
+            return Cursor.SystemCursor.Hand;
+        }
+        if (dossierPanel != null && skillTableBounds().contains(mx, my)) {
             return Cursor.SystemCursor.Hand;
         }
         return Cursor.SystemCursor.Arrow;
@@ -150,9 +227,15 @@ public class GameplayState implements State {
         storyPanel = new UiRect(storyX, body.y, storyWidth, storyHeight);
         notesPanel = new UiRect(storyX, storyPanel.bottom() + 20, storyWidth, notesHeight);
 
-        dossierChipPanel = new MenuChipPanel(dossierPanel, "INVESTIGATOR DOSSIER");
-        storyChipPanel = new MenuChipPanel(storyPanel, "CASE BOARD");
-        notesChipPanel = new MenuChipPanel(notesPanel, "FIELD NOTES");
+        if (dossierChipPanel == null) {
+            dossierChipPanel = new MenuChipPanel(dossierPanel, "INVESTIGATOR DOSSIER");
+            storyChipPanel = new MenuChipPanel(storyPanel, "CASE BOARD");
+            notesChipPanel = new MenuChipPanel(notesPanel, "FIELD NOTES");
+        } else {
+            dossierChipPanel.setBounds(dossierPanel);
+            storyChipPanel.setBounds(storyPanel);
+            notesChipPanel.setBounds(notesPanel);
+        }
 
         MenuActionStrip.placePrimaryRight(layout, backButton, 210, 48);
     }
@@ -194,19 +277,29 @@ public class GameplayState implements State {
 
         g2d.setColor(GreatDreamerTheme.TEXT);
         g2d.setFont(smallFont);
-        List<String> skillLines = selectedCharacter.getAllSkillsSummaryLines(8);
-        String[] dossierLines = new String[skillLines.size() + 6];
-        dossierLines[0] = String.format("STR:%d  POW:%d  EDU:%d CON:%d", selectedCharacter.getStrength(), selectedCharacter.getPower(), selectedCharacter.getEducation(), selectedCharacter.getConstitution());
-        dossierLines[1] = String.format("INT:%d  APP:%d  LCK:%d  SIZ:%d  DEX:%d", selectedCharacter.getIntelligence(), selectedCharacter.getAppearance(), selectedCharacter.getLuck(), selectedCharacter.getSize(), selectedCharacter.getDexterity());
-        dossierLines[2] = "";
-        dossierLines[3] = "SKILLS:";
-        for (int i = 0; i < skillLines.size(); i++) {
-            dossierLines[i + 4] = skillLines.get(i);
-        }
-        dossierLines[dossierLines.length - 2] = "";
-        dossierLines[dossierLines.length - 1] = "Stories completed: " + getCompletedStoryCount() + "/" + Character.MAX_STORIES;
+        String[] statLines = {
+                String.format("STR:%d  POW:%d  EDU:%d  CON:%d", selectedCharacter.getStrength(), selectedCharacter.getPower(),
+                        selectedCharacter.getEducation(), selectedCharacter.getConstitution()),
+                String.format("INT:%d  APP:%d  LCK:%d  SIZ:%d  DEX:%d", selectedCharacter.getIntelligence(),
+                        selectedCharacter.getAppearance(), selectedCharacter.getLuck(), selectedCharacter.getSize(),
+                        selectedCharacter.getDexterity())
+        };
+        // Attribute summary (not part of MenuTable; the skill grid is drawn below).
+        drawLines(g2d, statLines, dossierPanel.x + 18, dossierPanel.y + 96, 18);
 
-        drawLines(g2d, dossierLines, dossierPanel.x + 18, dossierPanel.y + 102, 20);
+        UiRect skillTableBounds = skillTableBounds();
+        MenuTable.draw(g2d, skillTableBounds, skillTableRows, SKILL_TABLE_COLS, skillTableCells, smallFont, 1);
+
+        g2d.setColor(GreatDreamerTheme.MUTED_TEXT);
+        g2d.setFont(smallFont);
+        String footer = "Stories completed: " + getCompletedStoryCount() + "/" + Character.MAX_STORIES;
+        FontMetrics fm = g2d.getFontMetrics(smallFont);
+        g2d.drawString(footer, dossierPanel.x + 18, dossierPanel.bottom() - 14 - Math.max(0, fm.getDescent() - 2));
+
+        if (skillTableTooltip != null) {
+            skillTableTooltip.render(g2d, Engine.instance().mouse.getX(), Engine.instance().mouse.getY(),
+                    Engine.instance().getWidth(), Engine.instance().getHeight());
+        }
     }
     
     private void drawStoryPlaceholder(Graphics2D g2d) {

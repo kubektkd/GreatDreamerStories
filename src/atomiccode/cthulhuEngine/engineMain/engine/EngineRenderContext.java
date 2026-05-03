@@ -10,6 +10,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.function.Consumer;
 
 public class EngineRenderContext {
@@ -108,6 +109,7 @@ public class EngineRenderContext {
 
         java2dImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         java2dPixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);
+        java2dPixmap.getPixels().order(ByteOrder.LITTLE_ENDIAN);
         java2dTexture = new Texture(width, height, Pixmap.Format.RGBA8888);
         java2dTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
     }
@@ -116,14 +118,13 @@ public class EngineRenderContext {
         int[] argbPixels = ((DataBufferInt) java2dImage.getRaster().getDataBuffer()).getData();
         ByteBuffer pixels = java2dPixmap.getPixels();
         pixels.clear();
-
         for (int argb : argbPixels) {
-            pixels.put((byte) ((argb >> 16) & 0xff));
-            pixels.put((byte) ((argb >> 8) & 0xff));
-            pixels.put((byte) (argb & 0xff));
-            pixels.put((byte) ((argb >> 24) & 0xff));
+            int rgba = ((argb >>> 24) << 24)
+                    | ((argb & 0xff) << 16)
+                    | (((argb >> 8) & 0xff) << 8)
+                    | ((argb >> 16) & 0xff);
+            pixels.putInt(rgba);
         }
-
         pixels.flip();
     }
 }

@@ -17,7 +17,8 @@ public class EngineConfigs {
     public String version = "0.0.1";
 
     public Mode windowMode = Mode.WINDOWED;
-    public int fps = 60;
+    /** Foreground FPS cap for LibGDX; 0 = uncapped (vsync still limits swap when enabled). Non-zero caps e.g. for testing. */
+    public int fps = 0;
     public boolean vsync = true;
     public boolean msaa = true;
 

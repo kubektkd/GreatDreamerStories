@@ -17,6 +17,8 @@ import atomiccode.greatDreamerStories.ui.menu.MenuActionStrip;
 import atomiccode.greatDreamerStories.ui.menu.MenuScreenTitle;
 import atomiccode.greatDreamerStories.ui.menu.MenuSettingsSliderPanel;
 
+import com.badlogic.gdx.graphics.Cursor;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -204,6 +206,18 @@ public class SettingsState implements State {
         backButton.setSelected(selectedIndex == FOCUS_BACK);
     }
 
+    @Override
+    public Cursor.SystemCursor getUiSystemCursor(int mx, int my) {
+        if (musicSlider.contains(mx, my) || sfxSlider.contains(mx, my)) {
+            return Cursor.SystemCursor.Hand;
+        }
+        if (windowedButton.contains(mx, my) || maximizedButton.contains(mx, my)
+                || fullscreenButton.contains(mx, my) || backButton.contains(mx, my)) {
+            return Cursor.SystemCursor.Hand;
+        }
+        return Cursor.SystemCursor.Arrow;
+    }
+
     private void updateDisplayModeButtonColors() {
         Window.Mode mode = Game.getDetectedWindowMode();
         Color normal = GreatDreamerTheme.BUTTON_NORMAL;
@@ -244,8 +258,6 @@ public class SettingsState implements State {
 
     @Override
     public void render(Graphics g) {
-        updateLayout();
-
         int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
         int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
         Graphics2D g2d = (Graphics2D) g;

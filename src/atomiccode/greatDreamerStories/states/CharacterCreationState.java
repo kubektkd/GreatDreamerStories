@@ -18,6 +18,8 @@ import atomiccode.greatDreamerStories.ui.menu.MenuChipPanel;
 import atomiccode.greatDreamerStories.ui.menu.MenuPortrait;
 import atomiccode.greatDreamerStories.ui.menu.MenuScreenTitle;
 
+import com.badlogic.gdx.graphics.Cursor;
+
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
@@ -431,6 +433,42 @@ public class CharacterCreationState implements State {
         updateCreateButtonColor();
     }
 
+    @Override
+    public Cursor.SystemCursor getUiSystemCursor(int mx, int my) {
+        if (nameInput.isActive() && nameInput.contains(mx, my)) {
+            return Cursor.SystemCursor.Ibeam;
+        }
+        if (nameInput.contains(mx, my)) {
+            return Cursor.SystemCursor.Hand;
+        }
+        for (Button b : genderButtons) {
+            if (b.contains(mx, my)) {
+                return Cursor.SystemCursor.Hand;
+            }
+        }
+        if (attributesPanel != null) {
+            UiRect b = attributesPanel.bounds();
+            for (int i = 0; i < STAT_COUNT; i++) {
+                if (AttributeSliderRow.sliderContains(b, getStatRowY(i), mx, my)) {
+                    return Cursor.SystemCursor.Hand;
+                }
+                if (statLabelBounds[i] != null && statLabelBounds[i].contains(mx, my)) {
+                    return Cursor.SystemCursor.Hand;
+                }
+                if (statBigDecButtons[i].contains(mx, my) || statDecButtons[i].contains(mx, my)
+                        || statIncButtons[i].contains(mx, my) || statBigIncButtons[i].contains(mx, my)) {
+                    return Cursor.SystemCursor.Hand;
+                }
+            }
+        }
+        for (Button button : menuButtons) {
+            if (button != null && button.contains(mx, my)) {
+                return Cursor.SystemCursor.Hand;
+            }
+        }
+        return Cursor.SystemCursor.Arrow;
+    }
+
     private void updateStatTooltip(int mouseX, int mouseY) {
         hoveredStatIndex = -1;
 
@@ -537,7 +575,6 @@ public class CharacterCreationState implements State {
     public void render(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
         Resources.enableAntialiasing(g2d);
-        updateLayout();
 
         int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
         int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();

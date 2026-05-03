@@ -16,6 +16,8 @@ import atomiccode.greatDreamerStories.ui.menu.MenuActionStrip;
 import atomiccode.greatDreamerStories.ui.menu.MenuConfirmationModal;
 import atomiccode.greatDreamerStories.ui.menu.MenuScreenTitle;
 
+import com.badlogic.gdx.graphics.Cursor;
+
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
@@ -187,6 +189,25 @@ public class CharacterSelectState implements State {
         }
         wasRightPressed = rightPressed;
     }
+
+    @Override
+    public Cursor.SystemCursor getUiSystemCursor(int mx, int my) {
+        if (confirmingDelete) {
+            if (confirmDeleteButton.contains(mx, my) || cancelDeleteButton.contains(mx, my)) {
+                return Cursor.SystemCursor.Hand;
+            }
+            return Cursor.SystemCursor.Arrow;
+        }
+        if (backButton.contains(mx, my)) {
+            return Cursor.SystemCursor.Hand;
+        }
+        for (UiRect slot : slotRects) {
+            if (slot != null && slot.contains(mx, my)) {
+                return Cursor.SystemCursor.Hand;
+            }
+        }
+        return Cursor.SystemCursor.Arrow;
+    }
     
     private void updateLayout() {
         int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
@@ -256,8 +277,6 @@ public class CharacterSelectState implements State {
 
     @Override
     public void render(Graphics g) {
-        updateLayout();
-        
         // Get window dimensions from the engine
         int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
         int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
@@ -311,7 +330,6 @@ public class CharacterSelectState implements State {
                         "Press Enter to delete or Esc to cancel."
                 });
 
-        updateDeleteConfirmationButtons();
         g2d.setStroke(new BasicStroke(1f));
         confirmDeleteButton.render(g2d);
         cancelDeleteButton.render(g2d);

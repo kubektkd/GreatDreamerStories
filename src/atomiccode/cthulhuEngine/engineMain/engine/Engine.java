@@ -1,11 +1,13 @@
 package atomiccode.cthulhuEngine.engineMain.engine;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Cursor;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.HdpiUtils;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.ScreenUtils;
 
+import atomiccode.cthulhuEngine.inputsOutputs.stateControl.State;
 import atomiccode.cthulhuEngine.inputsOutputs.stateControl.StateManager;
 import atomiccode.cthulhuEngine.inputsOutputs.stateControl.StateProcessor;
 import atomiccode.cthulhuEngine.inputsOutputs.userInputs.Keyboard;
@@ -29,6 +31,7 @@ public class Engine {
     private final ShapeRenderer shapeRenderer;
     private final EngineRenderContext renderContext;
     private float currentTime;
+    private Cursor.SystemCursor lastUiSystemCursor = Cursor.SystemCursor.Arrow;
 
     protected Engine(EngineConfigs configs) {
         this.configs = configs;
@@ -61,6 +64,18 @@ public class Engine {
         mouse.update();
         audioManager.update(deltaSeconds);
         stateProcessor.update(deltaSeconds);
+        applyUiSystemCursor();
+    }
+
+    private void applyUiSystemCursor() {
+        State state = stateProcessor.getCurrentState();
+        Cursor.SystemCursor desired = state != null
+                ? state.getUiSystemCursor(mouse.getX(), mouse.getY())
+                : Cursor.SystemCursor.Arrow;
+        if (desired != lastUiSystemCursor) {
+            Gdx.graphics.setSystemCursor(desired);
+            lastUiSystemCursor = desired;
+        }
     }
 
     public void render() {
@@ -109,6 +124,7 @@ public class Engine {
         renderContext.dispose();
         batch.dispose();
         shapeRenderer.dispose();
+        Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow);
         currentInstance = null;
     }
 

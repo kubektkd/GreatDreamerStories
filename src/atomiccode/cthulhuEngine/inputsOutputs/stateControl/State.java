@@ -2,6 +2,8 @@ package atomiccode.cthulhuEngine.inputsOutputs.stateControl;
 
 import atomiccode.cthulhuEngine.engineMain.engine.EngineRenderContext;
 
+import com.badlogic.gdx.graphics.Cursor;
+
 import java.awt.Graphics;
 
 public interface State {
@@ -29,4 +31,11 @@ public interface State {
     default void resize(int width, int height) {}
 
     default void dispose() {}
+
+    /**
+     * OS cursor for LibGDX after {@link #update()}; default is arrow. Override on screens with buttons, sliders, text fields, etc.
+     */
+    default Cursor.SystemCursor getUiSystemCursor(int mouseX, int mouseY) {
+        return Cursor.SystemCursor.Arrow;
+    }
 }

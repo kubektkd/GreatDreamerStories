@@ -11,7 +11,9 @@ import java.io.File;
 import java.io.IOException;
 
 public class SplashState implements State {
-    
+
+    private static final Font SPLASH_LOADING_FONT = new Font("Arial", Font.BOLD, 24);
+
     private static final int SINGLE_SPLASH_DURATION_MS = 2000; // 2 seconds per splash
     private static final int FADE_DURATION_MS = 500; // 0.5 seconds for fade transitions
     
@@ -55,10 +57,16 @@ public class SplashState implements State {
                 imageLoadTime = System.currentTimeMillis();
             } else {
                 System.err.println("Splash image not found: " + imageFile.getAbsolutePath());
+                splashImage = null;
+                imageLoaded = true;
+                imageLoadTime = System.currentTimeMillis();
             }
         } catch (IOException e) {
             System.err.println("Error loading splash image: " + e.getMessage());
             e.printStackTrace();
+            splashImage = null;
+            imageLoaded = true;
+            imageLoadTime = System.currentTimeMillis();
         }
     }
     
@@ -74,6 +82,9 @@ public class SplashState implements State {
     
     @Override
     public void update() {
+        if (hasStarted && !imageLoaded && currentImageIndex < splashImagePaths.length) {
+            loadSplashImage();
+        }
         if (hasStarted && imageLoaded) {
             long currentTime = System.currentTimeMillis();
             long elapsedTime = currentTime - imageLoadTime; // Use image load time as reference
@@ -149,12 +160,7 @@ public class SplashState implements State {
         // Get window dimensions from the engine
         int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
         int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
-        
-        // Try to load image if not already loaded
-        if (!imageLoaded) {
-            loadSplashImage();
-        }
-        
+
         // Draw splash image if loaded
         if (imageLoaded && splashImage != null) {
             // Draw black background first
@@ -207,8 +213,8 @@ public class SplashState implements State {
             g.setColor(Color.BLACK);
             g.fillRect(0, 0, windowWidth, windowHeight);
             g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.BOLD, 24));
-            FontMetrics metrics = g.getFontMetrics();
+            g.setFont(SPLASH_LOADING_FONT);
+            FontMetrics metrics = g.getFontMetrics(SPLASH_LOADING_FONT);
             String message = "Great Dreamer Stories";
             String loadingMessage = "Loading...";
             int x = (windowWidth - metrics.stringWidth(message)) / 2;

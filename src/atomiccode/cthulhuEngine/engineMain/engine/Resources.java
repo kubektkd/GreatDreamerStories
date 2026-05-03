@@ -20,6 +20,8 @@ import java.util.HashMap;
 public class Resources {
     private final AssetManager assetManager = new AssetManager();
     private final Map<String, Image> images = new HashMap<>();
+    /** TrueType loads are expensive; {@link #getFont} is called from hot render paths (e.g. every stat row). */
+    private final Map<String, Font> fontCache = new HashMap<>();
 
     public Texture getTexture(String path) {
         if (!assetManager.isLoaded(path, Texture.class)) {
@@ -46,16 +48,27 @@ public class Resources {
     }
 
     public Font getFont(String fontPath, int size) {
+        String key = fontPath + '\u0001' + size;
+        Font cached = fontCache.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        Font loaded = loadFontUncached(fontPath, size);
+        fontCache.put(key, loaded);
+        return loaded;
+    }
+
+    private Font loadFontUncached(String fontPath, int size) {
         try {
             File fontFile = EngineFiles.getResourceFile("fonts/" + fontPath);
             if (fontFile.exists()) {
-                InputStream fontStream = new FileInputStream(fontFile);
-                Font customFont = Font.createFont(Font.TRUETYPE_FONT, fontStream);
-                return customFont.deriveFont(Font.PLAIN, size);
-            } else {
-                System.err.println("Font file not found: " + fontFile.getAbsolutePath() + ", using Arial fallback");
-                return new Font("Arial", Font.PLAIN, size);
+                try (InputStream fontStream = new FileInputStream(fontFile)) {
+                    Font customFont = Font.createFont(Font.TRUETYPE_FONT, fontStream);
+                    return customFont.deriveFont(Font.PLAIN, size);
+                }
             }
+            System.err.println("Font file not found: " + fontFile.getAbsolutePath() + ", using Arial fallback");
+            return new Font("Arial", Font.PLAIN, size);
         } catch (Exception e) {
             System.err.println("Error loading custom font: " + e.getMessage() + ", using Arial fallback");
             return new Font("Arial", Font.PLAIN, size);
@@ -85,6 +98,7 @@ public class Resources {
     public void dispose() {
         assetManager.dispose();
         images.clear();
+        fontCache.clear();
     }
 
 }

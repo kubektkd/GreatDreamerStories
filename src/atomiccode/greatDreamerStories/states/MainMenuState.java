@@ -14,6 +14,8 @@ import atomiccode.greatDreamerStories.decorations.Snowflake;
 import atomiccode.greatDreamerStories.decorations.Mist;
 import atomiccode.greatDreamerStories.ui.GreatDreamerTheme;
 
+import com.badlogic.gdx.graphics.Cursor;
+
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
@@ -398,6 +400,19 @@ public class MainMenuState implements State {
         for (int i = 0; i < menuButtons.length; i++) {
             menuButtons[i].setSelected(i == selectedIndex);
         }
+    }
+
+    @Override
+    public Cursor.SystemCursor getUiSystemCursor(int mx, int my) {
+        if (menuButtons == null) {
+            return Cursor.SystemCursor.Arrow;
+        }
+        for (Button b : menuButtons) {
+            if (b.contains(mx, my)) {
+                return Cursor.SystemCursor.Hand;
+            }
+        }
+        return Cursor.SystemCursor.Arrow;
     }
 
     private void updateLayout() {

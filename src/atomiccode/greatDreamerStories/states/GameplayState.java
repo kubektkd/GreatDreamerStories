@@ -14,6 +14,8 @@ import atomiccode.greatDreamerStories.ui.menu.MenuActionStrip;
 import atomiccode.greatDreamerStories.ui.menu.MenuChipPanel;
 import atomiccode.greatDreamerStories.ui.menu.MenuScreenTitle;
 
+import com.badlogic.gdx.graphics.Cursor;
+
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.List;
@@ -122,6 +124,14 @@ public class GameplayState implements State {
         }
     }
 
+    @Override
+    public Cursor.SystemCursor getUiSystemCursor(int mx, int my) {
+        if (backButton.contains(mx, my)) {
+            return Cursor.SystemCursor.Hand;
+        }
+        return Cursor.SystemCursor.Arrow;
+    }
+
     private void updateLayout() {
         int windowWidth = Engine.instance().getWindow().getCanvas().getWidth();
         int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
@@ -154,7 +164,6 @@ public class GameplayState implements State {
         int windowHeight = Engine.instance().getWindow().getCanvas().getHeight();
         Graphics2D g2d = (Graphics2D) g;
         Resources.enableAntialiasing(g2d);
-        updateLayout();
 
         GeneralMenuRenderer.drawPage(g2d, windowWidth, windowHeight);
         GeneralMenuRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);

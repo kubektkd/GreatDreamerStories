@@ -230,7 +230,7 @@ public class CharacterCreationState implements State {
         createButton.setOnClick(this::createCharacter);
 
         backButton = new Button(0, 0, BACK_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT, "<  BACK");
-        GreatDreamerTheme.styleArchiveButton(backButton, buttonFont);
+        GreatDreamerTheme.styleSecondaryButton(backButton, buttonFont);
         backButton.setOnClick(this::cancelCreation);
 
         // Setup menu buttons array for navigation

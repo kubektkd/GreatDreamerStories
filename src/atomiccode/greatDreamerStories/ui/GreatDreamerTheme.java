@@ -12,6 +12,9 @@ public class GreatDreamerTheme {
     public static final String ARCHIVE_FONT_PATH = "Special_Elite/SpecialElite-Regular.ttf";
     public static final String TITLE_FONT_PATH = "Milonga/Milonga-Regular.ttf";
 
+    /** Archive size used by dossier {@code MenuTable} cell text. */
+    public static final int MENU_TABLE_FONT_SIZE = 12;
+
     public static final Color PAGE = new Color(8, 9, 11);
     public static final Color PANEL = new Color(11, 12, 15, 210);
     public static final Color PANEL_SOLID = new Color(11, 12, 15, 245);
@@ -37,13 +40,13 @@ public class GreatDreamerTheme {
         return Engine.instance().resources.getFont(ARCHIVE_FONT_PATH, size);
     }
 
-    public static Font titleFont(int size) {
-        return Engine.instance().resources.getFont(TITLE_FONT_PATH, size);
+    /** Consistent archive cell font for dossier {@code MenuTable} grids. */
+    public static Font menuTableCellFont() {
+        return archiveFont(MENU_TABLE_FONT_SIZE);
     }
 
-    public static void styleArchiveButton(Button button, Font font) {
-        button.setColors(BUTTON_NORMAL, BUTTON_HOVER, BUTTON_PRESSED, TEXT);
-        button.setFont(font);
+    public static Font titleFont(int size) {
+        return Engine.instance().resources.getFont(TITLE_FONT_PATH, size);
     }
 
     public static void stylePrimaryButton(Button button, Font font) {
@@ -51,8 +54,18 @@ public class GreatDreamerTheme {
         button.setFont(font);
     }
 
+    public static void styleSecondaryButton(Button button, Font font) {
+        button.setColors(BUTTON_NORMAL, BUTTON_HOVER, BUTTON_PRESSED, TEXT);
+        button.setFont(font);
+    }
+
     public static void styleDangerButton(Button button, Font font) {
         button.setColors(DANGER, DANGER_HOVER, new Color(90, 30, 30), TEXT);
+        button.setFont(font);
+    }
+
+    public static void styleDisabledButton(Button button, Font font) {
+        button.setColors(BUTTON_DISABLED, BUTTON_DISABLED, BUTTON_DISABLED, BUTTON_DISABLED_TEXT);
         button.setFont(font);
     }
 

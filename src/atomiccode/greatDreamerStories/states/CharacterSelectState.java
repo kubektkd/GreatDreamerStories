@@ -73,9 +73,9 @@ public class CharacterSelectState implements State {
         cancelDeleteButton = new Button(0, 0, DELETE_CONFIRM_BUTTON_WIDTH, DELETE_CONFIRM_BUTTON_HEIGHT, "CANCEL");
 
         // Set button colors
-        GreatDreamerTheme.styleArchiveButton(backButton, buttonFont);
+        GreatDreamerTheme.styleSecondaryButton(backButton, buttonFont);
         GreatDreamerTheme.styleDangerButton(confirmDeleteButton, buttonFont);
-        GreatDreamerTheme.styleArchiveButton(cancelDeleteButton, buttonFont);
+        GreatDreamerTheme.styleSecondaryButton(cancelDeleteButton, buttonFont);
 
         // Set button actions
         backButton.setOnClick(() -> {

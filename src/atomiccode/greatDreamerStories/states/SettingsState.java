@@ -87,7 +87,7 @@ public class SettingsState implements State {
         fullscreenButton = new Button(0, 0, DISPLAY_BUTTON_WIDTH, DISPLAY_BUTTON_HEIGHT, "FULLSCREEN");
         backButton = new Button(0, 0, ACTION_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT, "<  BACK");
 
-        GreatDreamerTheme.styleArchiveButton(backButton, buttonFont);
+        GreatDreamerTheme.styleSecondaryButton(backButton, buttonFont);
 
         windowedButton.setFont(buttonFont);
         maximizedButton.setFont(buttonFont);

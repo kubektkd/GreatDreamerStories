@@ -2,7 +2,7 @@
   <img src="res/logos/game-logo-white.png" alt="Great Dreamer Stories Logo" width="300" />
 </p>
 
-Great Dreamer Stories is a Visual Novel game project enriched with a turn-based combat system and classic RPG mechanics inspired by Call of Cthulhu. Set in a Nordic Noir atmosphere, the story begins in modern times in a small Scandinavian town, where you play as the chief of the local police station. As you investigate mysterious events and unravel dark secrets, you'll navigate both the psychological and supernatural, blending narrative-driven choices with strategic combat and RPG progression.
+Great Dreamer Stories is a indie game project enriched with a turn-based combat system and classic RPG mechanics inspired by Call of Cthulhu. Set in a Nordic Noir atmosphere, the story begins in modern times in a small Scandinavian town, where you play as the chief of the local police station. As you investigate mysterious events and unravel dark secrets, you'll navigate both the psychological and supernatural, blending narrative-driven choices with strategic combat and RPG progression.
 
 <img width="1261" height="673" alt="image" src="https://github.com/user-attachments/assets/1fa0aad0-7938-4e18-9bd6-d1d99500b679" />
 
@@ -12,8 +12,8 @@ Great Dreamer Stories is powered by a custom-built game engine, the CthulhuEngin
 
 ## 📋Current State
 
-The game is in very early stage with working main menu (having some features building the atmosphere of the game), player character creation tool, and simple save/load system.
-The main game is only a placeholder at this time, and will be available when all basic and necessary funtionalities will be at MVP state.
+The game is in very early stage with working main menu (having some features building the atmosphere of the game) - character creation/selection tools, and simple save/load system.
+The main game view is only a placeholder at this time, with stats information about character and narrative intro text, that will be later used to show a brief where the player ends playing last time and what were his most significant choices done with this character.
 
 ## 🛠️ Development Requirements
 

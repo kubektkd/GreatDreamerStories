@@ -20,8 +20,10 @@ sourceSets {
         java {
             srcDirs = ['src']
         }
+        // Keep game assets only on disk (project ./res, or app/res after jpackage).
+        // Packaging res into the jar duplicated ~600MB+ in dist (jar + loose copy in stageJpackage).
         resources {
-            srcDirs = ['res']
+            srcDirs = []
         }
     }
 }

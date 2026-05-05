@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'atomiccode'
-version = '0.0.1'
+// version: defined in gradle.properties (canonical for Gradle + scripts + generated GameVersion.java)
 
 ext {
     gdxVersion = '1.14.0'
@@ -69,4 +69,27 @@ tasks.register('cleanJpackageInput', Delete) {
 
 tasks.named('stageJpackage') {
     dependsOn cleanJpackageInput
+}
+
+def gameVersionJavaFile = layout.projectDirectory.file('src/atomiccode/greatDreamerStories/GameVersion.java')
+
+tasks.register('writeGameVersionJava') {
+    inputs.property('appVersion', version)
+    outputs.file(gameVersionJavaFile)
+    doLast {
+        def v = version.toString().replace('\\', '\\\\').replace('"', '\\"')
+        gameVersionJavaFile.asFile.text = """package atomiccode.greatDreamerStories;
+
+/** Synced from Gradle project version (gradle.properties). Regenerated on compile — do not edit. */
+public final class GameVersion {
+    private GameVersion() {}
+
+    public static final String CURRENT = \"${v}\";
+}
+"""
+    }
+}
+
+tasks.named('compileJava') {
+    dependsOn tasks.named('writeGameVersionJava')
 }

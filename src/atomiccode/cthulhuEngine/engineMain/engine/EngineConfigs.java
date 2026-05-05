@@ -14,7 +14,8 @@ public class EngineConfigs {
 
     public String windowTitle = "CthulhuEngine";
     public String language = "EN";
-    public String version = "0.0.1";
+    /** Overridden by game bootstrap (e.g. {@code EngineConfigs_Build}); placeholder for generic configs. */
+    public String version = "development";
 
     public Mode windowMode = Mode.WINDOWED;
     /** Foreground FPS cap for LibGDX; 0 = uncapped (vsync still limits swap when enabled). Non-zero caps e.g. for testing. */

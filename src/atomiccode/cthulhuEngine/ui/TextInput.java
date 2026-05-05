@@ -30,6 +30,8 @@ public class TextInput {
 
     private Font labelFont = new Font("Arial", Font.PLAIN, 12);
     private Font textFont = new Font("Arial", Font.PLAIN, 16);
+    /** When false, only the typed line and underline are drawn (for use inside {@code MenuChipPanel} inner content). */
+    private boolean drawChrome = true;
     private Color backgroundColor = new Color(11, 12, 15, 210);
     private Color borderColor = new Color(55, 58, 65);
     private Color activeBorderColor = Color.WHITE;
@@ -38,7 +40,7 @@ public class TextInput {
     private Color underlineColor = new Color(31, 34, 40);
 
     /**
-     * Label uses {@link ArchivePanelTitleChip}; chip fill follows {@link #backgroundColor}.
+     * Label uses {@link TitleChip}; chip fill follows {@link #backgroundColor}.
      * Layout tracks dossier panels ({@code x + 15}, baseline {@code panelTop + 5}).
      */
     private static final int LABEL_LEFT = 15;
@@ -63,9 +65,9 @@ public class TextInput {
     }
 
     /**
-     * Minimum outer height ({@link #LABEL_BASELINE_FROM_TOP}/{@link #TEXT_BASELINE_FROM_TOP} archive layout).
+     * Minimum outer height ({@link #LABEL_BASELINE_FROM_TOP}/{@link #TEXT_BASELINE_FROM_TOP} layout).
      */
-    public static int preferredArchiveOuterHeight(Font textFont) {
+    public static int preferredOuterHeight(Font textFont) {
         FontMetrics tm = scratchFontMetrics(textFont);
         return TEXT_BASELINE_FROM_TOP + tm.getDescent() + UNDERLINE_GAP_BELOW_DESCENT + 1
                 + BOTTOM_PADDING_BELOW_UNDERLINE;
@@ -101,6 +103,10 @@ public class TextInput {
         this.textColor = text;
         this.labelColor = label;
         this.underlineColor = underline;
+    }
+
+    public void setDrawChrome(boolean drawChrome) {
+        this.drawChrome = drawChrome;
     }
 
     public void setText(String text) {
@@ -168,20 +174,23 @@ public class TextInput {
     public void render(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
 
-        g2d.setColor(backgroundColor);
-        g2d.fillRect(x, y, width, height);
-        g2d.setColor(active ? activeBorderColor : borderColor);
-        g2d.drawRect(x, y, width, height);
+        if (drawChrome) {
+            g2d.setColor(backgroundColor);
+            g2d.fillRect(x, y, width, height);
+            g2d.setColor(active ? activeBorderColor : borderColor);
+            g2d.drawRect(x, y, width, height);
 
-        int labelBaseline = y + LABEL_BASELINE_FROM_TOP;
-        ArchivePanelTitleChip.paint(g2d, label, x + LABEL_LEFT, labelBaseline, labelFont,
-                backgroundColor, labelColor);
-
-        int textBaseline = y + TEXT_BASELINE_FROM_TOP;
+            int labelBaseline = y + LABEL_BASELINE_FROM_TOP;
+            TitleChip.paint(g2d, label, x + LABEL_LEFT, labelBaseline, labelFont,
+                    backgroundColor, labelColor);
+        }
 
         g2d.setColor(textColor);
         g2d.setFont(textFont);
         FontMetrics textFm = g2d.getFontMetrics();
+        int textBaseline = drawChrome ? y + TEXT_BASELINE_FROM_TOP
+                : y + (height - (textFm.getAscent() + textFm.getDescent() + UNDERLINE_GAP_BELOW_DESCENT + 1)) / 2
+                + textFm.getAscent();
         int underlineY = textBaseline + textFm.getDescent() + UNDERLINE_GAP_BELOW_DESCENT;
 
         int textX = x + TEXT_LEFT_INSET;
@@ -189,7 +198,9 @@ public class TextInput {
 
         if (active && System.currentTimeMillis() % 1000 < 500) {
             int caretX = textX + g2d.getFontMetrics().stringWidth(text.substring(0, clampCaretIndex(caretIndex)));
-            g2d.drawLine(caretX, textBaseline - 15, caretX, textBaseline + 3);
+            int caretTop = textBaseline - textFm.getAscent() - 2;
+            int caretBottom = textBaseline + textFm.getDescent() + 2;
+            g2d.drawLine(caretX, caretTop, caretX, caretBottom);
         }
 
         g2d.setColor(underlineColor);

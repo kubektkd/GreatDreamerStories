@@ -6,14 +6,14 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 
 /**
- * Tight padded label pill used on dossier panels; baseline coordinates match {@link Graphics2D#drawString}.
+ * Tight padded label pill; baseline coordinates match {@link Graphics2D#drawString}.
  */
-public final class ArchivePanelTitleChip {
+public final class TitleChip {
 
     private static final int PADDING_X = 5;
     private static final int PADDING_Y = 2;
 
-    private ArchivePanelTitleChip() {
+    private TitleChip() {
     }
 
     public static void paint(Graphics2D g2d, String title, int baselineX, int baselineY, Font titleFont,

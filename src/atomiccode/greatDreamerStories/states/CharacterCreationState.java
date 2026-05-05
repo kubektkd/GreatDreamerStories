@@ -31,7 +31,7 @@ public class CharacterCreationState implements State {
     private static final int MAX_NAME_LENGTH = 24;
     private static final int STAT_COUNT = 9;
     private static final int ATTR_PANEL_TOP_OFFSET = 80;
-    private static final int ATTR_PANEL_HEIGHT = 410;
+    private static final int ATTR_PANEL_HEIGHT = 425;
     private static final int STAT_ROW_TOP_OFFSET = 34;
     private static final int STAT_ROW_SPACING = 42;
     private static final int CREATE_BUTTON_WIDTH = 210;
@@ -41,11 +41,13 @@ public class CharacterCreationState implements State {
     private static final int GENDER_BUTTON_WIDTH = 130;
     private static final int GENDER_BUTTON_HEIGHT = 38;
     private static final int GENDER_BUTTON_GAP = 12;
-    private static final int AGE_BUTTON_WIDTH = 40;
-    private static final int AGE_BUTTON_HEIGHT = 26;
-    private static final int AGE_ROW_GAP_BELOW_NAME = 10;
-    /** Space from gender button bottom to name-panel top (~chip bleed above panel top + margin). */
+    private static final int AGE_SLIDER_MIN = 20;
+    private static final int AGE_SLIDER_MAX = 65;
+    private static final int AGE_PANEL_GAP_BELOW_NAME = 12;
+    private static final int AGE_ROW_TOP_OFFSET = 30;
+    private static final int AGE_PANEL_HEIGHT = 78;
     private static final int NAME_INPUT_CLEAR_BELOW_GENDER = 22;
+    private static final int NAME_PANEL_MIN_HEIGHT = 64;
     private static final long STAT_TOOLTIP_DELAY = 300;
     private static final String[] STAT_NAMES = {"Strength", "Power", "Education", "Constitution", "Intelligence", "Appearance", "Luck", "Size", "Dexterity"};
     private static final String[] STAT_CODES = {"STR", "POW", "EDU", "CON", "INT", "APP", "LCK", "SIZ", "DEX"};
@@ -84,8 +86,10 @@ public class CharacterCreationState implements State {
     
     // UI components
     private Button[] genderButtons;
+    private Button ageBigDecButton;
     private Button ageDecButton;
     private Button ageIncButton;
+    private Button ageBigIncButton;
     private Button[] statBigIncButtons;
     private Button[] statIncButtons;
     private Button[] statBigDecButtons;
@@ -97,6 +101,8 @@ public class CharacterCreationState implements State {
     private Tooltip statTooltip;
     private Rectangle[] statLabelBounds = new Rectangle[STAT_COUNT];
     private GeneralMenuLayout layout;
+    private MenuChipPanel namePanel;
+    private MenuChipPanel agePanel;
     private MenuChipPanel attributesPanel;
     private int layoutY;
     private int leftWidth;
@@ -104,6 +110,10 @@ public class CharacterCreationState implements State {
     private int portraitSize;
     private int portraitX;
     private int portraitY;
+    private int agePanelX;
+    private int agePanelY;
+    private int agePanelWidth;
+    private int agePanelHeight;
     private int attrPanelX;
     private int attrPanelY;
     private int attrPanelWidth;
@@ -113,6 +123,8 @@ public class CharacterCreationState implements State {
     private int selectedIndex = 0;
     private int hoveredStatIndex = -1;
     private int draggingStatIndex = -1;
+    private boolean draggingAgeSlider;
+    private final Rectangle ageLabelBounds = new Rectangle();
     
     // Colors and fonts
     private final Color textColor = GreatDreamerTheme.TEXT;
@@ -155,8 +167,9 @@ public class CharacterCreationState implements State {
     }
 
     private void initializeInputs() {
-        nameInput = new TextInput(0, 0, 0, 0, "SUBJECT NAME", DEFAULT_CHARACTER_NAME, MAX_NAME_LENGTH);
+        nameInput = new TextInput(0, 0, 0, 0, "", DEFAULT_CHARACTER_NAME, MAX_NAME_LENGTH);
         GreatDreamerTheme.styleTextInput(nameInput, smallFont, buttonFont);
+        nameInput.setDrawChrome(false);
 
         statTooltip = new Tooltip(STAT_TOOLTIP_DELAY);
         GreatDreamerTheme.styleTooltip(statTooltip, tooltipFont);
@@ -183,14 +196,22 @@ public class CharacterCreationState implements State {
             genderButtons[i].setOnClick(() -> this.selectedGender = selectedGender);
         }
 
-        ageDecButton = new Button(0, 0, AGE_BUTTON_WIDTH, AGE_BUTTON_HEIGHT, "-");
+        ageBigDecButton = new Button(0, 0, AttributeSliderRow.BIG_STEP_BUTTON_WIDTH, 22, "--");
+        ageBigDecButton.setColors(new Color(18, 20, 24), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
+        ageBigDecButton.setFont(smallFont);
+        ageBigDecButton.setOnClick(() -> adjustAge(-10));
+        ageDecButton = new Button(0, 0, AttributeSliderRow.STEP_BUTTON_WIDTH, 22, "-");
         ageDecButton.setColors(new Color(18, 20, 24), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
         ageDecButton.setFont(smallFont);
         ageDecButton.setOnClick(() -> adjustAge(-1));
-        ageIncButton = new Button(0, 0, AGE_BUTTON_WIDTH, AGE_BUTTON_HEIGHT, "+");
+        ageIncButton = new Button(0, 0, AttributeSliderRow.STEP_BUTTON_WIDTH, 22, "+");
         ageIncButton.setColors(new Color(18, 20, 24), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
         ageIncButton.setFont(smallFont);
         ageIncButton.setOnClick(() -> adjustAge(1));
+        ageBigIncButton = new Button(0, 0, AttributeSliderRow.BIG_STEP_BUTTON_WIDTH, 22, "++");
+        ageBigIncButton.setColors(new Color(18, 20, 24), new Color(42, 43, 48), new Color(8, 8, 10), textColor);
+        ageBigIncButton.setFont(smallFont);
+        ageBigIncButton.setOnClick(() -> adjustAge(10));
         
         // Stat adjustment buttons
         statBigIncButtons = new Button[STAT_COUNT];
@@ -234,13 +255,15 @@ public class CharacterCreationState implements State {
         backButton.setOnClick(this::cancelCreation);
 
         // Setup menu buttons array for navigation
-        menuButtons = new Button[genderButtons.length + 2 + statBigIncButtons.length + statIncButtons.length +
+        menuButtons = new Button[genderButtons.length + 4 + statBigIncButtons.length + statIncButtons.length +
                                  statBigDecButtons.length + statDecButtons.length + 2];
         int index = 0;
         System.arraycopy(genderButtons, 0, menuButtons, index, genderButtons.length);
         index += genderButtons.length;
+        menuButtons[index++] = ageBigDecButton;
         menuButtons[index++] = ageDecButton;
         menuButtons[index++] = ageIncButton;
+        menuButtons[index++] = ageBigIncButton;
         System.arraycopy(statBigIncButtons, 0, menuButtons, index, statBigIncButtons.length);
         index += statBigIncButtons.length;
         System.arraycopy(statIncButtons, 0, menuButtons, index, statIncButtons.length);
@@ -266,14 +289,16 @@ public class CharacterCreationState implements State {
         luck = Character.INITIAL_STAT_VALUE;
         size = Character.INITIAL_STAT_VALUE;
         dexterity = Character.INITIAL_STAT_VALUE;
-        age = Character.DEFAULT_INVESTIGATOR_AGE;
+        age = AttributeSliderRow.clampUserValue(Character.DEFAULT_INVESTIGATOR_AGE, AGE_SLIDER_MIN, AGE_SLIDER_MAX);
     }
 
     private void adjustAge(int delta) {
-        int next = age + delta;
-        if (next >= Character.MIN_INVESTIGATOR_AGE && next <= Character.MAX_INVESTIGATOR_AGE) {
-            age = next;
-        }
+        age = AttributeSliderRow.clampUserValue(age + delta, AGE_SLIDER_MIN, AGE_SLIDER_MAX);
+    }
+
+    private void applyAgeFromSliderMouse(int mouseX) {
+        int raw = AttributeSliderRow.valueAtMouseRange(mouseX, agePanel.bounds(), getAgeRowY(), AGE_SLIDER_MIN, AGE_SLIDER_MAX);
+        age = raw;
     }
     
     private void adjustStat(int statIndex, int amount) {
@@ -348,21 +373,32 @@ public class CharacterCreationState implements State {
     }
 
     private void updateAttributeSliderDrag(int mouseX, int mouseY, boolean mousePressed) {
-        UiRect b = attributesPanel.bounds();
         if (!mousePressed) {
             draggingStatIndex = -1;
+            draggingAgeSlider = false;
             return;
         }
-        if (draggingStatIndex < 0) {
-            for (int i = 0; i < STAT_COUNT; i++) {
-                if (AttributeSliderRow.sliderContains(b, getStatRowY(i), mouseX, mouseY)) {
-                    draggingStatIndex = i;
-                    applyStatFromSliderMouse(i, mouseX);
-                    return;
-                }
-            }
-        } else {
+        if (draggingAgeSlider) {
+            applyAgeFromSliderMouse(mouseX);
+            return;
+        }
+        if (draggingStatIndex >= 0) {
             applyStatFromSliderMouse(draggingStatIndex, mouseX);
+            return;
+        }
+        UiRect ageBounds = agePanel.bounds();
+        if (AttributeSliderRow.sliderContains(ageBounds, getAgeRowY(), mouseX, mouseY)) {
+            draggingAgeSlider = true;
+            applyAgeFromSliderMouse(mouseX);
+            return;
+        }
+        UiRect b = attributesPanel.bounds();
+        for (int i = 0; i < STAT_COUNT; i++) {
+            if (AttributeSliderRow.sliderContains(b, getStatRowY(i), mouseX, mouseY)) {
+                draggingStatIndex = i;
+                applyStatFromSliderMouse(i, mouseX);
+                return;
+            }
         }
     }
     
@@ -432,6 +468,7 @@ public class CharacterCreationState implements State {
             updateAttributeSliderDrag(mouseX, mouseY, mousePressed);
         } else {
             draggingStatIndex = -1;
+            draggingAgeSlider = false;
         }
 
         nameInput.update(mouseX, mouseY, mousePressed);
@@ -472,8 +509,15 @@ public class CharacterCreationState implements State {
                 return Cursor.SystemCursor.Hand;
             }
         }
-        if (ageDecButton.contains(mx, my) || ageIncButton.contains(mx, my)) {
-            return Cursor.SystemCursor.Hand;
+        if (agePanel != null) {
+            UiRect ab = agePanel.bounds();
+            if (AttributeSliderRow.sliderContains(ab, getAgeRowY(), mx, my)) {
+                return Cursor.SystemCursor.Hand;
+            }
+            if (ageBigDecButton.contains(mx, my) || ageDecButton.contains(mx, my)
+                    || ageIncButton.contains(mx, my) || ageBigIncButton.contains(mx, my)) {
+                return Cursor.SystemCursor.Hand;
+            }
         }
         if (attributesPanel != null) {
             UiRect b = attributesPanel.bounds();
@@ -524,8 +568,10 @@ public class CharacterCreationState implements State {
     }
 
     private void updateAgeButtonColors() {
-        setStatButtonEnabled(ageDecButton, age > Character.MIN_INVESTIGATOR_AGE);
-        setStatButtonEnabled(ageIncButton, age < Character.MAX_INVESTIGATOR_AGE);
+        setStatButtonEnabled(ageBigDecButton, age - 10 >= AGE_SLIDER_MIN);
+        setStatButtonEnabled(ageDecButton, age > AGE_SLIDER_MIN);
+        setStatButtonEnabled(ageIncButton, age < AGE_SLIDER_MAX);
+        setStatButtonEnabled(ageBigIncButton, age + 10 <= AGE_SLIDER_MAX);
     }
 
     private void updateStatButtonColors() {
@@ -577,14 +623,28 @@ public class CharacterCreationState implements State {
         genderButtons[1].y = genderButtons[0].y;
 
         int namePanelY = genderButtons[0].y + GENDER_BUTTON_HEIGHT + NAME_INPUT_CLEAR_BELOW_GENDER;
-        int namePanelH = TextInput.preferredArchiveOuterHeight(buttonFont);
-        nameInput.setBounds(leftX, namePanelY, leftContentWidth, namePanelH);
+        int namePanelH = Math.max(TextInput.preferredOuterHeight(buttonFont), NAME_PANEL_MIN_HEIGHT);
+        UiRect nameRect = new UiRect(leftX, namePanelY, leftContentWidth, namePanelH);
+        if (namePanel == null) {
+            namePanel = new MenuChipPanel(nameRect, "NAME");
+        } else {
+            namePanel.setBounds(nameRect);
+        }
+        UiRect nameInner = MenuChipPanel.innerContentRectForBounds(nameRect);
+        nameInput.setBounds(nameInner.x, nameInner.y, nameInner.width, nameInner.height);
 
-        int ageRowY = namePanelY + namePanelH + AGE_ROW_GAP_BELOW_NAME;
-        ageDecButton.x = leftX + 18;
-        ageDecButton.y = ageRowY;
-        ageIncButton.x = ageDecButton.x + AGE_BUTTON_WIDTH + 72;
-        ageIncButton.y = ageRowY;
+        agePanelX = leftX;
+        agePanelY = namePanelY + namePanelH + AGE_PANEL_GAP_BELOW_NAME;
+        agePanelWidth = leftContentWidth;
+        agePanelHeight = AGE_PANEL_HEIGHT;
+        UiRect ageRect = new UiRect(agePanelX, agePanelY, agePanelWidth, agePanelHeight);
+        if (agePanel == null) {
+            agePanel = new MenuChipPanel(ageRect, "TRAITS");
+        } else {
+            agePanel.setBounds(ageRect);
+        }
+        AttributeSliderRow.layout(agePanel.bounds(), getAgeRowY(), ageLabelBounds, ageBigDecButton, ageDecButton,
+                ageIncButton, ageBigIncButton);
 
         rightX = layout.rightColumn.x;
         int rightWidth = layout.rightColumn.width;
@@ -615,6 +675,10 @@ public class CharacterCreationState implements State {
     private int getStatRowY(int statIndex) {
         return attrPanelY + STAT_ROW_TOP_OFFSET + statIndex * STAT_ROW_SPACING;
     }
+
+    private int getAgeRowY() {
+        return agePanelY + AGE_ROW_TOP_OFFSET;
+    }
     
     @Override
     public void render(Graphics g) {
@@ -635,14 +699,20 @@ public class CharacterCreationState implements State {
         genderButtons[0].render(g2d);
         genderButtons[1].render(g2d);
 
-        nameInput.render(g2d);
-        drawAgeRow(g2d);
+        drawNamePanel(g2d);
+        drawAgePanel(g2d);
         drawAttributesPanel(g2d);
         drawCreateStatus(g2d);
         drawStatTooltip(g2d, windowWidth, windowHeight);
 
         backButton.render(g2d);
         createButton.render(g2d);
+    }
+
+    private void drawNamePanel(Graphics2D g2d) {
+        namePanel.drawPanelBody(g2d);
+        nameInput.render(g2d);
+        namePanel.drawChip(g2d);
     }
 
     private void drawStatTooltip(Graphics2D g2d, int windowWidth, int windowHeight) {
@@ -662,18 +732,19 @@ public class CharacterCreationState implements State {
         g2d.drawString(status, statusX, createButton.y + ACTION_BUTTON_HEIGHT + 18);
     }
 
-    private void drawAgeRow(Graphics2D g2d) {
-        g2d.setColor(mutedTextColor);
-        g2d.setFont(smallFont);
-        g2d.drawString("AGE", ageDecButton.x + AGE_BUTTON_WIDTH + 8, ageDecButton.y + AGE_BUTTON_HEIGHT / 2 + 4);
-        g2d.setColor(textColor);
-        g2d.setFont(buttonFont);
-        String value = String.valueOf(age);
-        FontMetrics fm = g2d.getFontMetrics(buttonFont);
-        int valueX = ageDecButton.x + AGE_BUTTON_WIDTH + 52 - fm.stringWidth(value) / 2;
-        g2d.drawString(value, valueX, ageDecButton.y + AGE_BUTTON_HEIGHT / 2 + 5);
+    private void drawAgePanel(Graphics2D g2d) {
+        agePanel.drawPanelBody(g2d);
+        int rowY = getAgeRowY();
+        UiRect ageBounds = agePanel.bounds();
+
+        ageBigDecButton.render(g2d);
         ageDecButton.render(g2d);
+        AttributeSliderRow.renderLabelsAndSliderRanged(g2d, ageBounds, rowY, "Age", "", age, AGE_SLIDER_MIN,
+                AGE_SLIDER_MAX);
         ageIncButton.render(g2d);
+        ageBigIncButton.render(g2d);
+        AttributeSliderRow.renderValue(g2d, ageBounds, rowY, age);
+        agePanel.drawChip(g2d);
     }
 
     private void drawAttributesPanel(Graphics2D g2d) {

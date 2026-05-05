@@ -7,6 +7,7 @@ import atomiccode.greatDreamerStories.ui.GreatDreamerTheme;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 
 /**
  * Dossier panel with archive chip title; supports absolute bounds and normalized child placement inside the
@@ -18,6 +19,13 @@ public final class MenuChipPanel {
     private static final int CHIP_BASELINE_OFFSET = 5;
     private static final int INNER_SIDE_INSET = 15;
     private static final int INNER_BOTTOM_INSET = 15;
+
+    private static final Graphics2D INNER_RECT_SCRATCH_G;
+
+    static {
+        BufferedImage scratch = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+        INNER_RECT_SCRATCH_G = scratch.createGraphics();
+    }
 
     private UiRect bounds;
     private final String chipLabel;
@@ -46,11 +54,25 @@ public final class MenuChipPanel {
 
     /** Padded region under the chip, before the bottom border. */
     public UiRect innerContentRect(Graphics2D g2d) {
+        return innerContentRectForBounds(bounds, g2d);
+    }
+
+    /**
+     * Same geometry as {@link #innerContentRect(Graphics2D)} for arbitrary panel bounds (chip metrics from
+     * {@link #chipFont()}).
+     */
+    public static UiRect innerContentRectForBounds(UiRect panelBounds, Graphics2D g2d) {
         Font f = chipFont();
         FontMetrics fm = g2d.getFontMetrics(f);
-        int chipBottom = bounds.y + CHIP_BASELINE_OFFSET + fm.getDescent() + 8;
-        int top = chipBottom - bounds.y;
-        return bounds.inset(INNER_SIDE_INSET, top, INNER_SIDE_INSET, INNER_BOTTOM_INSET);
+        int chipBottom = panelBounds.y + CHIP_BASELINE_OFFSET + fm.getDescent() + 8;
+        int top = chipBottom - panelBounds.y;
+        return panelBounds.inset(INNER_SIDE_INSET, top, INNER_SIDE_INSET, INNER_BOTTOM_INSET);
+    }
+
+    /** {@link #innerContentRectForBounds(UiRect, Graphics2D)} using a shared scratch context (single-threaded game loop). */
+    public static UiRect innerContentRectForBounds(UiRect panelBounds) {
+        INNER_RECT_SCRATCH_G.setFont(chipFont());
+        return innerContentRectForBounds(panelBounds, INNER_RECT_SCRATCH_G);
     }
 
     /**

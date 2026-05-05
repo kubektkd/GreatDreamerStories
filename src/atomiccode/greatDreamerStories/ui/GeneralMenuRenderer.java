@@ -1,6 +1,6 @@
 package atomiccode.greatDreamerStories.ui;
 
-import atomiccode.cthulhuEngine.ui.ArchivePanelTitleChip;
+import atomiccode.cthulhuEngine.ui.TitleChip;
 import atomiccode.cthulhuEngine.ui.layout.UiRect;
 
 import java.awt.Color;
@@ -53,13 +53,13 @@ public class GeneralMenuRenderer {
     }
 
     /**
-     * Chip on panel top ({@link ArchivePanelTitleChip}), same inset as archive {@link atomiccode.cthulhuEngine.ui.TextInput}.
+     * Chip on panel top ({@link TitleChip}), same inset as archive {@link atomiccode.cthulhuEngine.ui.TextInput}.
      * Call after the panel fill so the chip paints above the panel.
      */
     public static void drawPanelTopArchiveChip(Graphics2D g2d, int panelLeftX, int panelTopY, String chipLabel,
                                                Font chipFont) {
         int chipBaseline = panelTopY + 5;
-        ArchivePanelTitleChip.paint(g2d, chipLabel, panelLeftX + 15, chipBaseline, chipFont,
+        TitleChip.paint(g2d, chipLabel, panelLeftX + 15, chipBaseline, chipFont,
                 GreatDreamerTheme.PANEL, GreatDreamerTheme.MUTED_TEXT);
     }
 
@@ -112,7 +112,7 @@ public class GeneralMenuRenderer {
      * Small title strip on a filled panel: {@code (x, y)} is the text baseline (matches {@link Graphics2D#drawString}).
      */
     public static void drawPanelTitle(Graphics2D g2d, String title, int x, int y, Font titleFont) {
-        ArchivePanelTitleChip.paint(g2d, title, x, y, titleFont, GreatDreamerTheme.PANEL, GreatDreamerTheme.MUTED_TEXT);
+        TitleChip.paint(g2d, title, x, y, titleFont, GreatDreamerTheme.PANEL, GreatDreamerTheme.MUTED_TEXT);
     }
 
     public static void drawCenteredString(Graphics2D g2d, String text, int x, int y, int width) {

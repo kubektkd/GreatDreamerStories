@@ -26,7 +26,7 @@ import java.util.Comparator;
 
 /**
  * Main gameplay state where the story unfolds.
- * Currently serves as a placeholder for the actual visual novel/RPG gameplay.
+ * Currently serves as a placeholder for the actual isometric exploration / tactical combat gameplay loop.
  */
 public class GameplayState implements State {
 

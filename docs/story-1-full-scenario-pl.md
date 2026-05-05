@@ -2,7 +2,7 @@
 
 ## Wstęp
 
-Scenariusz inspirowany jest ponurymi skandynawskimi powieściami, serialami i filmami, w których główne role odgrywają tajemnica, społeczność i śledztwo. Konwencja ta znana jest czasem pod nazwą nordic-noir, lecz ten scenariusz nawiązuje również do baśni ludowych i lovecraftowskiej Krainy Snów.
+Scenariusz inspirowany jest ponurymi skandynawskimi powieściami, serialami i filmami, w których główne role odgrywają tajemnica, społeczność i śledztwo. Konwencja ta znana jest czasem pod nazwą nordic-noir, lecz ten scenariusz nawiązuje również do baśni ludowych i lovecraftowskiej Krainy Snów. W implementacji gry materiał ten ma być **odgrywany w świecie izometrycznym** (eksploracja, lokacje, NPC), z **osobnym widokiem taktycznym walki**.
 
 Akcja rozpoczyna się w lutym 2020 r. w Skandynawii. Oniryczny nastrój tej opowieści buduje odosobnione miasteczko otoczone przez wzgórza i ciemne lasy oraz surowa, choć niezwykle urokliwa zimowa aura. Pamiętaj, że w takich opowieściach nie wszystkie tajemnice muszą ujrzeć światło dzienne i im więcej niedopowiedzeń i półprawd, tym lepiej. To subtelna historia, która nie jest opowieścią akcji.
 

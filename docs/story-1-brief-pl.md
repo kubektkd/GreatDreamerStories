@@ -4,6 +4,7 @@
 *   **Wstępne info:** Historia ta jest punktem początkowym całej gry. Po ukończeniu tego scenariusza historia postaci gracza będzie mogła być dalej rozwijana w kolejnych historiach, będących rozwinięciem początkowych decyzji. Każda historia/scenariusz będzie osobną rozgrwyką, jednocześnie wszyskie pojedyncze historie będą składały się w jedną większą całość. 
 *   **Tytuł scenariusza:** Druga
 *   **Gatunek:** Nordic-noir, horror psychologiczny, mystery
+*   **Prezentacja w grze (kierunek techniczny):** eksploracja na **izometrycznej mapie kafelkowej** (nastrój i styl wizualny w okolicach klasycznego *Fallouta*), walka w **osobnym widoku taktycznym** (jak w serii *Heroes of Might and Magic*); fabuła i śledztwo przez lokacje, NPC i system notatek.
 *   **Miejsce akcji:** Stoksjö, odizolowane miasteczko w Skandynawii (prowincja Helbjerg), otoczone wzgórzami i ciemnymi lasami
 *   **Czas akcji:** Luty 2020 roku, kilka dni przed walentynkami, okres surowej zimy
 *   **Główny motyw:** Pakt z nadnaturalną istotą, podmiana dzieci (odmieniec), śledztwo w zamkniętej społeczności skrywającej bardzo starą tajemnicę

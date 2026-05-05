@@ -2,6 +2,7 @@ package atomiccode.greatDreamerStories.ui;
 
 import atomiccode.cthulhuEngine.engineMain.engine.Engine;
 import atomiccode.cthulhuEngine.ui.Button;
+import atomiccode.cthulhuEngine.ui.Dropdown;
 import atomiccode.cthulhuEngine.ui.TextInput;
 import atomiccode.cthulhuEngine.ui.Tooltip;
 
@@ -73,6 +74,13 @@ public class GreatDreamerTheme {
     public static void styleTextInput(TextInput input, Font labelFont, Font textFont) {
         input.setFonts(labelFont, textFont);
         input.setColors(PANEL, BORDER, SELECTED, TEXT, MUTED_TEXT, LINE);
+    }
+
+    /** Dossier dropdown: closed row matches panels; open list uses hover fill for keyboard/mouse highlight. */
+    public static void styleDropdown(Dropdown dropdown, Font font) {
+        dropdown.setFont(font);
+        dropdown.setColors(PANEL, BORDER, SELECTED, TEXT, MUTED_TEXT, BUTTON_HOVER,
+                new Color(245, 244, 238, 180));
     }
 
     public static void styleTooltip(Tooltip tooltip, Font font) {

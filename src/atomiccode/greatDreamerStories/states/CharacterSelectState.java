@@ -288,7 +288,7 @@ public class CharacterSelectState implements State {
         
         MenuScreenTitle.draw(g2d, layout.content, layout.content.right(), "CHOOSE INVESTIGATOR",
                 "STOKSJÖ POLICE ARCHIVE // CASE FILES",
-                new MenuScreenTitle.RightMetric(String.valueOf(getOccupiedSlotCount()), "ACTIVE CASES", 10, 90));
+                new MenuScreenTitle.RightMetric(String.valueOf(getOccupiedSlotCount()), "ACTIVE AGENTS", 10, 90));
         
         for (int i = 0; i < slotRects.length; i++) {
             UiRect slotRect = slotRects[i];

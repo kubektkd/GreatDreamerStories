@@ -84,6 +84,11 @@ public class Game extends ApplicationAdapter {
         applyWindowModeToOs(mode, true);
     }
 
+    /** Applies window mode for this session only (does not write to {@link GamePreferences}). */
+    public static void setSessionWindowMode(Window.Mode mode) {
+        applyWindowModeToOs(mode, false);
+    }
+
     private static void applyWindowModeToOs(Window.Mode mode, boolean persist) {
         Engine engine = Engine.instance();
         EngineConfigs c = engine.getConfigs();

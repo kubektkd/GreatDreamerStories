@@ -17,8 +17,12 @@ public final class GamePreferences {
     private static final String KEY_FULLSCREEN_LEGACY = "fullscreen";
     private static final String KEY_WINDOW_MODE = "windowMode";
 
+    private static final String KEY_DIFFICULTY = "difficulty";
+
     public static final float DEFAULT_MENU_MUSIC_VOLUME = 0.3f;
     public static final float DEFAULT_SFX_VOLUME = 0.85f;
+
+    public static final GameDifficulty DEFAULT_DIFFICULTY = GameDifficulty.NORMAL;
 
     private GamePreferences() {
     }
@@ -73,5 +77,22 @@ public final class GamePreferences {
     private static void putWindowMode(Preferences p, Window.Mode mode) {
         p.putString(KEY_WINDOW_MODE, mode.name());
         p.flush();
+    }
+
+    public static GameDifficulty getDifficulty() {
+        Preferences p = prefs();
+        try {
+            String name = p.getString(KEY_DIFFICULTY, DEFAULT_DIFFICULTY.name());
+            return GameDifficulty.valueOf(name);
+        } catch (IllegalArgumentException ex) {
+            return DEFAULT_DIFFICULTY;
+        }
+    }
+
+    public static void setDifficulty(GameDifficulty difficulty) {
+        Preferences pref = prefs();
+        pref.putString(KEY_DIFFICULTY,
+                difficulty != null ? difficulty.name() : DEFAULT_DIFFICULTY.name());
+        pref.flush();
     }
 }

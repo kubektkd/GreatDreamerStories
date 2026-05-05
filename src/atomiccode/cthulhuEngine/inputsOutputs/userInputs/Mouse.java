@@ -18,4 +18,5 @@ public class Mouse {
     public int getY() { return input.getMouseY(); }
     public boolean isLeftPressed() { return input.isLeftPressed(); }
     public boolean isRightPressed() { return input.isRightPressed(); }
+    public int consumeScrollY() { return input.consumeScrollY(); }
 }

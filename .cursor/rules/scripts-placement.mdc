@@ -1,0 +1,17 @@
+---
+alwaysApply: true
+description: Utility scripts placement
+---
+
+# Utility Scripts Placement
+
+All utility scripts, build scripts, and automation scripts should be placed in the [run-scripts/](mdc:run-scripts/) folder.
+
+This includes:
+- Compilation scripts (like [compile.sh](mdc:run-scripts/compile.sh))
+- Distribution scripts (like [distribute.sh](mdc:run-scripts/distribute.sh))
+- Build automation scripts
+- Deployment scripts
+- Any other utility scripts that help with project management
+
+The `run-scripts/` folder is already set up in this project and contains existing scripts. When creating new utility scripts, always place them in this directory to maintain project organization.

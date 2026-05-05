@@ -1,0 +1,14 @@
+---
+description: Game story and design context
+alwaysApply: true
+---
+
+# Game Context
+
+When making design, UI, gameplay, character, or story-related changes, use these project docs as context:
+
+- `docs/game-vision.md`
+- `docs/story-1-brief-pl.md`
+- `docs/story-1-full-scenario-pl.md`
+
+Preserve the intended tone, visual style, and gameplay direction described there.

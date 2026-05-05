@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Launch Great Dreamer Stories",
+            "request": "launch",
+            "mainClass": "atomiccode.greatDreamerStories.Launcher",
+            "args": "",
+            "console": "internalConsole",
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Compile Great Dreamer Stories"
+        },
+        {
+            "type": "java",
+            "name": "Debug Great Dreamer Stories",
+            "request": "launch",
+            "mainClass": "atomiccode.greatDreamerStories.Launcher",
+            "args": "",
+            "console": "internalConsole",
+            "stopOnEntry": false,
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Compile Great Dreamer Stories"
+        }
+    ]
+}

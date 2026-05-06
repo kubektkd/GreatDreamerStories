@@ -238,8 +238,8 @@ public class CharacterSelectState implements State {
         Character character = saveManager.getCharacter(slotIndex);
         
         if (character != null) {
-            // Existing character - start gameplay
-            Engine.instance().stateProcessor.setState(new GameplayState(character, slotIndex));
+            // Existing character - open investigator briefing before gameplay
+            Engine.instance().stateProcessor.setState(new InvestigationBriefState(character, slotIndex));
         } else if (slotIndex == saveManager.getFirstAvailableSlot()) {
             // Create new character in first available slot
             Engine.instance().stateProcessor.setState(new CharacterCreationState(slotIndex, this));

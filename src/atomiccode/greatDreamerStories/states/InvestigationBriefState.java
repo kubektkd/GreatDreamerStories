@@ -27,10 +27,10 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 /**
- * Main gameplay state where the story unfolds.
- * Currently serves as a placeholder for the actual isometric exploration / tactical combat gameplay loop.
+ * Briefing state that summarizes investigator context before launching gameplay.
+ * It shows current case data, recent notes, and acts as a staging point for the actual mission.
  */
-public class GameplayState implements State {
+public class InvestigationBriefState implements State {
 
     /** Leading graphic for back navigation (not translated). */
     private static final String BACK_BUTTON_GRAPHIC_PREFIX = "<  ";
@@ -71,7 +71,7 @@ public class GameplayState implements State {
     private String[][] statSummaryTooltips;
     private Tooltip skillTableTooltip;
     
-    public GameplayState(Character character, int characterSlot) {
+    public InvestigationBriefState(Character character, int characterSlot) {
         this.selectedCharacter = character;
         this.characterSlot = characterSlot;
     }
@@ -440,7 +440,9 @@ public class GameplayState implements State {
     }
 
     private boolean isContinuingStory() {
-        return selectedCharacter.getLastPlayedAt() != null;
+        return selectedCharacter.getTotalPlaytime() > 0
+                || selectedCharacter.getCurrentStoryIndex() > 0
+                || selectedCharacter.getCompletedStoryCount() > 0;
     }
 }
 

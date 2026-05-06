@@ -17,6 +17,7 @@ import atomiccode.greatDreamerStories.ui.menu.MenuActionStrip;
 import atomiccode.greatDreamerStories.ui.menu.MenuChipPanel;
 import atomiccode.greatDreamerStories.ui.menu.MenuPortrait;
 import atomiccode.greatDreamerStories.ui.menu.MenuScreenTitle;
+import atomiccode.greatDreamerStories.i18n.GameTexts;
 
 import com.badlogic.gdx.graphics.Cursor;
 
@@ -28,6 +29,9 @@ import java.awt.event.KeyEvent;
  * Allows players to distribute skill points, select gender, and name their character.
  */
 public class CharacterCreationState implements State {
+
+    private static final String BACK_BUTTON_GRAPHIC_PREFIX = "<  ";
+    private static final String CREATE_BUTTON_GRAPHIC_SUFFIX = "  >";
     private static final int MAX_NAME_LENGTH = 24;
     private static final int STAT_COUNT = 9;
     private static final int ATTR_PANEL_TOP_OFFSET = 80;
@@ -49,23 +53,11 @@ public class CharacterCreationState implements State {
     private static final int NAME_INPUT_CLEAR_BELOW_GENDER = 22;
     private static final int NAME_PANEL_MIN_HEIGHT = 64;
     private static final long STAT_TOOLTIP_DELAY = 300;
-    private static final String[] STAT_NAMES = {"Strength", "Power", "Education", "Constitution", "Intelligence", "Appearance", "Luck", "Size", "Dexterity"};
-    private static final String[] STAT_CODES = {"STR", "POW", "EDU", "CON", "INT", "APP", "LCK", "SIZ", "DEX"};
-    private static final String[] STAT_DESCRIPTIONS = {
-        "Physical force.\nHelps with restraints, forced entry, and close confrontations.",
-        "Willpower and nerve.\nHelps resist fear, pressure, and occult influence.",
-        "Formal knowledge.\nHelps with records, procedure, research, and expert context.",
-        "Endurance and health.\nHelps survive injury, fatigue, poison, and harsh conditions.",
-        "Reasoning and deduction.\nHelps connect clues, solve puzzles, and understand motives.",
-        "Presence and first impression.\nHelps with charm, disguise, and social access.",
-        "Good fortune.\nHelps when events are uncertain or outside direct control.",
-        "Body mass and reach.\nHelps with intimidation, carrying, pushing, and physical scale.",
-        "Speed and precision.\nHelps with stealth, firearms, dodging, and delicate actions."
-    };
+    /** Matches stat.*.short / .full / .desc keys in locale files. */
+    private static final String[] STAT_STEMS = {"str", "pow", "edu", "con", "int", "app", "lck", "siz", "dex"};
     private static final String MALE_PORTRAIT = "characters/main-officer-male.jfif";
     private static final String FEMALE_PORTRAIT = "characters/main-officer-female.jfif";
     private static final String FALLBACK_PORTRAIT = "characters/test.jfif";
-    private static final String DEFAULT_CHARACTER_NAME = "Officer Björn";
     
     private final int targetSlot;
     private final State returnState;
@@ -167,7 +159,7 @@ public class CharacterCreationState implements State {
     }
 
     private void initializeInputs() {
-        nameInput = new TextInput(0, 0, 0, 0, "", DEFAULT_CHARACTER_NAME, MAX_NAME_LENGTH);
+        nameInput = new TextInput(0, 0, 0, 0, "", GameTexts.tr("character.default_name"), MAX_NAME_LENGTH);
         GreatDreamerTheme.styleTextInput(nameInput, smallFont, buttonFont);
         nameInput.setDrawChrome(false);
 
@@ -185,8 +177,10 @@ public class CharacterCreationState implements State {
     
     private void initializeButtons() {
         // Gender selection buttons
-        genderButtons = new Button[]{new Button(0, 0, GENDER_BUTTON_WIDTH, GENDER_BUTTON_HEIGHT, "MALE OFFICER"),
-                                     new Button(0, 0, GENDER_BUTTON_WIDTH, GENDER_BUTTON_HEIGHT, "FEMALE OFFICER")};
+        genderButtons = new Button[]{new Button(0, 0, GENDER_BUTTON_WIDTH, GENDER_BUTTON_HEIGHT,
+                GameTexts.tr("screen.character_create.gender.male_officer")),
+                                     new Button(0, 0, GENDER_BUTTON_WIDTH, GENDER_BUTTON_HEIGHT,
+                                             GameTexts.tr("screen.character_create.gender.female_officer"))};
         Character.Gender[] selectableGenders = {Character.Gender.MALE, Character.Gender.FEMALE};
         for (int i = 0; i < genderButtons.length; i++) {
             Character.Gender gender = selectableGenders[i];
@@ -246,11 +240,13 @@ public class CharacterCreationState implements State {
         }
         
         // Action buttons
-        createButton = new Button(0, 0, CREATE_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT, "CREATE CHARACTER  >");
+        createButton = new Button(0, 0, CREATE_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT,
+                GameTexts.tr("screen.character_create.action.create") + CREATE_BUTTON_GRAPHIC_SUFFIX);
         GreatDreamerTheme.stylePrimaryButton(createButton, buttonFont);
         createButton.setOnClick(this::createCharacter);
 
-        backButton = new Button(0, 0, BACK_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT, "<  BACK");
+        backButton = new Button(0, 0, BACK_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT,
+                BACK_BUTTON_GRAPHIC_PREFIX + GameTexts.tr("common.back"));
         GreatDreamerTheme.styleSecondaryButton(backButton, buttonFont);
         backButton.setOnClick(this::cancelCreation);
 
@@ -277,7 +273,7 @@ public class CharacterCreationState implements State {
     }
     
     private void resetCharacterData() {
-        characterName = DEFAULT_CHARACTER_NAME;
+        characterName = GameTexts.tr("character.default_name");
         nameInput.setText(characterName);
         selectedGender = Character.Gender.MALE;
         strength = Character.INITIAL_STAT_VALUE;
@@ -405,7 +401,7 @@ public class CharacterCreationState implements State {
     private void createCharacter() {
         characterName = nameInput.getText();
         if (characterName.trim().isEmpty()) {
-            characterName = DEFAULT_CHARACTER_NAME; // Default name
+            characterName = GameTexts.tr("character.default_name");
             nameInput.setText(characterName);
         }
         
@@ -552,8 +548,8 @@ public class CharacterCreationState implements State {
             }
         }
 
-        String tooltipText = hoveredStatIndex >= 0 && hoveredStatIndex < STAT_DESCRIPTIONS.length
-                ? STAT_NAMES[hoveredStatIndex].toUpperCase() + "\n" + STAT_DESCRIPTIONS[hoveredStatIndex]
+        String tooltipText = hoveredStatIndex >= 0 && hoveredStatIndex < STAT_STEMS.length
+                ? statFull(hoveredStatIndex).toUpperCase(GameTexts.getActiveLocale()) + "\n" + statDesc(hoveredStatIndex)
                 : "";
         statTooltip.update(hoveredStatIndex >= 0, tooltipText);
     }
@@ -626,9 +622,10 @@ public class CharacterCreationState implements State {
         int namePanelH = Math.max(TextInput.preferredOuterHeight(buttonFont), NAME_PANEL_MIN_HEIGHT);
         UiRect nameRect = new UiRect(leftX, namePanelY, leftContentWidth, namePanelH);
         if (namePanel == null) {
-            namePanel = new MenuChipPanel(nameRect, "NAME");
+            namePanel = new MenuChipPanel(nameRect, GameTexts.tr("screen.character_create.panel.name"));
         } else {
             namePanel.setBounds(nameRect);
+            namePanel.setChipLabel(GameTexts.tr("screen.character_create.panel.name"));
         }
         UiRect nameInner = MenuChipPanel.innerContentRectForBounds(nameRect);
         nameInput.setBounds(nameInner.x, nameInner.y, nameInner.width, nameInner.height);
@@ -639,9 +636,10 @@ public class CharacterCreationState implements State {
         agePanelHeight = AGE_PANEL_HEIGHT;
         UiRect ageRect = new UiRect(agePanelX, agePanelY, agePanelWidth, agePanelHeight);
         if (agePanel == null) {
-            agePanel = new MenuChipPanel(ageRect, "TRAITS");
+            agePanel = new MenuChipPanel(ageRect, GameTexts.tr("screen.character_create.panel.traits"));
         } else {
             agePanel.setBounds(ageRect);
+            agePanel.setChipLabel(GameTexts.tr("screen.character_create.panel.traits"));
         }
         AttributeSliderRow.layout(agePanel.bounds(), getAgeRowY(), ageLabelBounds, ageBigDecButton, ageDecButton,
                 ageIncButton, ageBigIncButton);
@@ -656,9 +654,10 @@ public class CharacterCreationState implements State {
 
         UiRect attrRect = new UiRect(attrPanelX, attrPanelY, attrPanelWidth, attrPanelHeight);
         if (attributesPanel == null) {
-            attributesPanel = new MenuChipPanel(attrRect, "ATTRIBUTES");
+            attributesPanel = new MenuChipPanel(attrRect, GameTexts.tr("screen.character_create.panel.attributes"));
         } else {
             attributesPanel.setBounds(attrRect);
+            attributesPanel.setChipLabel(GameTexts.tr("screen.character_create.panel.attributes"));
         }
         UiRect attrBounds = attributesPanel.bounds();
 
@@ -670,6 +669,18 @@ public class CharacterCreationState implements State {
 
         MenuActionStrip.placeSecondaryBeforePrimary(layout, createButton, CREATE_BUTTON_WIDTH, backButton,
                 BACK_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT, ACTION_BUTTON_GAP);
+    }
+
+    private static String statShort(int i) {
+        return GameTexts.tr("stat." + STAT_STEMS[i] + ".short");
+    }
+
+    private static String statFull(int i) {
+        return GameTexts.tr("stat." + STAT_STEMS[i] + ".full");
+    }
+
+    private static String statDesc(int i) {
+        return GameTexts.tr("stat." + STAT_STEMS[i] + ".desc");
     }
 
     private int getStatRowY(int statIndex) {
@@ -690,10 +701,12 @@ public class CharacterCreationState implements State {
 
         GeneralMenuRenderer.drawPage(g2d, windowWidth, windowHeight);
         GeneralMenuRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
-        MenuScreenTitle.draw(g2d, layout.content, layout.leftColumn.right(), "NEW INVESTIGATOR",
-                "STOKSJÖ POLICE ARCHIVE // PERSONAL RECORD",
-                new MenuScreenTitle.RightMetric(String.valueOf(getRemainingPoints()), "PTS REMAINING", 20, 94));
-        MenuScreenTitle.drawSecondaryHeadingAlignedToMetric(g2d, layout.content, rightX + 15, "SUBJECT'S PROFILE");
+        MenuScreenTitle.draw(g2d, layout.content, layout.leftColumn.right(), GameTexts.tr("screen.character_create.title"),
+                GameTexts.archiveStrapline("archive.strapline.personal_record"),
+                new MenuScreenTitle.RightMetric(String.valueOf(getRemainingPoints()),
+                        GameTexts.tr("screen.character_create.metric.pts_remaining"), 20, 94));
+        MenuScreenTitle.drawSecondaryHeadingAlignedToMetric(g2d, layout.content, rightX + 15,
+                GameTexts.tr("screen.character_create.secondary_heading"));
 
         MenuPortrait.draw(g2d, portraitX, portraitY, portraitSize, selectedGender == Character.Gender.FEMALE ? femalePortrait : malePortrait);
         genderButtons[0].render(g2d);
@@ -726,7 +739,7 @@ public class CharacterCreationState implements State {
 
         g2d.setColor(mutedTextColor);
         g2d.setFont(smallFont);
-        String status = "USE ALL REMAINING POINTS TO CONTINUE";
+        String status = GameTexts.tr("screen.character_create.status.spend_points");
         FontMetrics metrics = g2d.getFontMetrics();
         int statusX = createButton.x + (CREATE_BUTTON_WIDTH - metrics.stringWidth(status)) / 2;
         g2d.drawString(status, statusX, createButton.y + ACTION_BUTTON_HEIGHT + 18);
@@ -739,7 +752,7 @@ public class CharacterCreationState implements State {
 
         ageBigDecButton.render(g2d);
         ageDecButton.render(g2d);
-        AttributeSliderRow.renderLabelsAndSliderRanged(g2d, ageBounds, rowY, "Age", "", age, AGE_SLIDER_MIN,
+        AttributeSliderRow.renderLabelsAndSliderRanged(g2d, ageBounds, rowY, GameTexts.tr("screen.character_create.age_label"), "", age, AGE_SLIDER_MIN,
                 AGE_SLIDER_MAX);
         ageIncButton.render(g2d);
         ageBigIncButton.render(g2d);
@@ -764,7 +777,7 @@ public class CharacterCreationState implements State {
         statBigDecButtons[statIndex].render(g2d);
         statDecButtons[statIndex].render(g2d);
 
-        AttributeSliderRow.renderLabelsAndSlider(g2d, attrBounds, rowY, STAT_NAMES[statIndex], STAT_CODES[statIndex],
+        AttributeSliderRow.renderLabelsAndSlider(g2d, attrBounds, rowY, statFull(statIndex), statShort(statIndex),
                 statValue);
 
         statIncButtons[statIndex].render(g2d);

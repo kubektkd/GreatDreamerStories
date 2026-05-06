@@ -1,10 +1,13 @@
 package atomiccode.greatDreamerStories.character;
 
+import atomiccode.greatDreamerStories.i18n.GameTexts;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Represents a player character with stats, skills, and story progress.
@@ -60,17 +63,11 @@ public class Character implements Serializable {
     public static final int DEFAULT_INVESTIGATOR_AGE = 35;
     
     public enum Gender {
-        MALE("Male"),
-        FEMALE("Female");
-        
-        private final String displayName;
-        
-        Gender(String displayName) {
-            this.displayName = displayName;
-        }
-        
+        MALE,
+        FEMALE;
+
         public String getDisplayName() {
-            return displayName;
+            return GameTexts.tr("character.gender." + name().toLowerCase(Locale.ROOT));
         }
     }
     
@@ -278,7 +275,14 @@ public class Character implements Serializable {
     public Gender getGender() { return gender; }
     public void setGender(Gender gender) { this.gender = gender; }
     
-    public String getOccupation() { return occupation; }
+    public String getOccupation() {
+        return occupation;
+    }
+
+    /** Localized label for UI (fixed role for story 1). */
+    public String getLocalizedOccupation() {
+        return GameTexts.tr("occupation.chief_police_officer");
+    }
     
     public int getAge() { return age; }
     public void setAge(int age) {

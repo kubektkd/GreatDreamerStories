@@ -18,6 +18,7 @@ public final class GamePreferences {
     private static final String KEY_WINDOW_MODE = "windowMode";
 
     private static final String KEY_DIFFICULTY = "difficulty";
+    private static final String KEY_LANGUAGE_TAG = "languageTag";
 
     public static final float DEFAULT_MENU_MUSIC_VOLUME = 0.3f;
     public static final float DEFAULT_SFX_VOLUME = 0.85f;
@@ -94,5 +95,20 @@ public final class GamePreferences {
         pref.putString(KEY_DIFFICULTY,
                 difficulty != null ? difficulty.name() : DEFAULT_DIFFICULTY.name());
         pref.flush();
+    }
+
+    /** BCP 47 language tag; supported: {@code en} (default), {@code pl}. */
+    public static String getLanguageTag() {
+        return prefs().getString(KEY_LANGUAGE_TAG, "en");
+    }
+
+    public static void setLanguageTag(String languageTag) {
+        String tag = languageTag == null || languageTag.isBlank() ? "en" : languageTag.trim().toLowerCase();
+        if (!tag.equals("pl")) {
+            tag = "en";
+        }
+        Preferences p = prefs();
+        p.putString(KEY_LANGUAGE_TAG, tag);
+        p.flush();
     }
 }

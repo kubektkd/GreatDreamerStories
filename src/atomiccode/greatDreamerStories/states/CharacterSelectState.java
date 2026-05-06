@@ -15,6 +15,7 @@ import atomiccode.greatDreamerStories.ui.menu.CharacterSlotFolder;
 import atomiccode.greatDreamerStories.ui.menu.MenuActionStrip;
 import atomiccode.greatDreamerStories.ui.menu.MenuConfirmationModal;
 import atomiccode.greatDreamerStories.ui.menu.MenuScreenTitle;
+import atomiccode.greatDreamerStories.i18n.GameTexts;
 
 import com.badlogic.gdx.graphics.Cursor;
 
@@ -22,6 +23,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 
 public class CharacterSelectState implements State {
+
+    private static final String BACK_BUTTON_GRAPHIC_PREFIX = "<  ";
 
     private Button backButton;
     private Button confirmDeleteButton;
@@ -68,9 +71,10 @@ public class CharacterSelectState implements State {
         tooltipFont = GreatDreamerTheme.archiveFont(12);
 
         // Initialize buttons
-        backButton = new Button(0, 0, ACTION_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT, "<  BACK");
-        confirmDeleteButton = new Button(0, 0, DELETE_CONFIRM_BUTTON_WIDTH, DELETE_CONFIRM_BUTTON_HEIGHT, "DELETE");
-        cancelDeleteButton = new Button(0, 0, DELETE_CONFIRM_BUTTON_WIDTH, DELETE_CONFIRM_BUTTON_HEIGHT, "CANCEL");
+        backButton = new Button(0, 0, ACTION_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT,
+                BACK_BUTTON_GRAPHIC_PREFIX + GameTexts.tr("common.back"));
+        confirmDeleteButton = new Button(0, 0, DELETE_CONFIRM_BUTTON_WIDTH, DELETE_CONFIRM_BUTTON_HEIGHT, GameTexts.tr("common.delete"));
+        cancelDeleteButton = new Button(0, 0, DELETE_CONFIRM_BUTTON_WIDTH, DELETE_CONFIRM_BUTTON_HEIGHT, GameTexts.tr("common.cancel"));
 
         // Set button colors
         GreatDreamerTheme.styleSecondaryButton(backButton, buttonFont);
@@ -286,9 +290,10 @@ public class CharacterSelectState implements State {
         GeneralMenuRenderer.drawPage(g2d, windowWidth, windowHeight);
         GeneralMenuRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
         
-        MenuScreenTitle.draw(g2d, layout.content, layout.content.right(), "CHOOSE INVESTIGATOR",
-                "STOKSJÖ POLICE ARCHIVE // CASE FILES",
-                new MenuScreenTitle.RightMetric(String.valueOf(getOccupiedSlotCount()), "ACTIVE AGENTS", 10, 90));
+        MenuScreenTitle.draw(g2d, layout.content, layout.content.right(), GameTexts.tr("screen.character_select.title"),
+                GameTexts.archiveStrapline("archive.strapline.case_files"),
+                new MenuScreenTitle.RightMetric(String.valueOf(getOccupiedSlotCount()),
+                        GameTexts.tr("screen.character_select.metric.active_agents"), 10, 90));
         
         for (int i = 0; i < slotRects.length; i++) {
             UiRect slotRect = slotRects[i];
@@ -318,16 +323,16 @@ public class CharacterSelectState implements State {
     
     private void drawDeleteConfirmation(Graphics2D g2d, int windowWidth, int windowHeight) {
         Character character = saveManager.getCharacter(pendingDeleteSlot);
-        String characterName = character != null ? character.getName() : "this character";
+        String characterName = character != null ? character.getName() : GameTexts.tr("screen.character_select.placeholder_name");
 
         MenuConfirmationModal.drawScrim(g2d, windowWidth, windowHeight);
         MenuConfirmationModal.Geometry geo = MenuConfirmationModal.centered(windowWidth, windowHeight,
                 MenuConfirmationModal.DEFAULT_WIDTH, MenuConfirmationModal.DEFAULT_HEIGHT);
         MenuConfirmationModal.drawFrame(g2d, geo);
-        MenuConfirmationModal.drawText(g2d, geo, buttonFont, tooltipFont, "DELETE CHARACTER?",
+        MenuConfirmationModal.drawText(g2d, geo, buttonFont, tooltipFont, GameTexts.tr("screen.character_select.delete.title"),
                 new String[]{
-                        "This will permanently delete \"" + characterName + "\".",
-                        "Press Enter to delete or Esc to cancel."
+                        GameTexts.trf("screen.character_select.delete.line1", characterName),
+                        GameTexts.tr("screen.character_select.delete.line2")
                 });
 
         g2d.setStroke(new BasicStroke(1f));

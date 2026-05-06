@@ -3,6 +3,7 @@ package atomiccode.greatDreamerStories.states;
 import atomiccode.cthulhuEngine.inputsOutputs.stateControl.State;
 import atomiccode.cthulhuEngine.engineMain.engine.Engine;
 import atomiccode.cthulhuEngine.engineMain.engine.EngineFiles;
+import atomiccode.greatDreamerStories.i18n.GameTexts;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -215,8 +216,8 @@ public class SplashState implements State {
             g.setColor(Color.WHITE);
             g.setFont(SPLASH_LOADING_FONT);
             FontMetrics metrics = g.getFontMetrics(SPLASH_LOADING_FONT);
-            String message = "Great Dreamer Stories";
-            String loadingMessage = "Loading...";
+            String message = GameTexts.tr("splash.title");
+            String loadingMessage = GameTexts.tr("splash.loading");
             int x = (windowWidth - metrics.stringWidth(message)) / 2;
             int y = windowHeight / 2;
             g.drawString(message, x, y);

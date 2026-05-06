@@ -16,11 +16,13 @@ import atomiccode.greatDreamerStories.ui.menu.MenuActionStrip;
 import atomiccode.greatDreamerStories.ui.menu.MenuChipPanel;
 import atomiccode.greatDreamerStories.ui.menu.MenuScreenTitle;
 import atomiccode.greatDreamerStories.ui.menu.MenuTable;
+import atomiccode.greatDreamerStories.i18n.GameTexts;
 
 import com.badlogic.gdx.graphics.Cursor;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.text.Collator;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -30,6 +32,8 @@ import java.util.Comparator;
  */
 public class GameplayState implements State {
 
+    /** Leading graphic for back navigation (not translated). */
+    private static final String BACK_BUTTON_GRAPHIC_PREFIX = "<  ";
     private static final int BACK_BUTTON_WIDTH = 130;
     private static final int START_BUTTON_WIDTH = 170;
     private static final int ACTION_BUTTON_HEIGHT = 48;
@@ -85,7 +89,8 @@ public class GameplayState implements State {
         buttonFont = GreatDreamerTheme.archiveFont(14);
         
         // Initialize buttons
-        backButton = new Button(0, 0, BACK_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT, "<  BACK");
+        backButton = new Button(0, 0, BACK_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT,
+                BACK_BUTTON_GRAPHIC_PREFIX + GameTexts.tr("common.back"));
         GreatDreamerTheme.styleSecondaryButton(backButton, buttonFont);
         
         // Set button action
@@ -98,7 +103,7 @@ public class GameplayState implements State {
             Engine.instance().stateProcessor.setState(new CharacterSelectState());
         });
 
-        String startButtonText = isContinuingStory() ? "CONTINUE" : "START";
+        String startButtonText = GameTexts.tr(isContinuingStory() ? "common.continue" : "common.start");
         startButton = new Button(0, 0, START_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT, startButtonText + "  >");
         GreatDreamerTheme.styleDisabledButton(startButton, buttonFont);
         
@@ -124,15 +129,16 @@ public class GameplayState implements State {
 
     private void rebuildSkillTable() {
         CharacterSkill[] all = CharacterSkill.values().clone();
-        Arrays.sort(all, Comparator.comparing(CharacterSkill::getDisplayName, String.CASE_INSENSITIVE_ORDER));
+        Collator collator = Collator.getInstance(GameTexts.getActiveLocale());
+        Arrays.sort(all, Comparator.comparing(CharacterSkill::getCode, collator));
         int n = all.length;
         int dataRows = (n + SKILLS_PER_TABLE_ROW - 1) / SKILLS_PER_TABLE_ROW;
         skillTableCells = new String[dataRows][SKILL_TABLE_COLS];
         skillTableTooltips = new String[dataRows][SKILL_TABLE_COLS];
         for (int r = 0; r < dataRows; r++) {
             for (int c = 0; c < SKILLS_PER_TABLE_ROW; c++) {
-                // Column-major within the 3 pair-columns: A→Z top→bottom in column 1, then column 2, then 3.
-                int i = c + r * SKILLS_PER_TABLE_ROW;
+                // Column-major: locale alphabetical order runs top→bottom in column 1, then column 2, then 3.
+                int i = c * dataRows + r;
                 int col = c * 2;
                 if (i < n) {
                     CharacterSkill s = all[i];
@@ -152,7 +158,8 @@ public class GameplayState implements State {
     }
 
     private static String skillTooltipText(CharacterSkill skill, String valueCell) {
-        return skill.getDisplayName().toUpperCase() + "\nRating: " + valueCell + "%";
+        return skill.getDisplayName().toUpperCase(GameTexts.getActiveLocale())
+                + "\n" + GameTexts.trf("gameplay.skill.rating_line", valueCell);
     }
 
     /** Pixels from dossier top to top of the 4×4 stat summary table (below the name/occupation divider). */
@@ -178,46 +185,47 @@ public class GameplayState implements State {
             return;
         }
         Character c = selectedCharacter;
-        statSummaryCells[0][0] = "STR " + c.getStrength();
-        statSummaryCells[0][1] = "POW " + c.getPower();
-        statSummaryCells[0][2] = "EDU " + c.getEducation();
-        statSummaryCells[0][3] = "CON " + c.getConstitution();
-        statSummaryCells[1][0] = "INT " + c.getIntelligence();
-        statSummaryCells[1][1] = "APP " + c.getAppearance();
-        statSummaryCells[1][2] = "LCK " + c.getLuck();
-        statSummaryCells[1][3] = "SIZ " + c.getSize();
-        statSummaryCells[2][0] = "DEX " + c.getDexterity();
-        statSummaryCells[2][1] = String.format("HP %d/%d", c.getCurrentHitPoints(), c.getMaxHitPoints());
-        statSummaryCells[2][2] = String.format("MP %d/%d", c.getCurrentMagicPoints(), c.getMaxMagicPoints());
-        statSummaryCells[2][3] = String.format("SAN %d/%d", c.getCurrentSanity(), c.getMaxSanityPoints());
-        statSummaryCells[3][0] = "MOV " + c.getMoveRate();
-        statSummaryCells[3][1] = "DB " + c.getDamageBonus();
-        statSummaryCells[3][2] = "Bld " + c.getBuild();
-        statSummaryCells[3][3] = "Ddg " + c.getDodgeValue() + "%";
+        statSummaryCells[0][0] = GameTexts.tr("stat.str.short") + " " + c.getStrength();
+        statSummaryCells[0][1] = GameTexts.tr("stat.pow.short") + " " + c.getPower();
+        statSummaryCells[0][2] = GameTexts.tr("stat.edu.short") + " " + c.getEducation();
+        statSummaryCells[0][3] = GameTexts.tr("stat.con.short") + " " + c.getConstitution();
+        statSummaryCells[1][0] = GameTexts.tr("stat.int.short") + " " + c.getIntelligence();
+        statSummaryCells[1][1] = GameTexts.tr("stat.app.short") + " " + c.getAppearance();
+        statSummaryCells[1][2] = GameTexts.tr("stat.lck.short") + " " + c.getLuck();
+        statSummaryCells[1][3] = GameTexts.tr("stat.siz.short") + " " + c.getSize();
+        statSummaryCells[2][0] = GameTexts.tr("stat.dex.short") + " " + c.getDexterity();
+        statSummaryCells[2][1] = GameTexts.trf("gameplay.stat.hp_short", c.getCurrentHitPoints(), c.getMaxHitPoints());
+        statSummaryCells[2][2] = GameTexts.trf("gameplay.stat.mp_short", c.getCurrentMagicPoints(), c.getMaxMagicPoints());
+        statSummaryCells[2][3] = GameTexts.trf("gameplay.stat.san_short", c.getCurrentSanity(), c.getMaxSanityPoints());
+        statSummaryCells[3][0] = GameTexts.trf("gameplay.stat.mov_short", c.getMoveRate());
+        statSummaryCells[3][1] = GameTexts.trf("gameplay.stat.db_short", c.getDamageBonus());
+        statSummaryCells[3][2] = GameTexts.trf("gameplay.stat.bld_short", c.getBuild());
+        statSummaryCells[3][3] = GameTexts.trf("gameplay.stat.ddg_short", c.getDodgeValue());
 
-        statSummaryTooltips[0][0] = statTooltipLine("STRENGTH", String.valueOf(c.getStrength()));
-        statSummaryTooltips[0][1] = statTooltipLine("POWER", String.valueOf(c.getPower()));
-        statSummaryTooltips[0][2] = statTooltipLine("EDUCATION", String.valueOf(c.getEducation()));
-        statSummaryTooltips[0][3] = statTooltipLine("CONSTITUTION", String.valueOf(c.getConstitution()));
-        statSummaryTooltips[1][0] = statTooltipLine("INTELLIGENCE", String.valueOf(c.getIntelligence()));
-        statSummaryTooltips[1][1] = statTooltipLine("APPEARANCE", String.valueOf(c.getAppearance()));
-        statSummaryTooltips[1][2] = statTooltipLine("LUCK", String.valueOf(c.getLuck()));
-        statSummaryTooltips[1][3] = statTooltipLine("SIZE", String.valueOf(c.getSize()));
-        statSummaryTooltips[2][0] = statTooltipLine("DEXTERITY", String.valueOf(c.getDexterity()));
-        statSummaryTooltips[2][1] = statTooltipLine("HIT POINTS",
-                c.getCurrentHitPoints() + " current, " + c.getMaxHitPoints() + " maximum");
-        statSummaryTooltips[2][2] = statTooltipLine("MAGIC POINTS",
-                c.getCurrentMagicPoints() + " current, " + c.getMaxMagicPoints() + " maximum");
-        statSummaryTooltips[2][3] = statTooltipLine("SANITY",
-                c.getCurrentSanity() + " current, " + c.getMaxSanityPoints() + " maximum (from Power)");
-        statSummaryTooltips[3][0] = statTooltipLine("MOVE RATE", String.valueOf(c.getMoveRate()));
-        statSummaryTooltips[3][1] = statTooltipLine("DAMAGE BONUS", c.getDamageBonus());
-        statSummaryTooltips[3][2] = statTooltipLine("BUILD", String.valueOf(c.getBuild()));
-        statSummaryTooltips[3][3] = statTooltipLine("DODGE", c.getDodgeValue() + "% skill rating");
+        statSummaryTooltips[0][0] = statTooltipLine(GameTexts.tr("tooltip.stat.strength"), String.valueOf(c.getStrength()));
+        statSummaryTooltips[0][1] = statTooltipLine(GameTexts.tr("tooltip.stat.power"), String.valueOf(c.getPower()));
+        statSummaryTooltips[0][2] = statTooltipLine(GameTexts.tr("tooltip.stat.education"), String.valueOf(c.getEducation()));
+        statSummaryTooltips[0][3] = statTooltipLine(GameTexts.tr("tooltip.stat.constitution"), String.valueOf(c.getConstitution()));
+        statSummaryTooltips[1][0] = statTooltipLine(GameTexts.tr("tooltip.stat.intelligence"), String.valueOf(c.getIntelligence()));
+        statSummaryTooltips[1][1] = statTooltipLine(GameTexts.tr("tooltip.stat.appearance"), String.valueOf(c.getAppearance()));
+        statSummaryTooltips[1][2] = statTooltipLine(GameTexts.tr("tooltip.stat.luck"), String.valueOf(c.getLuck()));
+        statSummaryTooltips[1][3] = statTooltipLine(GameTexts.tr("tooltip.stat.size"), String.valueOf(c.getSize()));
+        statSummaryTooltips[2][0] = statTooltipLine(GameTexts.tr("tooltip.stat.dexterity"), String.valueOf(c.getDexterity()));
+        statSummaryTooltips[2][1] = statTooltipLine(GameTexts.tr("tooltip.stat.hit_points"),
+                GameTexts.trf("gameplay.tooltip.hp_detail", c.getCurrentHitPoints(), c.getMaxHitPoints()));
+        statSummaryTooltips[2][2] = statTooltipLine(GameTexts.tr("tooltip.stat.magic_points"),
+                GameTexts.trf("gameplay.tooltip.mp_detail", c.getCurrentMagicPoints(), c.getMaxMagicPoints()));
+        statSummaryTooltips[2][3] = statTooltipLine(GameTexts.tr("tooltip.stat.sanity"),
+                GameTexts.trf("gameplay.tooltip.san_detail", c.getCurrentSanity(), c.getMaxSanityPoints()));
+        statSummaryTooltips[3][0] = statTooltipLine(GameTexts.tr("tooltip.stat.move_rate"), String.valueOf(c.getMoveRate()));
+        statSummaryTooltips[3][1] = statTooltipLine(GameTexts.tr("tooltip.stat.damage_bonus"), c.getDamageBonus());
+        statSummaryTooltips[3][2] = statTooltipLine(GameTexts.tr("tooltip.stat.build"), String.valueOf(c.getBuild()));
+        statSummaryTooltips[3][3] = statTooltipLine(GameTexts.tr("tooltip.stat.dodge"),
+                GameTexts.trf("gameplay.tooltip.dodge_detail", c.getDodgeValue()));
     }
 
     private static String statTooltipLine(String fullName, String detail) {
-        return fullName + "\n" + detail;
+        return fullName.toUpperCase(GameTexts.getActiveLocale()) + "\n" + detail;
     }
     
     @Override
@@ -322,13 +330,16 @@ public class GameplayState implements State {
         notesPanel = new UiRect(storyX, storyPanel.bottom() + 20, storyWidth, notesHeight);
 
         if (dossierChipPanel == null) {
-            dossierChipPanel = new MenuChipPanel(dossierPanel, "INVESTIGATOR DOSSIER");
-            storyChipPanel = new MenuChipPanel(storyPanel, "CASE BOARD");
-            notesChipPanel = new MenuChipPanel(notesPanel, "FIELD NOTES");
+            dossierChipPanel = new MenuChipPanel(dossierPanel, GameTexts.tr("panel.dossier.title"));
+            storyChipPanel = new MenuChipPanel(storyPanel, GameTexts.tr("panel.story.title"));
+            notesChipPanel = new MenuChipPanel(notesPanel, GameTexts.tr("panel.notes.title"));
         } else {
             dossierChipPanel.setBounds(dossierPanel);
             storyChipPanel.setBounds(storyPanel);
             notesChipPanel.setBounds(notesPanel);
+            dossierChipPanel.setChipLabel(GameTexts.tr("panel.dossier.title"));
+            storyChipPanel.setChipLabel(GameTexts.tr("panel.story.title"));
+            notesChipPanel.setChipLabel(GameTexts.tr("panel.notes.title"));
         }
 
         MenuActionStrip.placeSecondaryBeforePrimary(layout, startButton, START_BUTTON_WIDTH, backButton,
@@ -345,9 +356,10 @@ public class GameplayState implements State {
 
         GeneralMenuRenderer.drawPage(g2d, windowWidth, windowHeight);
         GeneralMenuRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
-        MenuScreenTitle.draw(g2d, layout.content, layout.content.right(), "ACTIVE INVESTIGATION",
-                "STOKSJÖ POLICE ARCHIVE // INCIDENT ROOM",
-                new MenuScreenTitle.RightMetric(String.valueOf(selectedCharacter.getCompletedStoryCount()), "CASES CLOSED", 12, 96));
+        MenuScreenTitle.draw(g2d, layout.content, layout.content.right(), GameTexts.tr("screen.gameplay.title"),
+                GameTexts.archiveStrapline("archive.strapline.incident_room"),
+                new MenuScreenTitle.RightMetric(String.valueOf(selectedCharacter.getCompletedStoryCount()),
+                        GameTexts.tr("screen.gameplay.metric.cases_closed"), 12, 96));
 
         drawStoryPlaceholder(g2d);
         drawNotesPanel(g2d);
@@ -362,11 +374,12 @@ public class GameplayState implements State {
 
         g2d.setColor(GreatDreamerTheme.TEXT);
         g2d.setFont(textFont);
-        String characterInfo = selectedCharacter.getName() + " (" + selectedCharacter.getGender().getDisplayName() + ")  Age: " + selectedCharacter.getAge();
+        String characterInfo = GameTexts.trf("gameplay.character_line", selectedCharacter.getName(),
+                selectedCharacter.getGender().getDisplayName(), selectedCharacter.getAge());
         g2d.drawString(characterInfo, dossierPanel.x + 18, dossierPanel.y + 28);
 
         g2d.setColor(GreatDreamerTheme.SELECTED);
-        g2d.drawString(selectedCharacter.getOccupation(), dossierPanel.x + 18, dossierPanel.y + 52);
+        g2d.drawString(selectedCharacter.getLocalizedOccupation(), dossierPanel.x + 18, dossierPanel.y + 52);
 
         g2d.setColor(GreatDreamerTheme.LINE);
         g2d.drawLine(dossierPanel.x + 18, dossierPanel.y + 68, dossierPanel.right() - 18, dossierPanel.y + 68);
@@ -388,17 +401,17 @@ public class GameplayState implements State {
         g2d.setColor(GreatDreamerTheme.TEXT);
         g2d.setFont(textFont);
         String[] storyLines = {
-            "The fog rolls in from the fjord as the station phone keeps ringing.",
-            "A strange case waits in Stoksjö, buried under snow, old records,",
-            "and the stories locals only tell after dark.",
+            GameTexts.tr("story01.line01"),
+            GameTexts.tr("story01.line02"),
+            GameTexts.tr("story01.line03"),
             "",
-            "Current objective:",
-            "Review the first reports, question witnesses, and start building",
-            "a timeline before the town closes ranks around the truth.",
+            GameTexts.tr("story01.objective_heading"),
+            GameTexts.tr("story01.objective01"),
+            GameTexts.tr("story01.objective02"),
             "",
-            "Future implementation:",
-            "Dialogue choices, clues, map exploration, inventory, and",
-            "turn-based encounters will unfold from this state."
+            GameTexts.tr("story01.future_heading"),
+            GameTexts.tr("story01.future01"),
+            GameTexts.tr("story01.future02")
         };
         drawLines(g2d, storyLines, storyPanel.x + 18, storyPanel.y + 28, 22);
     }
@@ -406,9 +419,9 @@ public class GameplayState implements State {
     private void drawNotesPanel(Graphics2D g2d) {
         notesChipPanel.draw(g2d);
         g2d.setColor(GreatDreamerTheme.TEXT);
-        g2d.drawString("Press ESC or use the case files button to return to investigator selection.", notesPanel.x + 18, notesPanel.y + 28);
+        g2d.drawString(GameTexts.tr("notes.hint_return"), notesPanel.x + 18, notesPanel.y + 28);
         g2d.setColor(GreatDreamerTheme.MUTED_TEXT);
-        g2d.drawString("This panel will later hold active clues, leads, and inventory reminders.", notesPanel.x + 18, notesPanel.y + 52);
+        g2d.drawString(GameTexts.tr("notes.placeholder"), notesPanel.x + 18, notesPanel.y + 52);
     }
 
     private void drawLines(Graphics2D g2d, String[] lines, int x, int startY, int lineHeight) {

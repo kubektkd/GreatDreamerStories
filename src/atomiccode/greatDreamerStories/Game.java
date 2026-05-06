@@ -12,6 +12,7 @@ import org.lwjgl.glfw.GLFW;
 import atomiccode.cthulhuEngine.engineMain.engine.EngineConfigs;
 import atomiccode.cthulhuEngine.engineMain.engine.Engine;
 import atomiccode.cthulhuEngine.inputsOutputs.windowing.Window;
+import atomiccode.greatDreamerStories.i18n.GameTexts;
 
 /**
  * LibGDX application facade. LibGDX owns the low-level loop; cthulhuEngine
@@ -145,6 +146,7 @@ public class Game extends ApplicationAdapter {
 
     @Override
     public void create() {
+        GameTexts.init();
         engine = Engine.init(configs);
         applyPersistedDisplayAndAudio();
     }

@@ -28,7 +28,7 @@ public final class MenuChipPanel {
     }
 
     private UiRect bounds;
-    private final String chipLabel;
+    private String chipLabel;
 
     public MenuChipPanel(UiRect bounds, String chipLabel) {
         this.bounds = bounds;
@@ -38,6 +38,11 @@ public final class MenuChipPanel {
     /** Updates panel geometry when the viewport changes; chip label is unchanged. */
     public void setBounds(UiRect bounds) {
         this.bounds = bounds;
+    }
+
+    /** For live locale switches (e.g. settings). */
+    public void setChipLabel(String chipLabel) {
+        this.chipLabel = chipLabel;
     }
 
     public UiRect bounds() {

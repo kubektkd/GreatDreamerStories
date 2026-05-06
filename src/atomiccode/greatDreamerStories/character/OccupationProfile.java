@@ -1,5 +1,7 @@
 package atomiccode.greatDreamerStories.character;
 
+import atomiccode.greatDreamerStories.i18n.GameTexts;
+
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
@@ -7,11 +9,9 @@ import java.util.Map;
 public class OccupationProfile {
     private static final OccupationProfile MODERN_SCANDINAVIAN_POLICE_OFFICER = createPoliceOfficerProfile();
 
-    private final String displayName;
     private final EnumMap<CharacterSkill, Integer> skillBonuses;
 
-    private OccupationProfile(String displayName, EnumMap<CharacterSkill, Integer> skillBonuses) {
-        this.displayName = displayName;
+    private OccupationProfile(EnumMap<CharacterSkill, Integer> skillBonuses) {
         this.skillBonuses = skillBonuses;
     }
 
@@ -20,7 +20,7 @@ public class OccupationProfile {
     }
 
     public String getDisplayName() {
-        return displayName;
+        return GameTexts.tr("occupation.chief_police_officer");
     }
 
     public int getBonus(CharacterSkill skill) {
@@ -50,6 +50,6 @@ public class OccupationProfile {
         bonuses.put(CharacterSkill.MEDICINE, 8);
         bonuses.put(CharacterSkill.NAVIGATE, 8);
         bonuses.put(CharacterSkill.CREDIT_RATING, 25);
-        return new OccupationProfile("Chief Police Officer", bonuses);
+        return new OccupationProfile(bonuses);
     }
 }

@@ -13,7 +13,7 @@ public class EngineConfigs_Build extends EngineConfigs {
         resolution = Resolution.HD;
         minResolution = Resolution.HD;
         windowMode = Mode.WINDOWED;
-        language = "PL";
+        language = "EN";
         defaultState = new MainMenuState();
         initialState = new SplashState();
     }

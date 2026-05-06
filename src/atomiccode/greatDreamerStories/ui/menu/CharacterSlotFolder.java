@@ -1,6 +1,7 @@
 package atomiccode.greatDreamerStories.ui.menu;
 
 import atomiccode.greatDreamerStories.character.Character;
+import atomiccode.greatDreamerStories.i18n.GameTexts;
 import atomiccode.greatDreamerStories.ui.GreatDreamerTheme;
 
 import java.awt.BasicStroke;
@@ -166,7 +167,7 @@ public final class CharacterSlotFolder {
             }
         }
 
-        String progressText = "Lvl " + (completedStories + 1);
+        String progressText = GameTexts.trf("common.level_abbr", completedStories + 1);
         g2d.setFont(detailFont);
         FontMetrics detailMetrics = g2d.getFontMetrics();
         int progressX = slotX + (slotWidth - detailMetrics.stringWidth(progressText)) / 2;
@@ -176,14 +177,14 @@ public final class CharacterSlotFolder {
 
         g2d.setColor(textColor);
         g2d.setFont(detailFont);
-        String stats = String.format("Closed Cases: %d", character.getCompletedStoryCount());
+        String stats = GameTexts.trf("slot.closed_cases", character.getCompletedStoryCount());
         FontMetrics statsMetrics = g2d.getFontMetrics();
         int statsX = slotX + (slotWidth - statsMetrics.stringWidth(stats)) / 2;
         int statsY = slotY + 118;
         g2d.drawString(stats, statsX, statsY);
 
         g2d.setColor(GreatDreamerTheme.SELECTED);
-        String playtime = String.format("Playtime: %dh", character.getTotalPlaytime() / 60);
+        String playtime = GameTexts.trf("slot.playtime_hours", character.getTotalPlaytime() / 60);
         int playtimeX = slotX + (slotWidth - statsMetrics.stringWidth(playtime)) / 2;
         int playtimeY = slotY + 155;
         g2d.drawString(playtime, playtimeX, playtimeY);
@@ -201,7 +202,7 @@ public final class CharacterSlotFolder {
 
         g2d.setFont(detailFont);
         FontMetrics statusMetrics = g2d.getFontMetrics();
-        String statusText = isAvailable ? "NEW FILE" : "LOCKED";
+        String statusText = isAvailable ? GameTexts.tr("slot.new_file") : GameTexts.tr("slot.locked");
         int statusX = slotX + (slotWidth - statusMetrics.stringWidth(statusText)) / 2;
         int statusY = slotY + slotHeight - 15;
         g2d.drawString(statusText, statusX, statusY);

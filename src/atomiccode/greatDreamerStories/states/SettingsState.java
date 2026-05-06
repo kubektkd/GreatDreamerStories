@@ -19,6 +19,7 @@ import atomiccode.greatDreamerStories.ui.menu.MenuActionStrip;
 import atomiccode.greatDreamerStories.ui.menu.MenuChipPanel;
 import atomiccode.greatDreamerStories.ui.menu.MenuScreenTitle;
 import atomiccode.greatDreamerStories.ui.menu.MenuSettingsSliderPanel;
+import atomiccode.greatDreamerStories.i18n.GameTexts;
 
 import com.badlogic.gdx.graphics.Cursor;
 
@@ -34,6 +35,8 @@ import java.awt.event.KeyEvent;
  * In-game settings reachable from the main menu. Returns to {@link MainMenuState} on Back or Esc.
  */
 public class SettingsState implements State {
+
+    private static final String BACK_BUTTON_GRAPHIC_PREFIX = "<  ";
 
     private static final String BACKGROUND_MUSIC_ID = "background_music";
 
@@ -54,14 +57,6 @@ public class SettingsState implements State {
 
     /** MenuSettingsSliderPanel expects 22px from panel border; MenuChipPanel uses 15px. */
     private static final int LABEL_VALUE_RIGHT_INSET_ADJUST = 7;
-
-    private static final String[] AVAILABLE_LANGUAGES = new String[]{"EN", "PL"};
-
-    /** Mock keybinding rows (placeholders until real controls exist). */
-    private static final String[] KEYBIND_MOCK_LABELS = new String[]{
-            "Move / investigate", "Interact / confirm", "Inventory", "Journal / notes"};
-    private static final String[] KEYBIND_MOCK_VALUES = new String[]{
-            "W A S D", "E / Enter", "Tab", "J"};
 
     private static final int FOCUS_MUSIC = 0;
     private static final int FOCUS_SFX = 1;
@@ -144,11 +139,12 @@ public class SettingsState implements State {
         musicSlider = new HorizontalSlider(0, 0, 200);
         sfxSlider = new HorizontalSlider(0, 0, 200);
 
-        windowedButton = new Button(0, 0, DISPLAY_BUTTON_WIDTH, DISPLAY_BUTTON_HEIGHT, "WINDOWED");
-        maximizedButton = new Button(0, 0, DISPLAY_BUTTON_WIDTH, DISPLAY_BUTTON_HEIGHT, "MAXIMIZED");
-        fullscreenButton = new Button(0, 0, DISPLAY_BUTTON_WIDTH, DISPLAY_BUTTON_HEIGHT, "FULLSCREEN");
-        saveButton = new Button(0, 0, ACTION_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT, "SAVE CHANGES");
-        backButton = new Button(0, 0, ACTION_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT, "<  BACK");
+        windowedButton = new Button(0, 0, DISPLAY_BUTTON_WIDTH, DISPLAY_BUTTON_HEIGHT, GameTexts.tr("settings.window.windowed"));
+        maximizedButton = new Button(0, 0, DISPLAY_BUTTON_WIDTH, DISPLAY_BUTTON_HEIGHT, GameTexts.tr("settings.window.maximized"));
+        fullscreenButton = new Button(0, 0, DISPLAY_BUTTON_WIDTH, DISPLAY_BUTTON_HEIGHT, GameTexts.tr("settings.window.fullscreen"));
+        saveButton = new Button(0, 0, ACTION_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT, GameTexts.tr("settings.action.save_changes"));
+        backButton = new Button(0, 0, ACTION_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT,
+                BACK_BUTTON_GRAPHIC_PREFIX + GameTexts.tr("common.back"));
 
         GreatDreamerTheme.stylePrimaryButton(saveButton, buttonFont);
         GreatDreamerTheme.styleSecondaryButton(backButton, buttonFont);
@@ -157,9 +153,9 @@ public class SettingsState implements State {
         maximizedButton.setFont(buttonFont);
         fullscreenButton.setFont(buttonFont);
 
-        difficultyEasyButton = new Button(0, 0, DISPLAY_BUTTON_WIDTH, DISPLAY_BUTTON_HEIGHT, "EASY");
-        difficultyNormalButton = new Button(0, 0, DISPLAY_BUTTON_WIDTH, DISPLAY_BUTTON_HEIGHT, "NORMAL");
-        difficultyHardButton = new Button(0, 0, DISPLAY_BUTTON_WIDTH, DISPLAY_BUTTON_HEIGHT, "HARD");
+        difficultyEasyButton = new Button(0, 0, DISPLAY_BUTTON_WIDTH, DISPLAY_BUTTON_HEIGHT, GameTexts.tr("settings.difficulty.easy"));
+        difficultyNormalButton = new Button(0, 0, DISPLAY_BUTTON_WIDTH, DISPLAY_BUTTON_HEIGHT, GameTexts.tr("settings.difficulty.normal"));
+        difficultyHardButton = new Button(0, 0, DISPLAY_BUTTON_WIDTH, DISPLAY_BUTTON_HEIGHT, GameTexts.tr("settings.difficulty.hard"));
         difficultyEasyButton.setFont(buttonFont);
         difficultyNormalButton.setFont(buttonFont);
         difficultyHardButton.setFont(buttonFont);
@@ -191,30 +187,32 @@ public class SettingsState implements State {
         saveButton.setOnClick(this::saveChanges);
         backButton.setOnClick(this::exitWithoutSaving);
 
-        audioPanel = new MenuChipPanel(new UiRect(0, 0, 100, 100), "AUDIO");
-        displayPanel = new MenuChipPanel(new UiRect(0, 0, 100, 100), "GRAPHICS");
-        gameplayPanel = new MenuChipPanel(new UiRect(0, 0, 100, 100), "GAMEPLAY");
-        languagePanel = new MenuChipPanel(new UiRect(0, 0, 100, 100), "LANGUAGE");
-        keybindingsPanel = new MenuChipPanel(new UiRect(0, 0, 100, 100), "KEYBINDINGS");
+        audioPanel = new MenuChipPanel(new UiRect(0, 0, 100, 100), GameTexts.tr("settings.panel.audio"));
+        displayPanel = new MenuChipPanel(new UiRect(0, 0, 100, 100), GameTexts.tr("settings.panel.graphics"));
+        gameplayPanel = new MenuChipPanel(new UiRect(0, 0, 100, 100), GameTexts.tr("settings.panel.gameplay"));
+        languagePanel = new MenuChipPanel(new UiRect(0, 0, 100, 100), GameTexts.tr("settings.panel.language"));
+        keybindingsPanel = new MenuChipPanel(new UiRect(0, 0, 100, 100), GameTexts.tr("settings.panel.keybindings"));
 
         languageDropdown = new Dropdown(0, 0, 200, DISPLAY_BUTTON_HEIGHT);
-        languageDropdown.setOptions(AVAILABLE_LANGUAGES);
         GreatDreamerTheme.styleDropdown(languageDropdown, buttonFont);
         languageDropdown.setOnSelectionChange(() -> {
             selectedLanguageIndex = languageDropdown.getSelectedIndex();
-            // Language selection is not persisted yet (future feature).
+            GameTexts.setLocaleForTag(languageTagForIndex(selectedLanguageIndex));
+            refreshLanguageDropdownOptions();
+            refreshDirtyFlag();
         });
 
         syncSlidersFromEngine();
 
-        selectedLanguageIndex = 0;
+        selectedLanguageIndex = languageIndexForTag(GamePreferences.getLanguageTag());
+        GameTexts.setLocaleForTag(languageTagForIndex(selectedLanguageIndex));
         baselineMusicPercent = musicSlider.getValue();
         baselineSfxPercent = sfxSlider.getValue();
         baselineWindowMode = GamePreferences.getWindowMode();
         baselineLanguageIndex = selectedLanguageIndex;
         selectedDifficulty = GamePreferences.getDifficulty();
         baselineDifficulty = selectedDifficulty;
-        languageDropdown.setSelectedIndex(selectedLanguageIndex);
+        refreshLanguageDropdownOptions();
         refreshDirtyFlag();
 
         selectedIndex = FOCUS_BACK;
@@ -263,6 +261,7 @@ public class SettingsState implements State {
         GamePreferences.setWindowMode(mode);
 
         GamePreferences.setDifficulty(selectedDifficulty);
+        GamePreferences.setLanguageTag(languageTagForIndex(selectedLanguageIndex));
 
         baselineMusicPercent = musicSlider.getValue();
         baselineSfxPercent = sfxSlider.getValue();
@@ -282,9 +281,10 @@ public class SettingsState implements State {
         sfxSlider.setValue(baselineSfxPercent);
         selectedLanguageIndex = baselineLanguageIndex;
         selectedDifficulty = baselineDifficulty;
+        GameTexts.setLocaleForTag(languageTagForIndex(baselineLanguageIndex));
         if (languageDropdown != null) {
             languageDropdown.closeWithoutApply();
-            languageDropdown.setSelectedIndex(baselineLanguageIndex);
+            refreshLanguageDropdownOptions();
         }
 
         Engine.instance().stateProcessor.setState(new MainMenuState());
@@ -296,7 +296,8 @@ public class SettingsState implements State {
                 && (musicSlider.getValue() != baselineMusicPercent
                 || sfxSlider.getValue() != baselineSfxPercent
                 || currentMode != baselineWindowMode
-                || selectedDifficulty != baselineDifficulty);
+                || selectedDifficulty != baselineDifficulty
+                || selectedLanguageIndex != baselineLanguageIndex);
         hasUnsavedChanges = dirty;
 
         if (saveButton != null) {
@@ -617,7 +618,7 @@ public class SettingsState implements State {
 
         int languageInnerHeightNeeded = MenuSettingsSliderPanel.ROW_HEIGHT;
 
-        int keybindRows = KEYBIND_MOCK_LABELS.length;
+        int keybindRows = keybindRowLabels().length;
         int keybindingsInnerHeightNeeded = keybindRows * MenuSettingsSliderPanel.ROW_HEIGHT
                 + Math.max(0, keybindRows - 1) * MenuSettingsSliderPanel.ROW_GAP + 44;
 
@@ -658,6 +659,11 @@ public class SettingsState implements State {
         gameplayPanel.setBounds(gameplayBounds);
         languagePanel.setBounds(languageBounds);
         keybindingsPanel.setBounds(keybindingsBounds);
+        audioPanel.setChipLabel(GameTexts.tr("settings.panel.audio"));
+        displayPanel.setChipLabel(GameTexts.tr("settings.panel.graphics"));
+        gameplayPanel.setChipLabel(GameTexts.tr("settings.panel.gameplay"));
+        languagePanel.setChipLabel(GameTexts.tr("settings.panel.language"));
+        keybindingsPanel.setChipLabel(GameTexts.tr("settings.panel.keybindings"));
 
         MenuActionStrip.placeSecondaryBeforePrimary(layout, saveButton, ACTION_BUTTON_WIDTH,
                 backButton, ACTION_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT, 12);
@@ -782,8 +788,8 @@ public class SettingsState implements State {
         GeneralMenuRenderer.drawPage(g2d, windowWidth, windowHeight);
         GeneralMenuRenderer.drawSubtleBackground(g2d, windowWidth, windowHeight);
 
-        MenuScreenTitle.draw(g2d, layout.content, layout.content.right(), "SETTINGS",
-                "STOKSJÖ POLICE ARCHIVE // MAINTENANCE ROOM", null);
+        MenuScreenTitle.draw(g2d, layout.content, layout.content.right(), GameTexts.tr("settings.title"),
+                GameTexts.archiveStrapline("archive.strapline.maintenance_room"), null);
 
         Shape oldClip = g2d.getClip();
         if (scrollViewportRect != null) {
@@ -794,7 +800,7 @@ public class SettingsState implements State {
         audioPanel.drawPanelBody(g2d);
         UiRect audioInner = MenuChipPanel.innerContentRectForBounds(audioPanel.bounds());
         drawChipPanelRowLabels(g2d, audioInner,
-                new String[]{"Game music", "Sound effects"},
+                new String[]{GameTexts.tr("settings.row.game_music"), GameTexts.tr("settings.row.sound_effects")},
                 new String[]{musicSlider.getValue() + "%", sfxSlider.getValue() + "%"});
         MenuSettingsSliderPanel.renderSlider(g2d, musicSlider, selectedIndex == FOCUS_MUSIC);
         MenuSettingsSliderPanel.renderSlider(g2d, sfxSlider, selectedIndex == FOCUS_SFX);
@@ -804,7 +810,7 @@ public class SettingsState implements State {
         displayPanel.drawPanelBody(g2d);
         UiRect displayInner = MenuChipPanel.innerContentRectForBounds(displayPanel.bounds());
         drawChipPanelRowLabels(g2d, displayInner,
-                new String[]{"Display mode"},
+                new String[]{GameTexts.tr("settings.row.display_mode")},
                 new String[]{null});
         windowedButton.render(g);
         maximizedButton.render(g);
@@ -815,7 +821,7 @@ public class SettingsState implements State {
         gameplayPanel.drawPanelBody(g2d);
         UiRect gameplayInner = MenuChipPanel.innerContentRectForBounds(gameplayPanel.bounds());
         drawChipPanelRowLabels(g2d, gameplayInner,
-                new String[]{"Difficulty level"},
+                new String[]{GameTexts.tr("settings.row.difficulty")},
                 new String[]{null});
         difficultyEasyButton.render(g);
         difficultyNormalButton.render(g);
@@ -826,7 +832,7 @@ public class SettingsState implements State {
         languagePanel.drawPanelBody(g2d);
         UiRect languageInner = MenuChipPanel.innerContentRectForBounds(languagePanel.bounds());
         drawChipPanelRowLabels(g2d, languageInner,
-                new String[]{"Language"},
+                new String[]{GameTexts.tr("settings.row.language")},
                 new String[]{null});
         if (languageDropdown != null) {
             languageDropdown.renderHeader(g);
@@ -836,13 +842,13 @@ public class SettingsState implements State {
         // KEYBINDINGS (mock table)
         keybindingsPanel.drawPanelBody(g2d);
         UiRect keybindInner = MenuChipPanel.innerContentRectForBounds(keybindingsPanel.bounds());
-        drawChipPanelRowLabels(g2d, keybindInner, KEYBIND_MOCK_LABELS, KEYBIND_MOCK_VALUES);
+        drawChipPanelRowLabels(g2d, keybindInner, keybindRowLabels(), keybindRowValues());
         g2d.setFont(subtitleFont);
         g2d.setColor(mutedTextColor);
-        int kbRows = KEYBIND_MOCK_LABELS.length;
+        int kbRows = keybindRowLabels().length;
         int noteY = keybindInner.y + kbRows * MenuSettingsSliderPanel.ROW_HEIGHT
                 + Math.max(0, kbRows - 1) * MenuSettingsSliderPanel.ROW_GAP + 18;
-        g2d.drawString("Illustrative only — rebinding TBD.", keybindInner.x + LABEL_VALUE_RIGHT_INSET_ADJUST, noteY);
+        g2d.drawString(GameTexts.tr("settings.keybind.note"), keybindInner.x + LABEL_VALUE_RIGHT_INSET_ADJUST, noteY);
         keybindingsPanel.drawChip(g2d);
 
         // Restore clip; scrollbar and Back button are outside of the scroll region.
@@ -855,6 +861,41 @@ public class SettingsState implements State {
         renderScrollbar(g2d);
         saveButton.render(g);
         backButton.render(g);
+    }
+
+    private static String languageTagForIndex(int index) {
+        return index == 1 ? "pl" : "en";
+    }
+
+    private static int languageIndexForTag(String tag) {
+        return tag != null && tag.equalsIgnoreCase("pl") ? 1 : 0;
+    }
+
+    private void refreshLanguageDropdownOptions() {
+        if (languageDropdown == null) {
+            return;
+        }
+        int idx = selectedLanguageIndex;
+        languageDropdown.setOptions(new String[]{GameTexts.tr("meta.lang.en"), GameTexts.tr("meta.lang.pl")});
+        languageDropdown.setSelectedIndex(idx);
+    }
+
+    private static String[] keybindRowLabels() {
+        return new String[]{
+                GameTexts.tr("settings.keybind.move"),
+                GameTexts.tr("settings.keybind.interact"),
+                GameTexts.tr("settings.keybind.inventory"),
+                GameTexts.tr("settings.keybind.journal")
+        };
+    }
+
+    private static String[] keybindRowValues() {
+        return new String[]{
+                GameTexts.tr("settings.keybind.values.move"),
+                GameTexts.tr("settings.keybind.values.interact"),
+                GameTexts.tr("settings.keybind.values.inventory"),
+                GameTexts.tr("settings.keybind.values.journal")
+        };
     }
 
     private void renderScrollbar(Graphics2D g2d) {

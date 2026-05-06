@@ -13,6 +13,7 @@ import atomiccode.cthulhuEngine.ui.layout.UiStackLayout;
 import atomiccode.greatDreamerStories.decorations.Snowflake;
 import atomiccode.greatDreamerStories.decorations.Mist;
 import atomiccode.greatDreamerStories.ui.GreatDreamerTheme;
+import atomiccode.greatDreamerStories.i18n.GameTexts;
 
 import com.badlogic.gdx.graphics.Cursor;
 
@@ -96,9 +97,9 @@ public class MainMenuState implements State {
         spawnInitialMist();
         
         // Initialize buttons (will be positioned in render method)
-        startButton = new Button(0, 0, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "Start Game");
-        settingsButton = new Button(0, 0, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "Settings");
-        exitButton = new Button(0, 0, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "Exit");
+        startButton = new Button(0, 0, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, GameTexts.tr("main_menu.start_game"));
+        settingsButton = new Button(0, 0, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, GameTexts.tr("main_menu.settings"));
+        exitButton = new Button(0, 0, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, GameTexts.tr("main_menu.exit"));
         
         // Set button colors
         Color normalColor = new Color(50, 50, 50, 200);
